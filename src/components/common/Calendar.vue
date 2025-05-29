@@ -1,6 +1,6 @@
 <template>
 
-    <div class="grid grid-cols-8 max-h-[calc(100vh-285px)] overflow-y-auto">
+    <div class="grid grid-cols-8 max-h-[calc(90vh-285px)] overflow-y-auto">
         <!-- Encabezados -->
         <div
             class="h-16 flex items-center justify-center font-bold border-b border-gray-200 sticky top-0 z-20 bg-white">

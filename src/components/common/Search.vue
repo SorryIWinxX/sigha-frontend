@@ -19,14 +19,14 @@ const handleSearch = (e) => {
 </script>
 
 <template>
-    <form @submit="handleSearch" class=" w-full">
-        <div class="relative">
-            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <Search class="h-4 w-4 sm:h-5 sm:w-5 text-[#8f95a3]" />
+    <form @submit="handleSearch" class="w-full">
+        <div
+            class="flex items-center bg-white border border-gray-300 focus-within:shadow-[inset_0_0_0_2px_#67B83C] focus-within:border-transparent rounded-sm transition-all duration-200">
+            <div class="flex items-center justify-center pl-4 pr-3">
+                <Search class="h-5 w-5 text-gray-400 peer-focus:text-[#67B83C]" />
             </div>
-            <input type="text" v-model="query"
-                class="w-full py-1.5 sm:py-2 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm sm:text-base border border-[#dcdfe3] rounded-sm text-[#231f20] placeholder-[#8f95a3] focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-none transition-colors"
-                :placeholder="placeholder" />
+            <input type="text" v-model="query" :placeholder="placeholder"
+                class="peer flex-1 py-2 pr-4 text-gray-700 placeholder:text-md placeholder-gray-400 bg-transparent border-none outline-none focus:ring-0" />
         </div>
     </form>
 </template>

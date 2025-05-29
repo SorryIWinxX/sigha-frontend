@@ -1,0 +1,310 @@
+<template>
+    <div class="w-full bg-white">
+        <div class="overflow-hidden border border-gray-200 rounded-sm">
+            <table class="w-full">
+                <thead class="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                        <th class="w-12 px-6 py-3 text-left">
+                            <CheckBox :modelValue="allSelected" @update:modelValue="toggleAllUsers"
+                                class="text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 focus:ring-2 transition-all duration-200" />
+                        </th>
+                        <th class="px-6 py-3 text-left">
+                            <button @click="handleSort('name')"
+                                class="flex items-center gap-2 text-gray-900 font-semibold cursor-pointer hover:text-green-600">
+                                Nombre
+                                <div v-if="sortConfig?.key === 'name'">
+                                    <ChevronUp v-if="sortConfig.direction === 'asc'" class="w-4 h-4 text-green-600" />
+                                    <ChevronDown v-else class="w-4 h-4 text-green-600" />
+                                </div>
+                                <div v-else class="flex flex-col">
+                                    <ChevronUp class="w-4 h-4 text-gray-400 -mb-1" />
+                                    <ChevronDown class="w-4 h-4 text-gray-400" />
+                                </div>
+                            </button>
+                        </th>
+                        <th class="px-6 py-3 text-left">
+                            <span class="text-gray-900 font-semibold">Email</span>
+                        </th>
+                        <th class="px-6 py-3 text-center">
+                            <button @click="handleSort('lastLogin')"
+                                class="flex items-center gap-2 text-gray-900 font-semibold cursor-pointer hover:text-green-600">
+                                Último ingreso
+                                <div v-if="sortConfig?.key === 'lastLogin'">
+                                    <ChevronUp v-if="sortConfig.direction === 'asc'" class="w-4 h-4 text-green-600" />
+                                    <ChevronDown v-else class="w-4 h-4 text-green-600" />
+                                </div>
+                                <div v-else class="flex flex-col">
+                                    <ChevronUp class="w-4 h-4 text-gray-400 -mb-1" />
+                                    <ChevronDown class="w-4 h-4 text-gray-400" />
+                                </div>
+                            </button>
+                        </th>
+                        <th class="px-6 py-3 text-right">
+                            <button @click="handleSort('permission')"
+                                class="flex items-center justify-center gap-2 text-gray-900 font-semibold cursor-pointer hover:text-green-600">
+                                Role
+                                <div v-if="sortConfig?.key === 'permission'">
+                                    <ChevronUp v-if="sortConfig.direction === 'asc'" class="w-4 h-4 text-green-600" />
+                                    <ChevronDown v-else class="w-4 h-4 text-green-600" />
+                                </div>
+                                <div v-else class="flex flex-col">
+                                    <ChevronUp class="w-4 h-4 text-gray-400 -mb-1" />
+                                    <ChevronDown class="w-4 h-4 text-gray-400" />
+                                </div>
+                            </button>
+                        </th>
+                        <th class="px-6 py-3 text-center">
+                            <span class="text-gray-900 font-semibold">Acciones</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    <tr v-for="(user, index) in paginatedUsers" :key="user.id" :class="[
+                        'border-b border-gray-100 hover:bg-gray-50 ',
+                        { 'bg-gray-50/30': index % 2 === 0 },
+                        { 'border-b-0': index === paginatedUsers.length - 1 }
+                    ]">
+                        <td class="px-6 py-3">
+                            <CheckBox :modelValue="user.selected" @update:modelValue="toggleUserSelection(user.id)"
+                                class="text-green-600 bg-white border-gray-300 rounded-sm focus:ring-green-500 focus:ring-2" />
+                        </td>
+                        <td class="px-6 py-3">
+                            <span class="text-gray-900 font-medium">{{ user.name }}</span>
+                        </td>
+                        <td class="px-6 py-3">
+                            <span class="text-gray-600">{{ user.email }}</span>
+                        </td>
+                        <td class="px-6 py-3">
+                            <span class="text-gray-500">{{ user.lastLogin }}</span>
+                        </td>
+                        <td class="px-6 py-3">
+                            <span :class="[
+                                'inline-flex items-center px-4 py-1 rounded-sm  justify-center',
+                                user.permission === 'Admin'
+                                    ? 'text-white '
+                                    : 'text-white'
+                            ]" :style="{
+                                backgroundColor: user.permission === 'Admin' ? '#67b83c' : '#94a3b8'
+                            }">
+                                {{ user.permission }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3">
+                            <div class="relative flex items-center  justify-center">
+                                <button @click="toggleDropdown(user.id)"
+                                    class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-white rounded-sm flex items-center justify-center hover:bg-[#67b83c] hover:border-gray-300">
+                                    <MoreHorizontal class="h-4 w-4 transition-colors duration-200" />
+                                </button>
+                                <div v-if="openDropdown === user.id" :class="[
+                                    'absolute z-50 w-48 bg-white rounded-sm border border-gray-200 shadow-lg overflow-hidden',
+                                    index >= paginatedUsers.length - 2 ? 'bottom-10 right-0' : 'top-10 right-0'
+                                ]">
+                                    <div class="py-1">
+                                        <button
+                                            class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
+                                            Ver detalles
+                                        </button>
+                                        <button
+                                            class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
+                                            Editar usuario
+                                        </button>
+                                        <button
+                                            class="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer">
+                                            Eliminar usuario
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
+            <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                <span>Mostrando {{ startIndex + 1 }} a {{ Math.min(endIndex, totalUsers) }} de {{ totalUsers }}
+                    usuarios</span>
+                <span class="mx-2">|</span>
+                <span>Mostrar</span>
+                <Select :modelValue="itemsPerPage" @update:modelValue="handleItemsPerPageChange" id="itemsPerPage"
+                    customClass="px-2 py-1 text-sm" width="w-15" height="">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="100">100</option>
+                </Select>
+                <span>por página</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1" :class="[
+                    'px-3 py-2 text-sm border rounded-sm flex items-center font-medium transition-all duration-200',
+                    currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                ]">
+                    <ChevronLeft class="w-4 h-4 mr-1" />
+                    Anterior
+                </button>
+
+                <div class="flex space-x-1">
+                    <button v-for="page in visiblePages" :key="page" @click="goToPage(page)" :class="[
+                        'px-3 py-2 text-sm border rounded-sm font-medium transition-all duration-200 min-w-[40px] flex items-center justify-center',
+                        page === currentPage
+                            ? 'text-white border-transparent'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    ]" :style="page === currentPage ? { backgroundColor: '#67b83c' } : {}">
+                        {{ page }}
+                    </button>
+                </div>
+
+                <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages" :class="[
+                    'px-3 py-2 text-sm border rounded-sm flex items-center font-medium transition-all duration-200',
+                    currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                ]">
+                    Siguiente
+                    <ChevronRight class="w-4 h-4 ml-1" />
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
+import CheckBox from './common/CheckBox.vue'
+import Select from './common/Select.vue'
+
+// Initial data
+const initialUsers = [
+    { id: "1", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Admin", selected: false },
+    { id: "2", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "3", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "4", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "5", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "6", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "7", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "8", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "9", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "10", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "11", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "12", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Admin", selected: false },
+    { id: "13", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "14", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+    { id: "15", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
+]
+
+// Reactive data
+const users = ref([...initialUsers])
+const sortConfig = ref(null)
+const openDropdown = ref(null)
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+// Computed properties
+const totalUsers = computed(() => users.value.length)
+const totalPages = computed(() => Math.ceil(totalUsers.value / itemsPerPage.value))
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value)
+const endIndex = computed(() => startIndex.value + itemsPerPage.value)
+
+const paginatedUsers = computed(() => {
+    let sortedUsers = [...users.value]
+
+    if (sortConfig.value) {
+        sortedUsers.sort((a, b) => {
+            const aValue = a[sortConfig.value.key]
+            const bValue = b[sortConfig.value.key]
+
+            if (aValue < bValue) return sortConfig.value.direction === 'asc' ? -1 : 1
+            if (aValue > bValue) return sortConfig.value.direction === 'asc' ? 1 : -1
+            return 0
+        })
+    }
+
+    return sortedUsers.slice(startIndex.value, endIndex.value)
+})
+
+const allSelected = computed(() => {
+    return paginatedUsers.value.length > 0 && paginatedUsers.value.every(user => user.selected)
+})
+
+const visiblePages = computed(() => {
+    const pages = []
+    const maxVisible = 5
+    let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
+    let end = Math.min(totalPages.value, start + maxVisible - 1)
+
+    if (end - start + 1 < maxVisible) {
+        start = Math.max(1, end - maxVisible + 1)
+    }
+
+    for (let i = start; i <= end; i++) {
+        pages.push(i)
+    }
+
+    return pages
+})
+
+// Methods
+const handleSort = (key) => {
+    let direction = 'asc'
+    if (sortConfig.value && sortConfig.value.key === key && sortConfig.value.direction === 'asc') {
+        direction = 'desc'
+    }
+    sortConfig.value = { key, direction }
+}
+
+const toggleUserSelection = (userId) => {
+    const userIndex = users.value.findIndex(user => user.id === userId)
+    if (userIndex !== -1) {
+        users.value[userIndex].selected = !users.value[userIndex].selected
+    }
+}
+
+const toggleAllUsers = () => {
+    const allCurrentlySelected = paginatedUsers.value.every(user => user.selected)
+    paginatedUsers.value.forEach(user => {
+        const userIndex = users.value.findIndex(u => u.id === user.id)
+        if (userIndex !== -1) {
+            users.value[userIndex].selected = !allCurrentlySelected
+        }
+    })
+}
+
+const toggleDropdown = (userId) => {
+    openDropdown.value = openDropdown.value === userId ? null : userId
+}
+
+const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+    }
+}
+
+const handleItemsPerPageChange = (value) => {
+    itemsPerPage.value = parseInt(value)
+    currentPage.value = 1 // Reset to first page when changing items per page
+}
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+    if (!event.target.closest('.relative')) {
+        openDropdown.value = null
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
+<style scoped>
+/* Remove custom checkbox styling since we're using the CheckBox component */
+</style>

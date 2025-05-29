@@ -5,6 +5,7 @@ import AvailableView from '../views/AvailableView.vue'
 import UserView from '../views/UserView.vue'
 import ToastDemoView from '../views/ToastDemoView.vue'
 import GroupsView from '../views/GroupsView.vue'
+import UsersView from '../views/UsersView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/groups',
       name: 'groups',
       component: GroupsView,
+    },
+    {
+      path: '/users',
+      name: 'users',
+      component: UsersView,
     },
     {
       path: '/admin/settings',

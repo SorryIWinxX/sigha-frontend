@@ -45,9 +45,9 @@ const menuItems = computed(() => {
 
     const adminItems = [
         {
-            to: '/groups',
+            to: '/users',
             icon: Users,
-            label: 'Grupos',
+            label: 'Usuarios',
             roles: [ROLES.ADMIN],
         },
         {
