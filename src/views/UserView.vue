@@ -1,197 +1,189 @@
 <template>
     <MainLayout>
-        <div>
+        <div class="flex h-full flex-col">
+            <div class="flex-1 min-h-0 overflow-auto">
+                <h1 class="text-2xl font-bold text-gray-900 mb-4">Información de Usuario</h1>
 
-            <div class="min-h-screen">
-                <div class="">
-                    <h1 class="text-2xl font-bold text-gray-900 mb-6">Información de Usuario</h1>
+                <form @submit.prevent="saveUserInfo" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Left Column -->
+                        <div class="space-y-4">
+                            <!-- Información Personal -->
+                            <div
+                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
+                                <div class="p-4">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Información Personal</h2>
 
-                    <form @submit.prevent="saveUserInfo" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Left Column -->
-                            <div class="space-y-6">
-                                <!-- Información Personal -->
-                                <div
-                                    class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                    <div class="p-6">
-                                        <h2 class="text-lg font-medium text-gray-900 mb-4">Información Personal</h2>
-
-                                        <div class="flex flex-col md:flex-row gap-6 mb-6">
-                                            <!-- Foto de perfil -->
-                                            <div class="flex flex-col items-center">
-                                                <div
-                                                    class="relative w-32 h-32 rounded-full overflow-hidden bg-gray-100 mb-2">
-                                                    <img v-if="userInfo.photo" :src="userInfo.photo"
-                                                        alt="Foto de perfil" class="w-full h-full object-cover" />
-                                                    <div v-else
-                                                        class="w-full h-full flex items-center justify-center text-gray-400">
-                                                        <User size="48" />
-                                                    </div>
+                                    <div class="flex flex-col md:flex-row gap-4 mb-4">
+                                        <!-- Foto de perfil -->
+                                        <div class="flex flex-col items-center">
+                                            <div
+                                                class="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 mb-2">
+                                                <img v-if="userInfo.photo" :src="userInfo.photo" alt="Foto de perfil"
+                                                    class="w-full h-full object-cover" />
+                                                <div v-else
+                                                    class="w-full h-full flex items-center justify-center text-gray-400">
+                                                    <User size="32" />
                                                 </div>
-                                                <label for="photo-upload"
-                                                    class="cursor-pointer border border-gray-300 hover:border-gray-400 text-black px-3 py-1 rounded-md text-sm">
-                                                    Cambiar foto
-                                                </label>
-                                                <input id="photo-upload" type="file" accept="image/*" class="hidden"
-                                                    @change="handlePhotoUpload" />
+                                            </div>
+                                            <label for="photo-upload"
+                                                class="cursor-pointer border border-gray-300 hover:border-gray-400 text-black px-2 py-1 rounded-md text-xs">
+                                                Cambiar foto
+                                            </label>
+                                            <input id="photo-upload" type="file" accept="image/*" class="hidden"
+                                                @change="handlePhotoUpload" />
+                                        </div>
+
+                                        <!-- Datos personales -->
+                                        <div class="flex-1 grid grid-cols-1 gap-3">
+                                            <div>
+                                                <Input id="nombres" label="Nombres" v-model="userInfo.nombres"
+                                                    type="text" required />
                                             </div>
 
-                                            <!-- Datos personales -->
-                                            <div class="flex-1 grid grid-cols-1 gap-4">
-                                                <div>
-
-                                                    <Input id="nombres" label="Nombres" v-model="userInfo.nombres"
-                                                        type="text" required />
+                                            <div>
+                                                <label for="cedula"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Documento
+                                                    de Identidad</label>
+                                                <div class="flex gap-2">
+                                                    <select v-model="userInfo.documentType"
+                                                        class="px-3 py-2 border border-[#dcdfe3] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C]">
+                                                        <option value="CC">CC</option>
+                                                        <option value="TI">TI</option>
+                                                        <option value="TE">TE</option>
+                                                    </select>
+                                                    <Input id="cedula" v-model="userInfo.cedula" type="text"
+                                                        placeholder="Número de documento" required class="flex-1" />
                                                 </div>
+                                            </div>
 
-                                                <div>
-                                                    <label for="cedula"
-                                                        class="block text-sm font-medium text-gray-700 mb-1">Documento
-                                                        de Identidad</label>
-                                                    <div class="flex gap-2">
-                                                        <select v-model="userInfo.documentType"
-                                                            class="px-3 py-2 border border-[#dcdfe3] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C]">
-                                                            <option value="CC">CC</option>
-                                                            <option value="TI">TI</option>
-                                                            <option value="TE">TE</option>
-                                                        </select>
-                                                        <Input id="cedula" v-model="userInfo.cedula" type="text"
-                                                            placeholder="Número de documento" required class="flex-1" />
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label for="role"
-                                                        class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                                    <div id="role"
-                                                        class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-700">
-                                                        {{ userInfo.role }}
-                                                    </div>
+                                            <div>
+                                                <label for="role"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                                <div id="role"
+                                                    class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-700">
+                                                    {{ userInfo.role }}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- Áreas Asignadas -->
-                                <div
-                                    class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                    <div class="p-6">
-                                        <h2 class="text-lg font-medium text-gray-900 mb-4">Áreas Asignadas</h2>
-
-                                        <div class="flex flex-wrap gap-2">
-                                            <div v-for="(area, index) in userInfo.areasAsignadas" :key="index"
-                                                class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                                                {{ area }}
-                                            </div>
-                                            <div v-if="userInfo.areasAsignadas.length === 0"
-                                                class="text-gray-500 text-sm">
-                                                No hay áreas asignadas
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div
-                                    class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                    <div class="p-6">
-                                        <h2 class="text-lg font-medium text-gray-900 mb-4">Correos Electrónicos</h2>
-
-                                        <div v-for="(email, index) in userInfo.emails" :key="index"
-                                            class="flex items-center mb-3">
-                                            <Input :id="`email-${index}`" v-model="userInfo.emails[index]" type="email"
-                                                :aria-label="`Email ${index + 1}`" required class="flex-1" />
-                                            <button type="button" @click="removeEmail(index)"
-                                                class="ml-2 text-red-500 p-2"
-                                                :aria-label="`Eliminar email ${index + 1}`">
-                                                <Trash2 size="20" />
-                                            </button>
-                                        </div>
-
-                                        <button type="button" @click="addEmail"
-                                            class="mt-2 flex items-center text-primary font-medium">
-                                            <PlusCircle size="20" class="mr-1" />
-                                            Agregar correo
-                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Right Column -->
-                            <div class="space-y-6">
-                                <!-- Emails -->
+                            <!-- Áreas Asignadas -->
+                            <div
+                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
+                                <div class="p-4">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Áreas Asignadas</h2>
 
-
-                                <!-- Números de Teléfono -->
-                                <div
-                                    class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                    <div class="p-6">
-                                        <h2 class="text-lg font-medium text-gray-900 mb-4">Números de Teléfono</h2>
-
-                                        <div v-for="(phone, index) in userInfo.phones" :key="index"
-                                            class="flex items-center mb-3">
-                                            <Input :id="`phone-${index}`" v-model="userInfo.phones[index]" type="tel"
-                                                :aria-label="`Teléfono ${index + 1}`" required class="flex-1" />
-                                            <button type="button" @click="removePhone(index)"
-                                                class="ml-2 text-red-500 p-2"
-                                                :aria-label="`Eliminar teléfono ${index + 1}`">
-                                                <Trash2 size="20" />
-                                            </button>
+                                    <div class="flex flex-wrap gap-2">
+                                        <div v-for="(area, index) in userInfo.areasAsignadas" :key="index"
+                                            class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                                            {{ area }}
                                         </div>
-
-                                        <button type="button" @click="addPhone"
-                                            class="mt-2 flex items-center text-primary font-medium">
-                                            <PlusCircle size="20" class="mr-1" />
-                                            Agregar teléfono
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Cambio de Contraseña -->
-                                <div
-                                    class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                    <div class="p-6">
-                                        <h2 class="text-lg font-medium text-gray-900 mb-4">Cambio de Contraseña</h2>
-
-                                        <div class="space-y-4">
-                                            <div>
-                                                <Input id="current-password" label="Contraseña Actual"
-                                                    v-model="passwordChange.currentPassword" type="password" />
-                                            </div>
-
-                                            <div>
-                                                <Input id="new-password" label="Nueva Contraseña"
-                                                    v-model="passwordChange.newPassword" type="password" />
-                                            </div>
-
-                                            <div>
-                                                <Input id="confirm-password" label="Confirmar Contraseña"
-                                                    v-model="passwordChange.confirmPassword" type="password" />
-                                            </div>
-
-                                            <div v-if="passwordError" class="text-red-500 text-sm">
-                                                {{ passwordError }}
-                                            </div>
-
-                                            <button type="button" @click="changePassword"
-                                                class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                                                :disabled="!canChangePassword">
-                                                Cambiar Contraseña
-                                            </button>
+                                        <div v-if="userInfo.areasAsignadas.length === 0" class="text-gray-500 text-sm">
+                                            No hay áreas asignadas
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Correos Electrónicos -->
+                            <div
+                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
+                                <div class="p-4">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Correos Electrónicos</h2>
+
+                                    <div v-for="(email, index) in userInfo.emails" :key="index"
+                                        class="flex items-center mb-2">
+                                        <Input :id="`email-${index}`" v-model="userInfo.emails[index]" type="email"
+                                            :aria-label="`Email ${index + 1}`" required class="flex-1" />
+                                        <button type="button" @click="removeEmail(index)" class="ml-2 text-red-500 p-1"
+                                            :aria-label="`Eliminar email ${index + 1}`">
+                                            <Trash2 size="16" />
+                                        </button>
+                                    </div>
+
+                                    <button type="button" @click="addEmail"
+                                        class="mt-2 flex items-center text-primary font-medium text-sm">
+                                        <PlusCircle size="16" class="mr-1" />
+                                        Agregar correo
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Botones de acción -->
-                        <div class="flex justify-end space-x-4">
-                            <button v-if="hasChanges" type="submit"
-                                class="px-4 py-2 bg-[#67B83C] text-white rounded-md cursor-pointer hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                                Guardar Cambios
-                            </button>
+                        <!-- Right Column -->
+                        <div class="space-y-4">
+                            <!-- Números de Teléfono -->
+                            <div
+                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
+                                <div class="p-4">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Números de Teléfono</h2>
+
+                                    <div v-for="(phone, index) in userInfo.phones" :key="index"
+                                        class="flex items-center mb-2">
+                                        <Input :id="`phone-${index}`" v-model="userInfo.phones[index]" type="tel"
+                                            :aria-label="`Teléfono ${index + 1}`" required class="flex-1" />
+                                        <button type="button" @click="removePhone(index)" class="ml-2 text-red-500 p-1"
+                                            :aria-label="`Eliminar teléfono ${index + 1}`">
+                                            <Trash2 size="16" />
+                                        </button>
+                                    </div>
+
+                                    <button type="button" @click="addPhone"
+                                        class="mt-2 flex items-center text-primary font-medium text-sm">
+                                        <PlusCircle size="16" class="mr-1" />
+                                        Agregar teléfono
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Cambio de Contraseña -->
+                            <div
+                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
+                                <div class="p-4">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Cambio de Contraseña</h2>
+
+                                    <div class="space-y-3">
+                                        <div>
+                                            <Input id="current-password" label="Contraseña Actual"
+                                                v-model="passwordChange.currentPassword" type="password" />
+                                        </div>
+
+                                        <div>
+                                            <Input id="new-password" label="Nueva Contraseña"
+                                                v-model="passwordChange.newPassword" type="password" />
+                                        </div>
+
+                                        <div>
+                                            <Input id="confirm-password" label="Confirmar Contraseña"
+                                                v-model="passwordChange.confirmPassword" type="password" />
+                                        </div>
+
+                                        <div v-if="passwordError" class="text-red-500 text-sm">
+                                            {{ passwordError }}
+                                        </div>
+
+                                        <button type="button" @click="changePassword"
+                                            class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                                            :disabled="!canChangePassword">
+                                            Cambiar Contraseña
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex justify-end space-x-4 pt-2">
+                        <button v-if="hasChanges" type="submit"
+                            class="px-4 py-2 bg-[#67B83C] text-white rounded-md cursor-pointer hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </MainLayout>

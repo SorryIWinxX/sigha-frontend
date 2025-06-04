@@ -1,6 +1,6 @@
 <template>
-    <div class="w-full mx-auto py-4 bg-white">
-        <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
+    <div class="w-full mx-auto bg-white">
+        <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
             <div
                 class="flex items-center justify-center border border-[#DCDFE3] rounded-sm px-4 py-2 text-sm text-gray-700">
                 <span class="font-medium mr-1.5">Horas Seleccionadas:</span>
@@ -9,37 +9,38 @@
                     {{ internalSelectedSlots.length }}
                 </span>
             </div>
-            <div class="flex gap-3 w-full md:w-auto">
-                <Button @click="clearAllSelections" customClass="py-2 px-3 bg-[#B83C3C] hover:bg-[#A33434] text-white">
+            <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                <Button @click="clearAllSelections"
+                    customClass="py-1.5 px-3 bg-[#B83C3C] hover:bg-[#A33434] text-white">
                     <template #icon>
-                        <Trash2 :size="20" />
+                        <Trash2 :size="18" />
                     </template>
                     Eliminar todas
                 </Button>
                 <Button @click="undoSelection" :disabled="!canUndo"
-                    customClass="py-2 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800">
+                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800">
                     <template #icon>
-                        <Undo2 :size="20" />
+                        <Undo2 :size="18" />
                     </template>
                     Deshacer
                 </Button>
                 <Button @click="redoSelection" :disabled="!canRedo"
-                    customClass="py-2 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800">
+                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800">
                     <template #icon>
-                        <Redo2 :size="20" />
+                        <Redo2 :size="18" />
                     </template>
                     Rehacer
                 </Button>
                 <button
-                    class="inline-flex items-center gap-1.5 py-2 px-3 rounded-sm  bg-[#3c8bb8] hover:bg-[#345fa3] transition-all text-white text-sm font-normal cursor-pointer">
+                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#3c8bb8] hover:bg-[#345fa3] transition-all text-white text-sm font-normal cursor-pointer">
                     Disponibilidad Anterior
-                    <ClipboardCopy :size="20" />
+                    <ClipboardCopy :size="18" />
                 </button>
                 <button
-                    class="inline-flex items-center gap-1.5 py-2 px-3 rounded-sm bg-[#67B83C] hover:bg-[#57A334] transition-all text-white text-sm font-normal cursor-pointer"
+                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#67B83C] hover:bg-[#57A334] transition-all text-white text-sm font-normal cursor-pointer"
                     @click="sendAvailability" :disabled="isAvailabilitySent"
                     :class="{ 'opacity-50 cursor-not-allowed': isAvailabilitySent }">
-                    <Send :size="20" />
+                    <Send :size="18" />
                     Enviar Disponibilidad
                 </button>
             </div>
@@ -47,7 +48,7 @@
 
         <Calendar @day-header-clicked="toggleSelectAllHoursInDay">
             <template #day-cell="{ day, hour }">
-                <div class="h-16 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group"
+                <div class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group"
                     :class="{
                         'bg-[#3c67b8] hover:bg-[#315495]': isSelected(day.value, hour.value),
                         'bg-[#3c67b89a]': isSelecting(day.value, hour.value),

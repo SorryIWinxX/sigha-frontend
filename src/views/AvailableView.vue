@@ -1,14 +1,14 @@
 <template>
     <MainLayout>
-        <div class="flex w-full">
-            <h1 class="text-2xl font-bold text-gray-800 mb-4">Disponibilidad</h1>
+        <div class="flex h-full flex-col">
+            <div class="flex w-full pb-4 justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Disponibilidad</h1>
+                <SemesterSelector />
+            </div>
+            <div class="flex-1 min-h-0 bg-white">
+                <AvailabilityCalendar />
+            </div>
         </div>
-        <div class="flex justify-start py-4 items-start">
-            <SemesterSelector />
-        </div>
-
-        <!-- Calendar Grid -->
-        <AvailabilityCalendar />
     </MainLayout>
 </template>
 

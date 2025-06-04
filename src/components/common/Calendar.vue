@@ -1,12 +1,11 @@
 <template>
-
-    <div class="grid grid-cols-8 max-h-[calc(90vh-285px)] overflow-y-auto">
+    <div class="grid grid-cols-8 h-[calc(100vh-16rem)] overflow-y-auto">
         <!-- Encabezados -->
         <div
-            class="h-16 flex items-center justify-center font-bold border-b border-gray-200 sticky top-0 z-20 bg-white">
+            class="h-14 flex items-center justify-center font-bold border-b border-gray-200 sticky top-0 z-20 bg-white">
         </div>
         <div v-for="day in days" :key="`header-${day.value}`"
-            class="h-16 sticky top-0 z-20 flex items-center justify-center bg-white font-bold border-b border-l border-gray-200 text-gray-800 cursor-pointer hover:bg-[#67B83C] hover:text-white transition-colors relative"
+            class="h-14 sticky top-0 z-20 flex items-center justify-center bg-white font-bold border-b border-l border-gray-200 text-gray-800 cursor-pointer hover:bg-[#67B83C] hover:text-white transition-colors relative"
             @click="$emit('day-header-clicked', day.value)">
             {{ day.label }}
         </div>
@@ -15,7 +14,7 @@
         <template v-for="hour in hours" :key="hour.value">
             <!-- Celda de hora -->
             <div
-                class="h-16 flex items-center justify-center border-b border-gray-200 text-xs text-gray-500 font-semibold">
+                class="h-14 flex items-center justify-center border-b border-gray-200 text-xs text-gray-500 font-semibold">
                 {{ hour.label }}
             </div>
 
@@ -24,7 +23,7 @@
                 <!-- Uso del slot para cada celda de día -->
                 <slot name="day-cell" :day="day" :hour="hour">
                     <div
-                        class="h-16 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group">
+                        class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group">
                         <div class="flex flex-col items-center justify-center w-full h-full">
                             <span class="text-xs transition-opacity opacity-0 group-hover:opacity-100 text-gray-400">
                                 {{ formatHourShort(hour.value) }}
