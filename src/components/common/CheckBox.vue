@@ -1,7 +1,7 @@
 <template>
     <input type="checkbox" :checked="modelValue" @change="$emit('update:modelValue', $event.target.checked)"
         :disabled="disabled" :class="[
-            'w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-offset-0',
+            'w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-gray-200 focus:ring-offset-0',
             disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
         ]" :style="{ accentColor: color }" />
 </template>

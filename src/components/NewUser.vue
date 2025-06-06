@@ -2,7 +2,7 @@
     <div class="fixed inset-0 flex items-center justify-center p-4 z-50 animate__animated"
         :class="isClosing ? 'animate__fadeOut animate__faster' : 'animate__fadeIn animate__faster'"
         style="background-color: rgba(0, 0, 0, 0.7);" @click="handleOverlayClick">
-        <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[85vh] overflow-y-auto animate__animated"
+        <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full animate__animated"
             :class="isClosing ? 'animate__fadeOutDown animate__faster' : 'animate__fadeInUp animate__faster'"
             @click.stop>
             <!-- Modal Header -->
@@ -87,17 +87,33 @@
                     <!-- Right side - Associated Areas -->
                     <div class="lg:col-span-1">
                         <div class="border border-[#dcdfe3] rounded-lg p-3">
-                            <h2 class="text-sm font-semibold text-[#3b3e45] mb-3  pb-2">
-                                Áreas Asociadas
-                            </h2>
+                            <div class="flex items-center justify-between mb-3 pb-2">
+                                <h2 class="text-sm font-semibold text-[#3b3e45]">
+                                    Áreas Asociadas
+                                </h2>
+                                <span class="text-xs text-[#666e7d] bg-[#f8f9fa] px-2 py-1 rounded">
+                                    {{ selectedAreasCount }} seleccionada{{ selectedAreasCount !== 1 ? 's' : '' }}
+                                </span>
+                            </div>
+
+                            <!-- Warning message when PROFESOR is not selected -->
+                            <div v-if="!isProfesorSelected"
+                                class="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                                <p>Las áreas asociadas solo están disponibles para el rol de PROFESOR</p>
+                            </div>
 
                             <div class="space-y-2 mb-3 overflow-y-auto max-h-129">
                                 <div v-for="(area, index) in availableAreas" :key="index"
-                                    class="flex items-start space-x-2 p-2 bg-white border border-[#dcdfe3] rounded hover:bg-[#f8f9fa] transition-colors">
-                                    <CheckBox v-model="area.selected" :color="'#67b83c'" class="mt-0.5" />
+                                    class="flex items-start space-x-2 p-2 bg-white border border-[#dcdfe3] rounded transition-colors"
+                                    :class="isProfesorSelected ? 'hover:bg-[#f8f9fa]' : 'opacity-50 cursor-not-allowed bg-gray-50'">
+                                    <CheckBox v-model="area.selected" :color="'#67b83c'" class="mt-0.5"
+                                        :disabled="!isProfesorSelected" />
                                     <div class="flex-1 min-w-0">
-                                        <span class="text-sm font-medium text-[#3b3e45] block">{{ area.name }}</span>
-                                        <p class="text-xs text-[#666e7d] mt-0.5">{{ area.description }}</p>
+                                        <span class="text-sm font-medium text-[#3b3e45] block"
+                                            :class="!isProfesorSelected ? 'text-gray-400' : ''">{{ area.name }}</span>
+                                        <p class="text-xs text-[#666e7d] mt-0.5"
+                                            :class="!isProfesorSelected ? 'text-gray-400' : ''">{{
+                                                area.description }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -128,12 +144,13 @@
 
 <script setup>
 import { RefreshCcw, ClipboardCopy } from 'lucide-vue-next'
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import Input from './common/Input.vue'
 import Button from './common/Button.vue'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
-import { showSuccessToast } from '@/utils/toast.js'
+import { showSuccessToast, showWarningToast, showErrorToast } from '@/utils/toast.js'
+import { newUserService } from '@/services/newUserService'
 
 // Define emits
 const emit = defineEmits(['close'])
@@ -154,51 +171,61 @@ const formData = reactive({
 // Available areas with more detailed structure
 const availableAreas = ref([
     {
+        id: 1,
         name: 'Matemáticas Discretas',
         description: 'Matemáticas aplicadas',
         selected: false
     },
     {
+        id: 2,
         name: 'Inteligencia Artificial',
         description: 'Ciencias computacionales',
         selected: false
     },
     {
+        id: 3,
         name: 'Bases de Datos',
         description: 'Gestión de información',
         selected: false
     },
     {
+        id: 4,
         name: 'Desarrollo Web',
         description: 'Tecnologías web',
         selected: false
     },
     {
+        id: 5,
         name: 'Seguridad Informática',
         description: 'Ciberseguridad y protección',
         selected: false
     },
     {
+        id: 6,
         name: 'Redes de Computadores',
         description: 'Infraestructura de red',
         selected: false
     },
     {
+        id: 7,
         name: 'Programación Móvil',
         description: 'Desarrollo de aplicaciones',
         selected: false
     },
     {
+        id: 8,
         name: 'Machine Learning',
         description: 'Aprendizaje automático',
         selected: false
     },
     {
+        id: 9,
         name: 'Sistemas Operativos',
         description: 'Administración de SO',
         selected: false
     },
     {
+        id: 10,
         name: 'Arquitectura de Software',
         description: 'Diseño de sistemas',
         selected: false
@@ -207,9 +234,9 @@ const availableAreas = ref([
 
 // Available roles
 const availableRoles = ref([
-    { label: 'Administrador', description: 'Gestión completa del sistema y usuarios', selected: false },
-    { label: 'Profesor', description: 'Creación y gestión de contenido académico', selected: false },
-    { label: 'Estudiante', description: 'Acceso a cursos y materiales de estudio', selected: false },
+    { id: 1, label: 'DIRECTOR DE ESCUELA', description: 'Gestión completa del sistema y usuarios', selected: false },
+    { id: 2, label: 'COORDINADOR ACADEMICO', description: 'Creación y gestión de contenido académico', selected: false },
+    { id: 3, label: 'PROFESOR', description: 'Acceso a cursos y materiales de estudio', selected: false },
 ])
 
 // Computed properties
@@ -221,13 +248,28 @@ const selectedRolesCount = computed(() => {
     return availableRoles.value.filter(role => role.selected).length
 })
 
+// Check if PROFESOR role is selected
+const isProfesorSelected = computed(() => {
+    return availableRoles.value.find(role => role.label === 'PROFESOR')?.selected || false
+})
+
 const isFormValid = computed(() => {
     return formData.nombre &&
         formData.apellido &&
         formData.numeroDocumento &&
         formData.email &&
         selectedRolesCount.value > 0 &&
-        selectedAreasCount.value > 0
+        (isProfesorSelected.value ? selectedAreasCount.value > 0 : true)
+})
+
+// Watch for changes in PROFESOR role selection
+watch(isProfesorSelected, (newValue, oldValue) => {
+    // If PROFESOR was deselected, clear all selected areas
+    if (oldValue && !newValue) {
+        availableAreas.value.forEach(area => {
+            area.selected = false
+        })
+    }
 })
 
 // Methods
@@ -296,38 +338,58 @@ const cancelForm = () => {
     closeModal()
 }
 
-const createUser = () => {
+const createUser = async () => {
     // Validate form data
     if (!isFormValid.value) {
-        alert('Por favor complete todos los campos requeridos y seleccione al menos un área y un rol')
+        showWarningToast('Por favor complete todos los campos requeridos y seleccione al menos un área y un rol')
         return
     }
 
-    // Get selected areas
-    const selectedAreas = availableAreas.value
+    // Get selected areas IDs
+    const selectedAreasIds = availableAreas.value
         .filter(area => area.selected)
-        .map(area => area.name)
+        .map(area => area.id)
 
-    // Get selected roles
-    const selectedRoles = availableRoles.value
+    // Get selected roles IDs
+    const selectedRolesIds = availableRoles.value
         .filter(role => role.selected)
-        .map(role => role.label)
+        .map(role => role.id)
 
-    // Prepare user data
-    const userData = {
-        ...formData,
-        areas: selectedAreas,
-        roles: selectedRoles
+    // Map document type to number
+    const documentTypeMap = {
+        'C.C': 1,
+        'T.I': 2,
+        'C.E': 3
     }
 
-    // Process form submission
-    console.log('Creating user:', userData)
+    // Prepare user data for API
+    const userData = {
+        idTipoDocumento: documentTypeMap[formData.tipoDocumento],
+        email: formData.email,
+        documento: formData.numeroDocumento,
+        password: formData.clavetemporal,
+        firstName: formData.nombre,
+        lastName: formData.apellido,
+        idsRoles: selectedRolesIds,
+        idsAreas: selectedAreasIds
+    }
 
-    // Here you would typically make an API call
-    // After successful creation, show success message and close modal with animation
-    showSuccessToast('Usuario creado exitosamente')
+    try {
+        // Call the API service
+        const response = await newUserService.createUser(userData)
 
-    closeModal()
+        // Process successful response
+        console.log('User created successfully:', response)
+
+        // Show success message
+        showSuccessToast('Usuario creado exitosamente')
+
+        // Close modal
+        closeModal()
+    } catch (error) {
+        console.error('Error creating user:', error)
+        showErrorToast(error.message || 'Error al crear el usuario')
+    }
 }
 
 const handleOverlayClick = () => {

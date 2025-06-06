@@ -122,7 +122,6 @@ import { ref } from 'vue'
 import LogoSIGHA from '../components/logos/LogoSIGHA.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import EmailOutline from 'vue-material-design-icons/EmailOutline.vue'
-import { showSuccessToast, showErrorToast } from '@/utils/toast.js'
 import { useAuth } from '@/composables/useAuth'
 
 // Auth composable

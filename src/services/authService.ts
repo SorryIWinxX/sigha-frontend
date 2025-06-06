@@ -1,9 +1,8 @@
 // Provisional: Reemplazar con la URL real de la API
-const API_BASE_URL = '/api/v1/login'
+const API_BASE_URL = '/login'
 
 interface LoginResponse {
   token: string
-  // Otros datos del usuario que puedan venir en la respuesta
   [key: string]: any
 }
 
