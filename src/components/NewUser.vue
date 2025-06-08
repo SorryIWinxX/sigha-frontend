@@ -48,7 +48,7 @@
                                             <CheckBox v-model="role.selected" :color="'#67b83c'" class="mt-0.5" />
                                             <div class="flex-1 min-w-0">
                                                 <span class="text-sm font-medium text-[#3b3e45] block">{{ role.label
-                                                }}</span>
+                                                    }}</span>
                                                 <p class="text-xs text-[#666e7d] mt-0.5">{{ role.description }}</p>
                                             </div>
                                         </div>
@@ -97,10 +97,7 @@
                             </div>
 
                             <!-- Warning message when PROFESOR is not selected -->
-                            <div v-if="!isProfesorSelected"
-                                class="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                                <p>Las áreas asociadas solo están disponibles para el rol de PROFESOR</p>
-                            </div>
+
 
                             <div class="space-y-2 mb-3 overflow-y-auto max-h-129">
                                 <div v-for="(area, index) in availableAreas" :key="index"
@@ -149,7 +146,7 @@ import Input from './common/Input.vue'
 import Button from './common/Button.vue'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
-import { showSuccessToast, showWarningToast, showErrorToast } from '@/utils/toast.js'
+import { showSuccessToast, showWarningToast, showErrorToast, showInfoToast } from '@/utils/toast.js'
 import { newUserService } from '@/services/newUserService'
 
 // Define emits
@@ -383,6 +380,7 @@ const createUser = async () => {
 
         // Show success message
         showSuccessToast('Usuario creado exitosamente')
+        showInfoToast('La contraseña es: ' + response.password)
 
         // Close modal
         closeModal()

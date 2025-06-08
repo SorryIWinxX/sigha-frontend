@@ -1,66 +1,123 @@
-// Provisional: Reemplazar con la URL real de la API
-const API_BASE_URL = '/login'
+import { useAuthStore } from '@/store/authStore'
+import { ref, type Ref } from 'vue'
+const API_BASE_URL = '/public/auth'
 
-interface LoginResponse {
+export interface LoginResponse {
   token: string
-  [key: string]: any
+  forcePasswordReset?: boolean
 }
 
-export const authService = {
-  async login(cedula: string, contrasena: string): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ cedula, contrasena }),
-    })
+export interface ErrorResponse {
+  error: string
+  status?: number
+  timestamp?: string
+  message?: string
+}
 
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ message: 'Error en el inicio de sesión' }))
-      throw new Error(errorData.message || 'Error en el inicio de sesión')
+export class AuthService {
+  private jwt: Ref<string>
+  private error: Ref<string>
+  private forcePasswordReset: Ref<boolean>
+  private documento: Ref<string>
+  private lastPassword: Ref<string>
+  private authStore = useAuthStore()
+
+  constructor() {
+    this.jwt = ref('')
+    this.error = ref('')
+    this.forcePasswordReset = ref(false)
+    this.documento = ref('')
+    this.lastPassword = ref('')
+  }
+
+  getJwt(): Ref<string> {
+    return this.jwt
+  }
+
+  getError(): Ref<string> {
+    return this.error
+  }
+
+  getForcePasswordReset(): Ref<boolean> {
+    return this.forcePasswordReset
+  }
+
+  async login(documento: string, password: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documento,
+          password,
+        }),
+      })
+
+      const response = await res.json()
+      if ('error' in response) {
+        this.error.value = response.message || response.error
+        return false
+      }
+
+      const loginResponse = response as LoginResponse
+      this.jwt.value = loginResponse.token
+      // Asegurar que el token se almacene en el authStore
+      this.authStore.setToken(loginResponse.token)
+      this.forcePasswordReset.value = loginResponse.forcePasswordReset || false
+      // Store documento and password for potential password change
+      this.documento.value = documento
+      this.lastPassword.value = password
+
+      return true
+    } catch (error) {
+      this.error.value = error instanceof Error ? error.message : 'Error desconocido'
+      return false
     }
-    return response.json() as Promise<LoginResponse>
-  },
+  }
 
-  async forgotPassword(cedula: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/forgot-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ cedula }),
-    })
+  async changePassword(newPassword: string): Promise<boolean> {
+    const token = this.authStore.getToken()
+    const userId = this.authStore.userId?.toString()
 
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ message: 'Error al solicitar el restablecimiento de contraseña' }))
-      throw new Error(errorData.message || 'Error al solicitar el restablecimiento de contraseña')
-    }
-    // No se espera contenido en la respuesta exitosa típicamente
-  },
-
-  async checkCedulaExists(cedula: string): Promise<{ exists: boolean; message?: string }> {
-    const response = await fetch(`${API_BASE_URL}/check-cedula/${encodeURIComponent(cedula)}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      // Si el backend devuelve un error específico para "no encontrado" que no sea un 404 genérico,
-      // podrías manejarlo aquí. Por ahora, asumimos que un error significa que algo falló en la verificación.
-      const errorData = await response
-        .json()
-        .catch(() => ({ message: 'Error al verificar la cédula' }))
-      throw new Error(errorData.message || 'Error al verificar la cédula')
+    if (!token) {
+      this.error.value = 'No hay token de autenticación disponible'
+      return false
     }
 
-    // Asumimos que el backend devuelve un JSON como { exists: true } o { exists: false }
-    return response.json() as Promise<{ exists: boolean; message?: string }>
-  },
+    if (!userId) {
+      this.error.value = 'No hay userId disponible'
+      return false
+    }
+
+    try {
+      const res = await fetch('/api/api/v1/changePassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          userId: userId,
+        },
+        body: JSON.stringify({
+          documento: this.documento.value,
+          password: newPassword,
+          lastPassword: this.lastPassword.value,
+        }),
+      })
+
+      const response = await res.json()
+      if ('error' in response) {
+        this.error.value = response.message || response.error
+        return false
+      }
+
+      this.forcePasswordReset.value = false
+      this.lastPassword.value = newPassword
+      return true
+    } catch (error) {
+      this.error.value = error instanceof Error ? error.message : 'Error desconocido'
+      return false
+    }
+  }
 }

@@ -1,10 +1,3 @@
-const PATH_API = '/public/auth/register'
-
-// Use proxy in development, direct URL in production
-const API_BASE_URL = import.meta.env.DEV
-  ? '/api' // This will use the Vite proxy
-  : import.meta.env.VITE_API_BACKEND_URL || 'http://localhost:8080'
-
 interface NewUserRequest {
   idTipoDocumento: number
   email: string
@@ -22,7 +15,7 @@ interface NewUserResponse {
 
 export const newUserService = {
   async createUser(userData: NewUserRequest): Promise<NewUserResponse> {
-    const response = await fetch(`${API_BASE_URL}${PATH_API}`, {
+    const response = await fetch(`/public/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

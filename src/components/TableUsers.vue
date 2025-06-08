@@ -59,7 +59,36 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
-                    <tr v-for="(user, index) in paginatedUsers" :key="user.id" :class="[
+                    <!-- Loading state -->
+                    <tr v-if="loading">
+                        <td colspan="6" class="px-6 py-8 text-center">
+                            <div class="flex items-center justify-center">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                <span class="ml-3 text-gray-600">Cargando usuarios...</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Error state -->
+                    <tr v-else-if="error && users.length === 0">
+                        <td colspan="6" class="px-6 py-8 text-center">
+                            <div class="text-red-600">
+                                <p class="font-semibold">Error al cargar usuarios</p>
+                                <p class="text-sm mt-1">{{ error }}</p>
+                                <button @click="loadUsers"
+                                    class="mt-3 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 transition-colors">
+                                    Reintentar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Empty state -->
+                    <tr v-else-if="!loading && users.length === 0">
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            No se encontraron usuarios
+                        </td>
+                    </tr>
+                    <!-- User rows -->
+                    <tr v-else v-for="(user, index) in paginatedUsers" :key="user.id" :class="[
                         'border-b border-gray-100 hover:bg-gray-50 ',
                         { 'bg-gray-50/30': index % 2 === 0 },
                         { 'border-b-0': index === paginatedUsers.length - 1 }
@@ -80,11 +109,11 @@
                         <td class="px-6 py-3">
                             <span :class="[
                                 'inline-flex items-center px-4 py-1 rounded-sm  justify-center',
-                                user.permission === 'Admin'
+                                user.permission === 'DIRECTOR DE ESCUELA' || user.permission === 'COORDINADOR ACADEMICO'
                                     ? 'text-white '
                                     : 'text-white'
                             ]" :style="{
-                                backgroundColor: user.permission === 'Admin' ? '#67b83c' : '#94a3b8'
+                                backgroundColor: user.permission === 'DIRECTOR DE ESCUELA' || user.permission === 'COORDINADOR ACADEMICO' ? '#67b83c' : '#94a3b8'
                             }">
                                 {{ user.permission }}
                             </span>
@@ -122,7 +151,8 @@
         </div>
 
         <!-- Pagination -->
-        <div class="flex items-center justify-between mt-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
+        <div v-if="!loading && users.length > 0"
+            class="flex items-center justify-between mt-6 p-4 bg-gray-50 border border-gray-200 rounded-sm">
             <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
                 <span>Mostrando {{ startIndex + 1 }} a {{ Math.min(endIndex, totalUsers) }} de {{ totalUsers }}
                     usuarios</span>
@@ -177,28 +207,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
-
-// Initial data
-const initialUsers = [
-    { id: "1", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Admin", selected: false },
-    { id: "2", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "3", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "4", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "5", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "6", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "7", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "8", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "9", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "10", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "11", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "12", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Admin", selected: false },
-    { id: "13", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "14", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-    { id: "15", name: "Leslie Maya", email: "leslie@gmail.com", lastLogin: "October 2, 2010", permission: "Profesor", selected: false },
-]
+import { userService } from '@/services/userServices'
+import { showErrorToast, showSuccessToast } from '@/utils/toast'
 
 // Reactive data
-const users = ref([...initialUsers])
+const users = ref([])
+const loading = ref(false)
+const error = ref('')
 const sortConfig = ref(null)
 const openDropdown = ref(null)
 const currentPage = ref(1)
@@ -249,6 +264,23 @@ const visiblePages = computed(() => {
 })
 
 // Methods
+const loadUsers = async () => {
+    loading.value = true
+    error.value = ''
+
+    try {
+        const apiUsers = await userService.getUsers()
+        users.value = userService.formatUsersForTable(apiUsers)
+        showSuccessToast('Usuarios cargados correctamente')
+    } catch (err) {
+        error.value = err instanceof Error ? err.message : 'Error al cargar usuarios'
+        showErrorToast(error.value)
+        console.error('Error loading users:', err)
+    } finally {
+        loading.value = false
+    }
+}
+
 const handleSort = (key) => {
     let direction = 'asc'
     if (sortConfig.value && sortConfig.value.key === key && sortConfig.value.direction === 'asc') {
@@ -298,10 +330,17 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside)
+    loadUsers() // Load users when component mounts
 })
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
+})
+
+// Expose methods to parent component
+defineExpose({
+    loadUsers,
+    refreshUsers: loadUsers
 })
 </script>
 

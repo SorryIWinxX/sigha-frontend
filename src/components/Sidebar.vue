@@ -1,68 +1,56 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, UsersRound } from 'lucide-vue-next';
+import { usePermissions } from '@/composables/usePermissions';
 
 const isSidebarOpen = ref(true);
-const userRole = ref<string | null>(null);
-
-const ROLES = {
-    ADMIN: 'admin',
-    USER: 'user',
-};
-
-onMounted(() => {
-    const storedRole = localStorage.getItem('userRole');
-    if (storedRole) {
-        userRole.value = storedRole;
-    }
-
-    window.addEventListener('storage', (event) => {
-        if (event.key === 'userRole') {
-            userRole.value = event.newValue;
-        }
-    });
-});
+const { isProfesor, isAdmin } = usePermissions();
 
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value;
 };
 
 const menuItems = computed(() => {
-    const userItems = [
-        {
-            to: '/available',
-            icon: CalendarCog,
-            label: 'Disponibilidad',
-            roles: [ROLES.USER],
-        },
-        {
-            to: '/calendar-asigned',
-            icon: CalendarRange,
-            label: 'Calendario asignado',
-            roles: [ROLES.USER],
-        },
-    ];
+    const items = [];
 
-    const adminItems = [
-        {
-            to: '/users',
-            icon: Users,
-            label: 'Usuarios',
-            roles: [ROLES.ADMIN],
-        },
-        {
-            to: '/admin/settings',
-            icon: Settings,
-            label: 'Configuración',
-            roles: [ROLES.ADMIN],
-        },
-    ];
-
-    if (userRole.value === ROLES.ADMIN) {
-        return adminItems;
-    } else {
-        return userItems;
+    // Elementos para profesores
+    if (isProfesor.value) {
+        items.push(
+            {
+                to: '/available',
+                icon: CalendarCog,
+                label: 'Disponibilidad',
+            },
+            {
+                to: '/calendar-asigned',
+                icon: CalendarRange,
+                label: 'Calendario asignado',
+            }
+        );
     }
+
+    // Elementos para directores y coordinadores
+    if (isAdmin.value) {
+        items.push(
+            {
+                to: '/groups',
+                icon: UsersRound,
+                label: 'Grupos',
+            },
+            {
+                to: '/users',
+                icon: Users,
+                label: 'Usuarios',
+            },
+            {
+                to: '/admin/settings',
+                icon: Settings,
+                label: 'Configuración',
+            }
+        );
+    }
+
+    return items;
 });
 </script>
 

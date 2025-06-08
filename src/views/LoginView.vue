@@ -9,13 +9,13 @@
                     </div>
 
                     <!-- Login Form -->
-                    <form v-if="!isForgotPasswordMode" @submit.prevent="handleLogin" class="space-y-6">
+                    <form v-if="!isForgotPasswordMode && !isChangePasswordMode" class="space-y-6">
                         <div class="space-y-2">
-                            <label for="cedula" class="block text-sm font-medium text-gray-700">
-                                Cédula
+                            <label for="documento" class="block text-sm font-medium text-gray-700">
+                                Documento
                             </label>
                             <div class="flex flex-row">
-                                <input id="cedula" v-model="cedula" placeholder="1234567890"
+                                <input id="documento" v-model="documento" placeholder="1234567890"
                                     class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
                                 <div>
                                     <div
@@ -52,29 +52,25 @@
                             </div>
                         </div>
 
-                        <div v-if="loginError" class="text-red-500 text-sm">
-                            {{ loginError }}
-                        </div>
-
-                        <button type="submit"
+                        <button type="submit" @click.prevent="authUser"
                             class="w-full bg-[#67b83c] cursor-pointer hover:bg-[#5aa534] text-white py-3 rounded-md shadow-md font-medium transition-colors mt-4"
-                            :disabled="loginLoading">
-                            {{ loginLoading ? 'Iniciando...' : 'Iniciar sesión' }}
+                            :disabled="!documento || !password">
+                            Iniciar sesión
                         </button>
                     </form>
 
                     <!-- Forgot Password Form -->
-                    <form v-else @submit.prevent="handleForgotPassword" class="space-y-6">
+                    <form v-else-if="isForgotPasswordMode" class="space-y-6">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-xl font-semibold text-gray-800">Recuperar contraseña</h2>
                         </div>
 
                         <div class="space-y-2">
-                            <label for="recover-cedula" class="block text-sm font-medium text-gray-700">
-                                Cédula
+                            <label for="recover-documento" class="block text-sm font-medium text-gray-700">
+                                Documento
                             </label>
                             <div class="flex flex-row">
-                                <input id="recover-cedula" v-model="forgotPasswordCedula" placeholder="1234567890"
+                                <input id="recover-documento" v-model="forgotPasswordDocumento" placeholder="1234567890"
                                     class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
                                 <div>
                                     <div
@@ -87,25 +83,81 @@
                             </div>
                         </div>
 
-                        <div v-if="forgotPasswordError" class="text-red-500 text-sm">
-                            {{ forgotPasswordError }}
-                        </div>
-                        <div v-if="forgotPasswordSuccess" class="text-green-600 text-sm">
-                            {{ forgotPasswordSuccess }}
-                        </div>
-
                         <div class="flex justify-end space-x-3 mt-6">
-                            <button type="button"
-                                @click="isForgotPasswordMode = false; forgotPasswordError = null; forgotPasswordSuccess = null; forgotPasswordCedula = ''"
+                            <button type="button" @click="isForgotPasswordMode = false; forgotPasswordDocumento = ''"
                                 class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                                 Volver
                             </button>
                             <button type="submit"
                                 class="px-4 py-2 bg-[#67b83c] hover:bg-[#5aa534] text-white rounded-md"
-                                :disabled="forgotPasswordLoading || !forgotPasswordCedula">
-                                {{ forgotPasswordLoading ? 'Enviando...' : 'Enviar' }}
+                                :disabled="!forgotPasswordDocumento">
+                                Enviar
                             </button>
                         </div>
+                    </form>
+
+                    <!-- Change Password Form -->
+                    <form v-else-if="isChangePasswordMode" class="space-y-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-semibold text-gray-800">Cambiar contraseña</h2>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                            <p class="text-blue-800 text-sm">
+                                <strong>Atención:</strong> Debe cambiar su contraseña antes de continuar. Su contraseña
+                                actual ha expirado o debe ser actualizada por motivos de seguridad.
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="new-password" class="block text-sm font-medium text-gray-700">
+                                Nueva contraseña
+                            </label>
+                            <div class="flex flex-row">
+                                <input id="new-password" v-model="newPassword" type="password" placeholder="••••••••"
+                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
+                                <div>
+                                    <div
+                                        class="w-full h-full rounded-r-md rounded-l-none flex bg-[#67b83c] hover:bg-[#5aa534] text-white transition-colors">
+                                        <div class="w-10 flex items-center justify-center">
+                                            <LockOutline />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500">La contraseña debe tener al menos 8 caracteres.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="confirm-password" class="block text-sm font-medium text-gray-700">
+                                Confirmar contraseña
+                            </label>
+                            <div class="flex flex-row">
+                                <input id="confirm-password" v-model="confirmPassword" type="password"
+                                    placeholder="••••••••"
+                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
+                                <div>
+                                    <div
+                                        class="w-full h-full rounded-r-md rounded-l-none flex bg-[#67b83c] hover:bg-[#5aa534] text-white transition-colors">
+                                        <div class="w-10 flex items-center justify-center">
+                                            <LockOutline />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-if="confirmPassword && newPassword !== confirmPassword" class="text-xs text-red-500">
+                                Las contraseñas no coinciden.
+                            </p>
+                            <p v-if="newPassword && newPassword.length < 8" class="text-xs text-red-500">
+                                La contraseña debe tener al menos 8 caracteres.
+                            </p>
+                        </div>
+
+                        <button type="submit" @click.prevent="changePassword"
+                            class="w-full bg-[#67b83c] cursor-pointer hover:bg-[#5aa534] text-white py-3 rounded-md shadow-md font-medium transition-colors mt-4"
+                            :disabled="!isPasswordValid">
+                            Cambiar contraseña
+                        </button>
                     </form>
                 </div>
             </div>
@@ -118,37 +170,83 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import LogoSIGHA from '../components/logos/LogoSIGHA.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import EmailOutline from 'vue-material-design-icons/EmailOutline.vue'
-import { useAuth } from '@/composables/useAuth'
+import { AuthService } from '@/services/authService'
+import { showSuccessToast, showErrorToast, showInfoToast } from '@/utils/toast'
+import { useAuthStore } from '@/store/authStore'
+import { useRouter } from 'vue-router'
 
-// Auth composable
-const {
-    login,
-    loginLoading,
-    loginError,
-    forgotPassword,
-    forgotPasswordLoading,
-    forgotPasswordError,
-    forgotPasswordSuccess
-} = useAuth()
+const authStore = useAuthStore()
+const router = useRouter()
 
 // Form state
-const cedula = ref('')
+const documento = ref('')
 const password = ref('')
-const forgotPasswordCedula = ref('')
+const forgotPasswordDocumento = ref('')
 const isForgotPasswordMode = ref(false)
+const isChangePasswordMode = ref(false)
+const newPassword = ref('')
+const confirmPassword = ref('')
 
-// Handle login submission
-const handleLogin = async () => {
-    await login(cedula.value, password.value)
+// Create auth service instance
+const authService = new AuthService()
+
+// Computed property for password validation
+const isPasswordValid = computed(() => {
+    return newPassword.value.length >= 8 && newPassword.value === confirmPassword.value
+})
+
+const authUser = async () => {
+    const success = await authService.login(documento.value, password.value)
+
+    if (success) {
+        if (authService.getForcePasswordReset().value) {
+            isChangePasswordMode.value = true
+            showInfoToast('Debe cambiar su contraseña antes de continuar')
+            return
+        }
+
+        showSuccessToast('Login successful')
+        redirectUser()
+    } else {
+        showErrorToast(authService.getError().value || 'Login failed')
+    }
 }
 
-// Handle forgot password submission
-const handleForgotPassword = async () => {
-    await forgotPassword(forgotPasswordCedula.value)
+const changePassword = async () => {
+    if (!isPasswordValid.value) {
+        showErrorToast('Las contraseñas no coinciden o no cumplen los requisitos')
+        return
+    }
+
+    const success = await authService.changePassword(newPassword.value)
+
+    if (success) {
+        showSuccessToast('Contraseña cambiada exitosamente')
+        isChangePasswordMode.value = false
+        redirectUser()
+    } else {
+        showErrorToast(authService.getError().value || 'Error al cambiar la contraseña')
+    }
+}
+
+const redirectUser = () => {
+    // Redirigir según el rol del usuario
+    const userRoles = authStore.userRoles
+
+    if (userRoles.includes('DIRECTOR DE ESCUELA') || userRoles.includes('COORDINADOR ACADEMICO')) {
+        // Redirigir a vista de administrador
+        router.push('/groups')
+    } else if (userRoles.includes('PROFESOR')) {
+        // Redirigir a vista de profesor
+        router.push('/available')
+    } else {
+        // Redirigir a vista de usuario por defecto
+        router.push('/user')
+    }
 }
 </script>
 

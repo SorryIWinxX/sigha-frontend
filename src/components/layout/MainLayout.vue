@@ -63,13 +63,14 @@ import Sidebar from '@/components/Sidebar.vue';
 import Search from '@/components/common/Search.vue';
 import Button from '@/components/common/Button.vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/authStore';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const logout = () => {
-    // Aquí puedes agregar la lógica para cerrar sesión
-    // Por ejemplo, limpiar el token de autenticación del localStorage
-    localStorage.removeItem('auth-token');
+    // Limpiar el token del store de autenticación
+    authStore.clearToken();
     // Redireccionar al login
     router.push('/login');
 };
