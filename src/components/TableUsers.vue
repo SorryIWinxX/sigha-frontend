@@ -129,7 +129,7 @@
                                     index >= paginatedUsers.length - 2 ? 'bottom-10 right-0' : 'top-10 right-0'
                                 ]">
                                     <div class="py-1">
-                                        <button
+                                        <button @click.stop="viewUserDetails(user.id)"
                                             class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
                                             Ver detalles
                                         </button>
@@ -199,6 +199,10 @@
                 </button>
             </div>
         </div>
+
+        <!-- User Details Modal -->
+        <UserDetailsModal v-if="showUserDetailsModal" :show="showUserDetailsModal" :userId="selectedUserId"
+            @close="closeUserDetailsModal" />
     </div>
 </template>
 
@@ -207,6 +211,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
+import UserDetailsModal from './UserDetailsModal.vue'
 import { userService } from '@/services/userServices'
 import { showErrorToast, showSuccessToast } from '@/utils/toast'
 
@@ -218,6 +223,8 @@ const sortConfig = ref(null)
 const openDropdown = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const showUserDetailsModal = ref(false)
+const selectedUserId = ref(null)
 
 // Computed properties
 const totalUsers = computed(() => users.value.length)
@@ -321,8 +328,23 @@ const handleItemsPerPageChange = (value) => {
     currentPage.value = 1 // Reset to first page when changing items per page
 }
 
+const viewUserDetails = (userId) => {
+    console.log('ViewUserDetails called with userId:', userId, typeof userId)
+    selectedUserId.value = userId
+    showUserDetailsModal.value = true
+    openDropdown.value = null // Close the dropdown
+}
+
+const closeUserDetailsModal = () => {
+    showUserDetailsModal.value = false
+    selectedUserId.value = null
+}
+
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
+    // Don't close if clicking on modal or if modal is open
+    if (showUserDetailsModal.value) return
+
     if (!event.target.closest('.relative')) {
         openDropdown.value = null
     }

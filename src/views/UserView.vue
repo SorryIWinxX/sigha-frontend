@@ -4,7 +4,15 @@
             <div class="flex-1 min-h-0 overflow-auto">
                 <h1 class="text-2xl font-bold text-gray-900 mb-4">Información de Usuario</h1>
 
-                <form @submit.prevent="saveUserInfo" class="space-y-4">
+                <div v-if="loading" class="flex justify-center items-center py-8">
+                    <div class="text-gray-500">Cargando información del usuario...</div>
+                </div>
+
+                <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                    <div class="text-red-700">{{ error }}</div>
+                </div>
+
+                <form v-else @submit.prevent="saveUserInfo" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Left Column -->
                         <div class="space-y-4">
@@ -37,32 +45,58 @@
                                         <!-- Datos personales -->
                                         <div class="flex-1 grid grid-cols-1 gap-3">
                                             <div>
-                                                <Input id="nombres" label="Nombres" v-model="userInfo.nombres"
+                                                <Input id="firstName" label="Nombres" v-model="userInfo.firstName"
                                                     type="text" required />
                                             </div>
 
                                             <div>
-                                                <label for="cedula"
+                                                <Input id="lastName" label="Apellidos" v-model="userInfo.lastName"
+                                                    type="text" required />
+                                            </div>
+
+                                            <div>
+                                                <label for="documento"
                                                     class="block text-sm font-medium text-gray-700 mb-1">Documento
                                                     de Identidad</label>
                                                 <div class="flex gap-2">
-                                                    <select v-model="userInfo.documentType"
-                                                        class="px-3 py-2 border border-[#dcdfe3] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C]">
-                                                        <option value="CC">CC</option>
-                                                        <option value="TI">TI</option>
-                                                        <option value="TE">TE</option>
-                                                    </select>
-                                                    <Input id="cedula" v-model="userInfo.cedula" type="text"
+                                                    <Select id="type-document" v-model="userInfo.id_type_document"
+                                                        placeholder="Seleccionar tipo" width="w-auto"
+                                                        class="min-w-[120px]">
+                                                        <option v-for="tipo in tiposDocumento" :key="tipo.idSigla"
+                                                            :value="tipo.idSigla">
+                                                            {{ tipo.sigla }} - {{ tipo.description }}
+                                                        </option>
+                                                    </Select>
+                                                    <Input id="documento" v-model="userInfo.documento" type="text"
                                                         placeholder="Número de documento" required class="flex-1" />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label for="role"
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                                <div id="role"
+                                                <label for="email"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Correo
+                                                    Electrónico</label>
+                                                <Input id="email" v-model="userInfo.email" type="email" required />
+                                            </div>
+
+                                            <div>
+                                                <label for="roles"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Roles</label>
+                                                <div id="roles"
                                                     class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-700">
-                                                    {{ userInfo.role }}
+                                                    {{ userInfo.rolesDescriptions.join(', ') || 'Sin roles asignados' }}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label for="isActive"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                                <div class="flex items-center">
+                                                    <input id="isActive" type="checkbox" v-model="userInfo.isActive"
+                                                        class="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+                                                    <span class="text-sm text-gray-700">
+                                                        {{ userInfo.isActive ? 'Activo' : 'Inactivo' }}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -70,75 +104,35 @@
                                 </div>
                             </div>
 
-                            <!-- Áreas Asignadas -->
+                            <!-- Información del Sistema -->
                             <div
                                 class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
                                 <div class="p-4">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Áreas Asignadas</h2>
+                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Información del Sistema</h2>
 
-                                    <div class="flex flex-wrap gap-2">
-                                        <div v-for="(area, index) in userInfo.areasAsignadas" :key="index"
-                                            class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                                            {{ area }}
+                                    <div class="space-y-2 text-sm text-gray-600">
+                                        <div>
+                                            <span class="font-medium">ID de Usuario:</span> {{ userInfo.id }}
                                         </div>
-                                        <div v-if="userInfo.areasAsignadas.length === 0" class="text-gray-500 text-sm">
-                                            No hay áreas asignadas
+                                        <div>
+                                            <span class="font-medium">Fecha de Creación:</span> {{
+                                                formatDate(userInfo.createAt) }}
+                                        </div>
+                                        <div>
+                                            <span class="font-medium">Última Actualización:</span> {{
+                                                formatDate(userInfo.updatedAt) }}
+                                        </div>
+                                        <div>
+                                            <span class="font-medium">Último Login:</span> {{
+                                                formatDate(userInfo.lastLogin) }}
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Correos Electrónicos -->
-                            <div
-                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                <div class="p-4">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Correos Electrónicos</h2>
-
-                                    <div v-for="(email, index) in userInfo.emails" :key="index"
-                                        class="flex items-center mb-2">
-                                        <Input :id="`email-${index}`" v-model="userInfo.emails[index]" type="email"
-                                            :aria-label="`Email ${index + 1}`" required class="flex-1" />
-                                        <button type="button" @click="removeEmail(index)" class="ml-2 text-red-500 p-1"
-                                            :aria-label="`Eliminar email ${index + 1}`">
-                                            <Trash2 size="16" />
-                                        </button>
-                                    </div>
-
-                                    <button type="button" @click="addEmail"
-                                        class="mt-2 flex items-center text-primary font-medium text-sm">
-                                        <PlusCircle size="16" class="mr-1" />
-                                        Agregar correo
-                                    </button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Right Column -->
                         <div class="space-y-4">
-                            <!-- Números de Teléfono -->
-                            <div
-                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                <div class="p-4">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Números de Teléfono</h2>
-
-                                    <div v-for="(phone, index) in userInfo.phones" :key="index"
-                                        class="flex items-center mb-2">
-                                        <Input :id="`phone-${index}`" v-model="userInfo.phones[index]" type="tel"
-                                            :aria-label="`Teléfono ${index + 1}`" required class="flex-1" />
-                                        <button type="button" @click="removePhone(index)" class="ml-2 text-red-500 p-1"
-                                            :aria-label="`Eliminar teléfono ${index + 1}`">
-                                            <Trash2 size="16" />
-                                        </button>
-                                    </div>
-
-                                    <button type="button" @click="addPhone"
-                                        class="mt-2 flex items-center text-primary font-medium text-sm">
-                                        <PlusCircle size="16" class="mr-1" />
-                                        Agregar teléfono
-                                    </button>
-                                </div>
-                            </div>
-
                             <!-- Cambio de Contraseña -->
                             <div
                                 class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
@@ -178,9 +172,13 @@
 
                     <!-- Botones de acción -->
                     <div class="flex justify-end space-x-4 pt-2">
-                        <button v-if="hasChanges" type="submit"
-                            class="px-4 py-2 bg-[#67B83C] text-white rounded-md cursor-pointer hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                            Guardar Cambios
+                        <button v-if="hasChanges" type="button" @click="resetForm"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-md cursor-pointer hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            Cancelar
+                        </button>
+                        <button v-if="hasChanges" type="submit" :disabled="saving"
+                            class="px-4 py-2 bg-[#67B83C] text-white rounded-md cursor-pointer hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                            {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
                         </button>
                     </div>
                 </form>
@@ -191,37 +189,41 @@
 
 <script setup>
 import MainLayout from '@/components/layout/MainLayout.vue';
-import { ref, computed } from 'vue';
-import { User, Trash2, PlusCircle } from 'lucide-vue-next';
+import { ref, computed, onMounted } from 'vue';
+import { User, PlusCircle } from 'lucide-vue-next';
 import Input from '@/components/common/Input.vue';
+import Select from '@/components/common/Select.vue';
+import { userService } from '@/services/userServices';
+import { TipoDocumentoService } from '@/services/tipoDocumentoService';
+
+// Estados de la aplicación
+const loading = ref(true);
+const error = ref('');
+const saving = ref(false);
+
+// Servicio de tipos de documento
+const tipoDocumentoService = new TipoDocumentoService();
+const tiposDocumento = ref([]);
 
 // Datos del usuario
 const userInfo = ref({
-    nombres: 'Juan Carlos Pérez',
-    cedula: '1234567890',
-    documentType: 'CC',
-    role: 'Desarrollador Senior',
-    photo: null,
-    emails: ['juancarlos@example.com', 'jcperez@empresa.com'],
-    areasAsignadas: ['Desarrollo', 'Diseño'],
-    phones: ['555-1234', '555-5678']
+    id: 0,
+    email: '',
+    id_type_document: 1,
+    documento: '',
+    firstName: '',
+    lastName: '',
+    isActive: true,
+    idsRoles: [],
+    rolesDescriptions: [],
+    createAt: '',
+    updatedAt: '',
+    lastLogin: '',
+    photo: null // Campo adicional para la foto
 });
 
 // Guardar copia del estado original para detectar cambios
-const originalUserInfo = ref(JSON.parse(JSON.stringify(userInfo.value)));
-
-// Áreas disponibles
-const availableAreas = ref([
-    'Desarrollo',
-    'Diseño',
-    'Marketing',
-    'Ventas',
-    'Recursos Humanos',
-    'Administración',
-    'Finanzas',
-    'Soporte Técnico',
-    'Atención al Cliente'
-]);
+const originalUserInfo = ref();
 
 // Cambio de contraseña
 const passwordChange = ref({
@@ -245,26 +247,47 @@ const canChangePassword = computed(() => {
 
 // Computed para verificar si ha habido cambios en el formulario
 const hasChanges = computed(() => {
-    return JSON.stringify(userInfo.value) !== JSON.stringify(originalUserInfo.value);
+    if (!originalUserInfo.value) return false;
+
+    return (
+        userInfo.value.firstName !== originalUserInfo.value.firstName ||
+        userInfo.value.lastName !== originalUserInfo.value.lastName ||
+        userInfo.value.email !== originalUserInfo.value.email ||
+        userInfo.value.documento !== originalUserInfo.value.documento ||
+        userInfo.value.id_type_document !== originalUserInfo.value.id_type_document ||
+        userInfo.value.isActive !== originalUserInfo.value.isActive
+    );
 });
 
+// Cargar tipos de documento
+const loadTiposDocumento = async () => {
+    try {
+        const tipos = await tipoDocumentoService.getTiposDocumento();
+        tiposDocumento.value = tipos;
+    } catch (err) {
+        console.error('Error loading tipos de documento:', err);
+    }
+};
+
+// Cargar datos del usuario
+const loadUserData = async () => {
+    try {
+        loading.value = true;
+        error.value = '';
+
+        const userData = await userService.getCurrentUser();
+        userInfo.value = { ...userData, photo: null }; // Agregamos photo como null por defecto
+        originalUserInfo.value = JSON.parse(JSON.stringify(userData));
+
+    } catch (err) {
+        console.error('Error loading user data:', err);
+        error.value = 'Error al cargar la información del usuario. Por favor, inténtelo de nuevo.';
+    } finally {
+        loading.value = false;
+    }
+};
+
 // Métodos
-const addEmail = () => {
-    userInfo.value.emails.push('');
-};
-
-const removeEmail = (index) => {
-    userInfo.value.emails.splice(index, 1);
-};
-
-const addPhone = () => {
-    userInfo.value.phones.push('');
-};
-
-const removePhone = (index) => {
-    userInfo.value.phones.splice(index, 1);
-};
-
 const handlePhotoUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -302,25 +325,67 @@ const changePassword = () => {
     alert('Contraseña cambiada con éxito');
 };
 
-const saveUserInfo = () => {
-    // Aquí iría la lógica para guardar la información del usuario
-    // Por ejemplo, una llamada a una API
-    console.log('Guardando información del usuario:', userInfo.value);
+const saveUserInfo = async () => {
+    try {
+        saving.value = true;
+        error.value = '';
 
-    // Actualizar el estado original después de guardar
-    originalUserInfo.value = JSON.parse(JSON.stringify(userInfo.value));
+        const updateData = {
+            id: userInfo.value.id,
+            email: userInfo.value.email,
+            id_type_document: userInfo.value.id_type_document,
+            documento: userInfo.value.documento,
+            firstName: userInfo.value.firstName,
+            lastName: userInfo.value.lastName,
+            isActive: userInfo.value.isActive,
+            idsRoles: userInfo.value.idsRoles,
+            rolesDescriptions: userInfo.value.rolesDescriptions
+        };
 
-    // Mostrar mensaje de éxito (en un caso real usarías un sistema de notificaciones)
-    alert('Información guardada con éxito');
+        const updatedUser = await userService.updateUser(userInfo.value.id, updateData);
+
+        // Actualizar los datos locales con la respuesta del servidor
+        userInfo.value = { ...updatedUser, photo: userInfo.value.photo };
+        originalUserInfo.value = JSON.parse(JSON.stringify(updatedUser));
+
+        alert('Información guardada con éxito');
+
+    } catch (err) {
+        console.error('Error saving user data:', err);
+        error.value = 'Error al guardar la información. Por favor, inténtelo de nuevo.';
+    } finally {
+        saving.value = false;
+    }
 };
 
 const resetForm = () => {
-    // Aquí podrías recargar los datos originales del usuario desde el servidor
-    // Por ahora, simplemente mostramos un mensaje
     if (confirm('¿Estás seguro de que deseas cancelar los cambios?')) {
-        // Recargar datos originales
-        userInfo.value = JSON.parse(JSON.stringify(originalUserInfo.value));
-        console.log('Cancelando cambios...');
+        if (originalUserInfo.value) {
+            userInfo.value = { ...originalUserInfo.value, photo: userInfo.value.photo };
+        }
     }
 };
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'No disponible';
+
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return dateString;
+    }
+};
+
+// Cargar datos al montar el componente
+onMounted(() => {
+    loadUserData();
+    loadTiposDocumento();
+});
 </script>

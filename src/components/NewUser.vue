@@ -25,9 +25,10 @@
                                 placeholder="Ingrese el apellido" required />
 
                             <Select id="tipoDocumento" v-model="formData.tipoDocumento" label="Tipo de documento">
-                                <option value="C.C">C.C</option>
-                                <option value="T.I">T.I</option>
-                                <option value="C.E">C.E</option>
+                                <option value="" disabled>Seleccione un tipo de documento</option>
+                                <option v-for="tipo in tiposDocumento" :key="tipo.id" :value="tipo.idSigla">
+                                    {{ tipo.sigla }} - {{ tipo.description }}
+                                </option>
                             </Select>
 
                             <Input id="numeroDocumento" v-model="formData.numeroDocumento" label="Número de documento"
@@ -48,7 +49,7 @@
                                             <CheckBox v-model="role.selected" :color="'#67b83c'" class="mt-0.5" />
                                             <div class="flex-1 min-w-0">
                                                 <span class="text-sm font-medium text-[#3b3e45] block">{{ role.label
-                                                    }}</span>
+                                                }}</span>
                                                 <p class="text-xs text-[#666e7d] mt-0.5">{{ role.description }}</p>
                                             </div>
                                         </div>
@@ -96,26 +97,30 @@
                                 </span>
                             </div>
 
-                            <!-- Warning message when PROFESOR is not selected -->
+                            <!-- Loading state for areas -->
+                            <div v-if="loadingAreas" class="text-center py-4">
+                                <p class="text-sm text-[#666e7d]">Cargando áreas...</p>
+                            </div>
 
-
-                            <div class="space-y-2 mb-3 overflow-y-auto max-h-129">
-                                <div v-for="(area, index) in availableAreas" :key="index"
+                            <!-- Areas list -->
+                            <div v-else class="space-y-2 mb-3 overflow-y-auto max-h-129">
+                                <div v-for="(area, index) in availableAreas" :key="area.id || index"
                                     class="flex items-start space-x-2 p-2 bg-white border border-[#dcdfe3] rounded transition-colors"
                                     :class="isProfesorSelected ? 'hover:bg-[#f8f9fa]' : 'opacity-50 cursor-not-allowed bg-gray-50'">
                                     <CheckBox v-model="area.selected" :color="'#67b83c'" class="mt-0.5"
                                         :disabled="!isProfesorSelected" />
                                     <div class="flex-1 min-w-0">
                                         <span class="text-sm font-medium text-[#3b3e45] block"
-                                            :class="!isProfesorSelected ? 'text-gray-400' : ''">{{ area.name }}</span>
-                                        <p class="text-xs text-[#666e7d] mt-0.5"
-                                            :class="!isProfesorSelected ? 'text-gray-400' : ''">{{
-                                                area.description }}</p>
+                                            :class="!isProfesorSelected ? 'text-gray-400' : ''">{{ area.description
+                                            }}</span>
                                     </div>
                                 </div>
                             </div>
 
-
+                            <!-- Empty state for areas -->
+                            <div v-if="!loadingAreas && availableAreas.length === 0" class="text-center py-4">
+                                <p class="text-sm text-[#666e7d]">No hay áreas disponibles</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -130,7 +135,7 @@
                     </Button>
                     <Button @click="createUser"
                         custom-class="px-4 py-2 bg-[#67b83c] hover:bg-[#5ba332] text-white transition-colors text-sm"
-                        :disabled="!isFormValid">
+                        :disabled="!isFormValid || loadingAreas || loadingTiposDocumento">
                         Crear Usuario
                     </Button>
                 </div>
@@ -141,100 +146,89 @@
 
 <script setup>
 import { RefreshCcw, ClipboardCopy } from 'lucide-vue-next'
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import Input from './common/Input.vue'
 import Button from './common/Button.vue'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
 import { showSuccessToast, showWarningToast, showErrorToast, showInfoToast } from '@/utils/toast.js'
 import { newUserService } from '@/services/newUserService'
+import { TipoDocumentoService } from '@/services/tipoDocumentoService'
+import { AreasService } from '@/services/areasService'
 
 // Define emits
 const emit = defineEmits(['close'])
 
+// Services instances
+const tipoDocumentoService = new TipoDocumentoService()
+const areasService = new AreasService()
+
 // Animation state
 const isClosing = ref(false)
+
+// Loading states
+const loadingTiposDocumento = ref(false)
+const loadingAreas = ref(false)
+
+// Data from services
+const tiposDocumento = ref([])
+const availableAreas = ref([])
 
 // Form data
 const formData = reactive({
     nombre: '',
     apellido: '',
-    tipoDocumento: 'C.C',
+    tipoDocumento: '',
     numeroDocumento: '',
     email: '',
     clavetemporal: '',
 })
 
-// Available areas with more detailed structure
-const availableAreas = ref([
-    {
-        id: 1,
-        name: 'Matemáticas Discretas',
-        description: 'Matemáticas aplicadas',
-        selected: false
-    },
-    {
-        id: 2,
-        name: 'Inteligencia Artificial',
-        description: 'Ciencias computacionales',
-        selected: false
-    },
-    {
-        id: 3,
-        name: 'Bases de Datos',
-        description: 'Gestión de información',
-        selected: false
-    },
-    {
-        id: 4,
-        name: 'Desarrollo Web',
-        description: 'Tecnologías web',
-        selected: false
-    },
-    {
-        id: 5,
-        name: 'Seguridad Informática',
-        description: 'Ciberseguridad y protección',
-        selected: false
-    },
-    {
-        id: 6,
-        name: 'Redes de Computadores',
-        description: 'Infraestructura de red',
-        selected: false
-    },
-    {
-        id: 7,
-        name: 'Programación Móvil',
-        description: 'Desarrollo de aplicaciones',
-        selected: false
-    },
-    {
-        id: 8,
-        name: 'Machine Learning',
-        description: 'Aprendizaje automático',
-        selected: false
-    },
-    {
-        id: 9,
-        name: 'Sistemas Operativos',
-        description: 'Administración de SO',
-        selected: false
-    },
-    {
-        id: 10,
-        name: 'Arquitectura de Software',
-        description: 'Diseño de sistemas',
-        selected: false
-    }
-])
-
-// Available roles
+// Available roles (these seem to be static based on the original code)
 const availableRoles = ref([
     { id: 1, label: 'DIRECTOR DE ESCUELA', description: 'Gestión completa del sistema y usuarios', selected: false },
     { id: 2, label: 'COORDINADOR ACADEMICO', description: 'Creación y gestión de contenido académico', selected: false },
     { id: 3, label: 'PROFESOR', description: 'Acceso a cursos y materiales de estudio', selected: false },
 ])
+
+// Load data on component mount
+onMounted(async () => {
+    await Promise.all([
+        loadTiposDocumento(),
+        loadAreas()
+    ])
+})
+
+// Methods to load data from services
+const loadTiposDocumento = async () => {
+    try {
+        loadingTiposDocumento.value = true
+        const tipos = await tipoDocumentoService.getTiposDocumento()
+        tiposDocumento.value = tipos
+        console.log('Loaded tipos de documento:', tipos)
+    } catch (error) {
+        console.error('Error loading tipos de documento:', error)
+        showErrorToast('Error al cargar los tipos de documento')
+    } finally {
+        loadingTiposDocumento.value = false
+    }
+}
+
+const loadAreas = async () => {
+    try {
+        loadingAreas.value = true
+        const areas = await areasService.getAreas()
+        availableAreas.value = areas.map(area => ({
+            ...area,
+            selected: false
+        }))
+    } catch (error) {
+        console.error('Error loading areas:', error)
+        showErrorToast('Error al cargar las áreas')
+    } finally {
+        loadingAreas.value = false
+    }
+}
 
 // Computed properties
 const selectedAreasCount = computed(() => {
@@ -255,6 +249,7 @@ const isFormValid = computed(() => {
         formData.apellido &&
         formData.numeroDocumento &&
         formData.email &&
+        formData.tipoDocumento &&
         selectedRolesCount.value > 0 &&
         (isProfesorSelected.value ? selectedAreasCount.value > 0 : true)
 })
@@ -280,7 +275,7 @@ const closeModal = () => {
         Object.assign(formData, {
             nombre: '',
             apellido: '',
-            tipoDocumento: 'C.C',
+            tipoDocumento: '',
             numeroDocumento: '',
             email: '',
             clavetemporal: '',
@@ -317,7 +312,6 @@ const copyTemporaryPassword = async () => {
 
     try {
         await navigator.clipboard.writeText(formData.clavetemporal)
-        // Aquí podrías agregar una notificación de éxito
         showSuccessToast('Clave temporal copiada al portapapeles')
     } catch (err) {
         console.error('Error al copiar al portapapeles:', err)
@@ -342,34 +336,71 @@ const createUser = async () => {
         return
     }
 
+    // Additional validation for tipo documento
+    if (!formData.tipoDocumento) {
+        showErrorToast('Por favor seleccione un tipo de documento')
+        return
+    }
+
     // Get selected areas IDs
     const selectedAreasIds = availableAreas.value
         .filter(area => area.selected)
-        .map(area => area.id)
+        .map(area => {
+            const id = parseInt(area.id)
+            console.log('Area ID conversion:', area.id, '->', id)
+            return id
+        })
+        .filter(id => !isNaN(id)) // Filter out any NaN values
 
     // Get selected roles IDs
     const selectedRolesIds = availableRoles.value
         .filter(role => role.selected)
-        .map(role => role.id)
+        .map(role => {
+            const id = parseInt(role.id)
+            console.log('Role ID conversion:', role.id, '->', id)
+            return id
+        })
+        .filter(id => !isNaN(id)) // Filter out any NaN values
 
-    // Map document type to number
-    const documentTypeMap = {
-        'C.C': 1,
-        'T.I': 2,
-        'C.E': 3
+    // Parse and validate tipo documento idSigla
+    const idSigla = parseInt(formData.tipoDocumento)
+    if (isNaN(idSigla) || idSigla <= 0) {
+        showErrorToast('Tipo de documento inválido')
+        console.error('Invalid idSigla value:', formData.tipoDocumento)
+        return
     }
 
-    // Prepare user data for API
+    // Generate temporary password if not provided
+    if (!formData.clavetemporal || formData.clavetemporal.trim() === '') {
+        generateTemporaryPassword()
+    }
+
+    // Additional validation
+    if (selectedRolesIds.length === 0) {
+        showErrorToast('Debe seleccionar al menos un rol')
+        return
+    }
+
+    // If PROFESOR is selected, areas are required
+    if (isProfesorSelected.value && selectedAreasIds.length === 0) {
+        showErrorToast('Debe seleccionar al menos un área cuando el rol PROFESOR está seleccionado')
+        return
+    }
+
+    // Prepare user data for API - ensure all values match the expected format
     const userData = {
-        idTipoDocumento: documentTypeMap[formData.tipoDocumento],
-        email: formData.email,
-        documento: formData.numeroDocumento,
-        password: formData.clavetemporal,
-        firstName: formData.nombre,
-        lastName: formData.apellido,
+        idTipoDocumento: idSigla,
+        email: formData.email.trim(),
+        documento: formData.numeroDocumento.trim(),
+        password: formData.clavetemporal.trim(),
+        firstName: formData.nombre.trim(),
+        lastName: formData.apellido.trim(),
         idsRoles: selectedRolesIds,
         idsAreas: selectedAreasIds
     }
+
+    // Debug logging
+    console.log('Creating user with data:', userData)
 
     try {
         // Call the API service

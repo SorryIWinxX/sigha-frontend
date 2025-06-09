@@ -1,6 +1,37 @@
 <template>
-    <div class="w-full mx-auto bg-white">
-        <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
+    <div class="w-full h-full flex flex-col overflow-hidden bg-white">
+        <div v-if="internalSelectedSlots.length > 0"
+            class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg flex-shrink-0">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <Info :size="20" class="text-yellow-500" />
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800">
+                        Estado de Disponibilidad
+                    </h3>
+                    <div class="mt-1 text-sm text-yellow-700">
+                        <p>La disponibilidad seleccionada será revisada por el coordinador académico. Dependiendo de su
+                            decisión, la disponibilidad será aprobada o rechazada.</p>
+                        <p class="mt-1">
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                Verde: Aprobada
+                            </span>
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 mr-2">
+                                Amarillo: Debe cambiar las áreas seleccionadas
+                            </span>
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                Azul: Aun no se ha revisado
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4 flex-shrink-0">
             <div
                 class="flex items-center justify-center border border-[#DCDFE3] rounded-sm px-4 py-2 text-sm text-gray-700">
                 <span class="font-medium mr-1.5">Horas Seleccionadas:</span>
@@ -8,6 +39,8 @@
                     class="inline-flex items-center justify-center bg-[#67B83C] text-white rounded-full h-6 min-w-[24px] px-2 text-xs font-semibold">
                     {{ internalSelectedSlots.length }}
                 </span>
+                <span v-if="loadingAvailability" class="ml-2 text-xs text-blue-600">Cargando...</span>
+                <span v-if="availabilityError" class="ml-2 text-xs text-red-600">Error al cargar</span>
             </div>
             <div class="flex flex-wrap gap-2 w-full md:w-auto">
                 <Button @click="clearAllSelections"
@@ -38,73 +71,81 @@
                 </button>
                 <button
                     class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#67B83C] hover:bg-[#57A334] transition-all text-white text-sm font-normal cursor-pointer"
-                    @click="sendAvailability" :disabled="isAvailabilitySent"
-                    :class="{ 'opacity-50 cursor-not-allowed': isAvailabilitySent }">
+                    @click="sendAvailability" :disabled="isAvailabilitySent || loadingAvailability"
+                    :class="{ 'opacity-50 cursor-not-allowed': isAvailabilitySent || loadingAvailability }">
                     <Send :size="18" />
-                    Enviar Disponibilidad
+                    {{ loadingAvailability ? 'Cargando...' : 'Enviar Disponibilidad' }}
                 </button>
             </div>
         </div>
 
-        <Calendar @day-header-clicked="toggleSelectAllHoursInDay">
-            <template #day-cell="{ day, hour }">
-                <div class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group"
-                    :class="{
-                        'bg-[#3c67b8] hover:bg-[#315495]': isSelected(day.value, hour.value),
-                        'bg-[#3c67b89a]': isSelecting(day.value, hour.value),
-                        'bg-gray-800 ': isLunchTime(hour.value) || isSunday(day.value),
-                        'hover:bg-[#3C67B8] hover:text-white cursor-pointer': !isLunchTime(hour.value) && !isSunday(day.value),
-                        'cursor-not-allowed': isLunchTime(hour.value) || isSunday(day.value)
-                    }"
-                    @mousedown="!isLunchTime(hour.value) && !isSunday(day.value) && startSelection($event, day.value, hour.value)"
-                    @mousemove="handleMouseMove($event, day.value, hour.value)" @mouseup="endSelection()"
-                    @mouseleave="handleMouseLeave(day.value, hour.value)"
-                    @click="!isLunchTime(hour.value) && !isSunday(day.value) && toggleSelection(day.value, hour.value)">
-                    <div class="flex flex-col items-center justify-center w-full h-full">
-                        <span class="text-xs transition-opacity" :class="{
-                            'opacity-0 group-hover:opacity-100 text-gray-400': !isSelected(day.value, hour.value) && !isLunchTime(hour.value) && !isSunday(day.value),
-                            'opacity-100 text-white font-semibold': isSelected(day.value, hour.value),
-                            'text-white opacity-80': isLunchTime(hour.value) || isSunday(day.value)
-                        }">
-                            {{ formatHourShort(hour.value) }}
-                        </span>
-                        <span v-if="isLunchTime(hour.value)"
-                            class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            :class="{ 'opacity-100': isLunchTime(hour.value) }">
-                            Almuerzo
-                        </span>
-                        <span v-if="isSunday(day.value)"
-                            class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            :class="{ 'opacity-100': isSunday(day.value) }">
-                            Festivo
-                        </span>
-                    </div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+            <Calendar @day-header-clicked="toggleSelectAllHoursInDay">
+                <template #day-cell="{ day, hour }">
+                    <div class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group"
+                        :class="{
+                            'bg-[#3c67b8] hover:bg-[#315495]': isSelected(day.value, hour.value),
+                            'bg-[#3c67b89a]': isSelecting(day.value, hour.value),
+                            'bg-gray-800 ': isLunchTime(hour.value) || isSunday(day.value),
+                            'hover:bg-[#3C67B8] hover:text-white cursor-pointer': !isLunchTime(hour.value) && !isSunday(day.value),
+                            'cursor-not-allowed': isLunchTime(hour.value) || isSunday(day.value)
+                        }"
+                        @mousedown="!isLunchTime(hour.value) && !isSunday(day.value) && startSelection($event, day.value, hour.value)"
+                        @mousemove="handleMouseMove($event, day.value, hour.value)" @mouseup="endSelection()"
+                        @mouseleave="handleMouseLeave(day.value, hour.value)"
+                        @click="!isLunchTime(hour.value) && !isSunday(day.value) && toggleSelection(day.value, hour.value)">
+                        <div class="flex flex-col items-center justify-center w-full h-full">
+                            <span class="text-xs transition-opacity" :class="{
+                                'opacity-0 group-hover:opacity-100 text-gray-400': !isSelected(day.value, hour.value) && !isLunchTime(hour.value) && !isSunday(day.value),
+                                'opacity-100 text-white font-semibold': isSelected(day.value, hour.value),
+                                'text-white opacity-80': isLunchTime(hour.value) || isSunday(day.value)
+                            }">
+                                {{ formatHourShort(hour.value) }}
+                            </span>
+                            <span v-if="isLunchTime(hour.value)"
+                                class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                :class="{ 'opacity-100': isLunchTime(hour.value) }">
+                                Almuerzo
+                            </span>
+                            <span v-if="isSunday(day.value)"
+                                class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                :class="{ 'opacity-100': isSunday(day.value) }">
+                                Festivo
+                            </span>
+                        </div>
 
-                    <!-- Tooltip -->
-                    <div
-                        class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-3 rounded text-xs whitespace-nowrap opacity-0 pointer-events-none transition-opacity z-20 shadow-lg group-hover:opacity-100">
-                        {{ day.label }} {{ hour.label }}
+                        <!-- Tooltip -->
                         <div
-                            class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
+                            class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-3 rounded text-xs whitespace-nowrap opacity-0 pointer-events-none transition-opacity z-20 shadow-lg group-hover:opacity-100">
+                            {{ day.label }} {{ hour.label }}
+                            <div
+                                class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
+                            </div>
                         </div>
                     </div>
-                </div>
-            </template>
-        </Calendar>
+                </template>
+            </Calendar>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { Trash2, Undo2, Redo2, X, Send, ClipboardCopy } from 'lucide-vue-next';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { Trash2, Undo2, Redo2, X, Send, ClipboardCopy, Info } from 'lucide-vue-next';
 import Button from '@/components/common/Button.vue';
 import Calendar from '@/components/common/Calendar.vue';
+import availabilityService from '@/services/availabilityService';
+import { showSuccessToast, showErrorToast } from '@/utils/toast';
 
 // Props y emits
 const props = defineProps({
     modelValue: {
         type: Array,
         default: () => []
+    },
+    semesterId: {
+        type: [String, Number],
+        required: true
     }
 });
 
@@ -123,6 +164,8 @@ const lastSelectedCell = ref(null);
 const lunchHours = [12, 13]; // 12 PM a 2 PM (12 y 13 en formato 24h)
 const internalSelectedSlots = ref([]);
 const isAvailabilitySent = ref(false);
+const loadingAvailability = ref(false);
+const availabilityError = ref(null);
 
 // Computed properties
 const sortedSelectedSlots = computed(() => {
@@ -408,29 +451,88 @@ function toggleSelectAllHoursInDay(dayValue) {
     saveToHistory();
 }
 
-function sendAvailability() {
-    // Ordenar las selecciones por día y hora
-    const orderedSelections = [...internalSelectedSlots.value].sort((a, b) => {
-        if (a.day !== b.day) {
-            return a.day - b.day;
-        }
-        return a.hour - b.hour;
-    });
+async function loadAvailability() {
+    if (!props.semesterId) return;
 
-    // Agrupar por día
-    const groupedByDay = {};
-    // Map days 1-7 to day names (Lunes to Domingo)
-    const dayNames = {
-        1: 'lunes',
-        2: 'martes',
-        3: 'miercoles',
-        4: 'jueves',
-        5: 'viernes',
-        6: 'sabado',
-        7: 'domingo'
+    try {
+        loadingAvailability.value = true;
+        availabilityError.value = null;
+
+        const response = await availabilityService.getAvailability(props.semesterId);
+
+        if (response.disponibilidad) {
+            // Convertir la disponibilidad de la API al formato interno
+            const loadedSlots = convertApiToInternalFormat(response.disponibilidad);
+            internalSelectedSlots.value = loadedSlots;
+
+            // Limpiar historial y guardar el estado cargado
+            history.value = [];
+            historyIndex.value = -1;
+            saveToHistory();
+        } else {
+            // Si no hay disponibilidad, asegurarse de que esté vacío
+            internalSelectedSlots.value = [];
+            history.value = [];
+            historyIndex.value = -1;
+            saveToHistory();
+        }
+
+        // Reset availability sent status
+        isAvailabilitySent.value = false;
+    } catch (error) {
+        console.error('Error loading availability:', error);
+        availabilityError.value = error.message;
+
+        // En caso de error, mantener vacío y reiniciar historial
+        internalSelectedSlots.value = [];
+        history.value = [];
+        historyIndex.value = -1;
+        saveToHistory();
+    } finally {
+        loadingAvailability.value = false;
+    }
+}
+
+function convertApiToInternalFormat(apiData) {
+    const slots = [];
+    const dayMapping = {
+        'LUNES': 1,
+        'MARTES': 2,
+        'MIERCOLES': 3,
+        'JUEVES': 4,
+        'VIERNES': 5,
+        'SABADO': 6,
+        'DOMINGO': 7
     };
 
-    orderedSelections.forEach(slot => {
+    Object.keys(apiData).forEach(dayName => {
+        const dayValue = dayMapping[dayName];
+        if (dayValue) {
+            apiData[dayName].forEach(slot => {
+                slots.push({
+                    day: dayValue,
+                    hour: slot.hour
+                });
+            });
+        }
+    });
+
+    return slots;
+}
+
+function convertInternalToApiFormat(internalSlots) {
+    const groupedByDay = {};
+    const dayNames = {
+        1: 'LUNES',
+        2: 'MARTES',
+        3: 'MIERCOLES',
+        4: 'JUEVES',
+        5: 'VIERNES',
+        6: 'SABADO',
+        7: 'DOMINGO'
+    };
+
+    internalSlots.forEach(slot => {
         // Skip Sundays as they are holidays
         if (slot.day === 7) return;
 
@@ -439,28 +541,52 @@ function sendAvailability() {
             groupedByDay[dayName] = [];
         }
 
-        // Store the raw 24-hour numerical value (timestamp)
-        groupedByDay[dayName].push(slot.hour);
+        groupedByDay[dayName].push({
+            hour: slot.hour,
+            statusId: 1
+        });
     });
 
-    // Log del resultado agrupado
-    console.log("Disponibilidad seleccionada:");
-    Object.keys(groupedByDay).forEach(day => {
-        const formattedHoursString = groupedByDay[day]
-            .map(h => `${String(h).padStart(2, '0')}:00`)
-            .join(', ');
-        console.log(`${day}: ${formattedHoursString}`);
-    });
-    console.log(groupedByDay);
-
-    isAvailabilitySent.value = true;
+    return groupedByDay;
 }
+
+async function sendAvailability() {
+    if (!props.semesterId) {
+        console.error('No semester ID provided');
+        return;
+    }
+
+    try {
+        // Convertir al formato de la API
+        const apiFormatData = convertInternalToApiFormat(internalSelectedSlots.value);
+
+        // Log para depuración
+        console.log("Disponibilidad a enviar:", apiFormatData);
+
+        // Enviar a la API
+        await availabilityService.sendAvailability(props.semesterId, apiFormatData);
+
+        showSuccessToast("Disponibilidad enviada exitosamente");
+        isAvailabilitySent.value = true;
+
+        // Opcional: recargar la disponibilidad para confirmar
+        // await loadAvailability();
+
+    } catch (error) {
+        showErrorToast('Error al enviar la disponibilidad');
+        // Opcional: mostrar un mensaje de error al usuario
+    }
+}
+
+// Watchers
+watch(() => props.semesterId, (newSemesterId) => {
+    if (newSemesterId) {
+        loadAvailability();
+    }
+}, { immediate: true });
 
 // Lifecycle hooks
 onMounted(() => {
-    // Guardar el estado inicial en el historial
-    saveToHistory();
-
     // Agregar event listeners para teclas Ctrl/Cmd
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);

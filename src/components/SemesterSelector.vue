@@ -1,12 +1,18 @@
 <template>
     <div class="flex flex-col items-center w-full max-w-md">
-        <div class="flex items-center justify-between w-full">
+        <div v-if="loading" class="flex items-center justify-center py-4">
+            <div class="text-sm text-gray-500">Cargando semestres...</div>
+        </div>
+        <div v-else-if="error" class="flex items-center justify-center py-4">
+            <div class="text-sm text-red-500">Error al cargar semestres</div>
+        </div>
+        <div v-else class="flex items-center justify-between w-full">
             <button @click="previousSemester" :disabled="!canGoPrevious" :class="buttonClass(canGoPrevious)">
                 <ChevronLeft :size="20" />
             </button>
 
             <div class="flex-1 text-center px-4">
-                <h1 class="text-xl font-semibold text-[#3b3e45]">{{ currentSemester.name }}</h1>
+                <h1 class="text-xl font-semibold text-[#3b3e45]">{{ currentSemester?.description }}</h1>
                 <p class="text-sm text-[#666e7d] mt-1">{{ dateRange }}</p>
             </div>
 
@@ -18,16 +24,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { SemesterService } from '@/services/semesterService'
 
-const availableSemesters = ref([
-    { id: '2024-I', name: 'Semestre 2024-I', startDate: '2024-03-15', endDate: '2024-07-31' },
-    { id: '2024-II', name: 'Semestre 2024-II', startDate: '2024-08-15', endDate: '2024-12-15' },
-    { id: '2025-I', name: 'Semestre 2025-I', startDate: '2025-03-15', endDate: '2025-07-31' }
-])
+const semesterService = new SemesterService()
+const availableSemesters = ref([])
+const currentSemesterIndex = ref(0)
+const loading = ref(true)
+const error = ref(false)
 
-const currentSemesterIndex = ref(1)
 const emit = defineEmits(['semester-changed'])
 
 const currentSemester = computed(() => availableSemesters.value[currentSemesterIndex.value])
@@ -40,14 +46,54 @@ const buttonClass = (canNavigate) => [
 ]
 
 const dateRange = computed(() => {
+    if (!currentSemester.value) return ''
+
     const format = (date) => new Date(date).toLocaleDateString('es-ES', {
         day: 'numeric', month: 'long', year: 'numeric'
     })
     return `${format(currentSemester.value.startDate)} - ${format(currentSemester.value.endDate)}`
 })
 
-const previousSemester = () => canGoPrevious.value && currentSemesterIndex.value--
-const nextSemester = () => canGoNext.value && currentSemesterIndex.value++
+const previousSemester = () => {
+    if (canGoPrevious.value) {
+        currentSemesterIndex.value--
+    }
+}
 
-watch(currentSemester, (newSemester) => emit('semester-changed', newSemester), { deep: true })
+const nextSemester = () => {
+    if (canGoNext.value) {
+        currentSemesterIndex.value++
+    }
+}
+
+const loadSemesters = async () => {
+    try {
+        loading.value = true
+        error.value = false
+        const semesters = await semesterService.getSemesters()
+        availableSemesters.value = semesters
+
+        // Si hay semestres, seleccionar el primero por defecto
+        if (semesters.length > 0) {
+            currentSemesterIndex.value = 0
+        }
+    } catch (err) {
+        console.error('Error loading semesters:', err)
+        error.value = true
+        availableSemesters.value = []
+    } finally {
+        loading.value = false
+    }
+}
+
+// Emitir el semestre seleccionado cuando cambie
+watch(currentSemester, (newSemester) => {
+    if (newSemester) {
+        emit('semester-changed', newSemester)
+    }
+}, { deep: true })
+
+onMounted(() => {
+    loadSemesters()
+})
 </script>

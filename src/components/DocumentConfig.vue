@@ -4,13 +4,20 @@
             <h2 class="text-lg font-medium text-gray-900">Tipos de Documento</h2>
             <button @click="addNewDocumentRow"
                 class="px-4 py-2 bg-[#67B83C] text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200"
-                :disabled="isCreating" :class="{ 'opacity-50 cursor-not-allowed': isCreating }">
+                :disabled="isCreating || isLoading"
+                :class="{ 'opacity-50 cursor-not-allowed': isCreating || isLoading }">
                 + Crear Tipo de Documento
             </button>
         </div>
 
+        <!-- Indicador de carga -->
+        <div v-if="isLoading && documents.length === 0" class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#67B83C]"></div>
+            <p class="mt-2 text-gray-500 text-sm">Cargando tipos de documento...</p>
+        </div>
+
         <!-- Tabla usando el componente del sistema -->
-        <div class="w-full bg-white">
+        <div v-if="!isLoading || documents.length > 0" class="w-full bg-white">
             <div class="overflow-hidden border border-gray-200 rounded-sm">
                 <table class="w-full">
                     <thead class="bg-gray-100 border-b border-gray-200">
@@ -43,11 +50,13 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-2">
                                     <button @click="saveNewDocument"
-                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-sm transition-colors duration-200"
-                                        :disabled="!canSaveNew" :class="canSaveNew
+                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-sm transition-colors duration-200 flex items-center gap-2"
+                                        :disabled="!canSaveNew || isSaving" :class="(canSaveNew && !isSaving)
                                             ? 'bg-green-600 hover:bg-green-700'
                                             : 'bg-gray-400 cursor-not-allowed'">
-                                        Guardar
+                                        <div v-if="isSaving"
+                                            class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                        {{ isSaving ? 'Guardando...' : 'Guardar' }}
                                     </button>
                                     <button @click="cancelCreate"
                                         class="px-3 py-1.5 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
@@ -98,11 +107,11 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="relative flex items-center justify-center">
-                                        <button @click="toggleDropdown(document.id)"
+                                        <button @click="toggleDropdown(document.id || '')"
                                             class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-white rounded-sm flex items-center justify-center hover:bg-[#67b83c] hover:border-gray-300">
                                             <MoreHorizontal class="h-4 w-4 transition-colors duration-200" />
                                         </button>
-                                        <div v-if="openDropdown === document.id" :class="[
+                                        <div v-if="openDropdown === (document.id || '')" :class="[
                                             'absolute z-50 w-32 bg-white rounded-sm border border-gray-200 shadow-lg overflow-hidden',
                                             index >= documents.length - 2 ? 'bottom-10 right-0' : 'top-10 right-0'
                                         ]">
@@ -111,7 +120,7 @@
                                                     class="flex items-center justify-center flex-1 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-r border-gray-100 cursor-pointer">
                                                     <Edit class="h-5 w-5 text-gray-900" />
                                                 </button>
-                                                <button @click="deleteDocument(document.id)"
+                                                <button @click="deleteDocument(document.id || '')"
                                                     class="flex items-center justify-center flex-1 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer">
                                                     <Trash2 class="h-5 w-5 text-red-500" />
                                                 </button>
@@ -139,23 +148,18 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-vue-next'
+import { TipoDocumentoService } from '@/services/tipoDocumentoService'
+import { showSuccessToast, showErrorToast } from '@/utils/toast'
+import type { TipoDocumento } from '@/services/tipoDocumentoService'
 
-interface DocumentType {
-    id: string
-    description: string
-    sigla: string
-}
+// Instanciar el servicio
+const tipoDocumentoService = new TipoDocumentoService()
 
 // Estado reactivo
-const documents = ref<DocumentType[]>([
-    {
-        id: '1',
-        description: 'Cedula de Ciudadania',
-        sigla: 'C.C'
-    }
-])
-
+const documents = ref<TipoDocumento[]>([])
+const isLoading = ref(false)
 const isCreating = ref(false)
+const isSaving = ref(false)
 const editingId = ref<string | null>(null)
 const openDropdown = ref<string | null>(null)
 
@@ -174,6 +178,19 @@ const canSaveNew = computed(() => {
     return newDocument.description.trim() && newDocument.sigla.trim()
 })
 
+// Cargar tipos de documento al montar el componente
+const loadTiposDocumento = async () => {
+    isLoading.value = true
+    try {
+        documents.value = await tipoDocumentoService.getTiposDocumento()
+    } catch (error) {
+        console.error('Error loading tipos de documento:', error)
+        showErrorToast('Error al cargar los tipos de documento')
+    } finally {
+        isLoading.value = false
+    }
+}
+
 // Funciones para crear
 const addNewDocumentRow = () => {
     if (editingId.value) {
@@ -183,17 +200,27 @@ const addNewDocumentRow = () => {
     isCreating.value = true
 }
 
-const saveNewDocument = () => {
-    if (!canSaveNew.value) return
+const saveNewDocument = async () => {
+    if (!canSaveNew.value || isSaving.value) return
 
-    const document: DocumentType = {
-        id: Date.now().toString(),
+    const tipoDocumento = {
         description: newDocument.description.trim(),
         sigla: newDocument.sigla.trim()
     }
 
-    documents.value.unshift(document) // Agregar al inicio
-    cancelCreate()
+    isSaving.value = true
+    try {
+        await tipoDocumentoService.createTipoDocumento(tipoDocumento)
+        // Limpiar y recargar la lista para asegurar consistencia
+        await loadTiposDocumento()
+        showSuccessToast('Tipo de documento creado exitosamente')
+        cancelCreate()
+    } catch (error) {
+        console.error('Error creating tipo de documento:', error)
+        showErrorToast('Error al crear el tipo de documento')
+    } finally {
+        isSaving.value = false
+    }
 }
 
 const cancelCreate = () => {
@@ -207,29 +234,34 @@ const resetNewDocument = () => {
 }
 
 // Funciones para editar
-const startEdit = (document: DocumentType) => {
+const startEdit = (document: TipoDocumento) => {
     if (isCreating.value) {
         cancelCreate()
     }
     closeDropdown()
-    editingId.value = document.id
+    editingId.value = document.id || ''
     editForm.description = document.description
     editForm.sigla = document.sigla
 }
 
-const saveEdit = () => {
+const saveEdit = async () => {
     if (!editingId.value) return
 
-    const index = documents.value.findIndex(d => d.id === editingId.value)
-    if (index !== -1) {
-        documents.value[index] = {
-            ...documents.value[index],
-            description: editForm.description.trim(),
-            sigla: editForm.sigla.trim()
-        }
+    const updateData = {
+        description: editForm.description.trim(),
+        sigla: editForm.sigla.trim()
     }
 
-    cancelEdit()
+    try {
+        await tipoDocumentoService.updateTipoDocumento(editingId.value, updateData)
+        // Recargar la lista para asegurar consistencia con el servidor
+        await loadTiposDocumento()
+        showSuccessToast('Tipo de documento actualizado exitosamente')
+        cancelEdit()
+    } catch (error) {
+        console.error('Error updating tipo de documento:', error)
+        showErrorToast('Error al actualizar el tipo de documento')
+    }
 }
 
 const cancelEdit = () => {
@@ -247,15 +279,10 @@ const closeDropdown = () => {
     openDropdown.value = null
 }
 
-// Función para eliminar
+// Función para eliminar (no disponible según requerimientos)
 const deleteDocument = (id: string) => {
     closeDropdown()
-    if (confirm('¿Estás seguro de que quieres eliminar este tipo de documento?')) {
-        const index = documents.value.findIndex(d => d.id === id)
-        if (index !== -1) {
-            documents.value.splice(index, 1)
-        }
-    }
+    alert('La función de eliminar no está disponible para tipos de documento.')
 }
 
 // Close dropdown when clicking outside
@@ -267,6 +294,7 @@ const handleClickOutside = (event: Event) => {
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside)
+    loadTiposDocumento()
 })
 
 onUnmounted(() => {

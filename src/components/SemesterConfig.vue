@@ -4,7 +4,8 @@
             <h2 class="text-lg font-medium text-gray-900">Semestres</h2>
             <button @click="addNewSemesterRow"
                 class="px-4 py-2 bg-[#67B83C] text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200"
-                :disabled="isCreating" :class="{ 'opacity-50 cursor-not-allowed': isCreating }">
+                :disabled="isCreating || isLoading"
+                :class="{ 'opacity-50 cursor-not-allowed': isCreating || isLoading }">
                 + Crear Semestre
             </button>
         </div>
@@ -50,11 +51,13 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-2">
                                     <button @click="saveNewSemester"
-                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-sm transition-colors duration-200"
-                                        :disabled="!canSaveNew" :class="canSaveNew
+                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-sm transition-colors duration-200 flex items-center gap-2"
+                                        :disabled="!canSaveNew || isSaving" :class="(canSaveNew && !isSaving)
                                             ? 'bg-green-600 hover:bg-green-700'
                                             : 'bg-gray-400 cursor-not-allowed'">
-                                        Guardar
+                                        <div v-if="isSaving"
+                                            class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                        {{ isSaving ? 'Guardando...' : 'Guardar' }}
                                     </button>
                                     <button @click="cancelCreate"
                                         class="px-3 py-1.5 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
@@ -137,8 +140,18 @@
                             </template>
                         </tr>
 
+                        <!-- Estado de carga -->
+                        <tr v-if="isLoading">
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex items-center justify-center gap-2">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[#67B83C]"></div>
+                                    Cargando semestres...
+                                </div>
+                            </td>
+                        </tr>
+
                         <!-- Estado vacío -->
-                        <tr v-if="semesters.length === 0 && !isCreating">
+                        <tr v-if="semesters.length === 0 && !isCreating && !isLoading">
                             <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                                 No hay semestres configurados. Haz clic en "Crear Semestre" para agregar uno.
                             </td>
@@ -153,27 +166,20 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-vue-next'
+import { SemesterService } from '@/services/semesterService'
+import { showSuccessToast, showErrorToast } from '@/utils/toast'
+import type { Semester } from '@/types/semester'
 
-interface Semester {
-    id: string
-    description: string
-    startDate: string
-    endDate: string
-}
+// Instanciar el servicio
+const semesterService = new SemesterService()
 
 // Estado reactivo
-const semesters = ref<Semester[]>([
-    {
-        id: '1',
-        description: '2025-1',
-        startDate: '2025-01-01',
-        endDate: '2025-06-30'
-    }
-])
-
+const semesters = ref<Semester[]>([])
+const isLoading = ref(false)
 const isCreating = ref(false)
-const editingId = ref<string | null>(null)
-const openDropdown = ref<string | null>(null)
+const isSaving = ref(false)
+const editingId = ref<number | null>(null)
+const openDropdown = ref<number | null>(null)
 
 const newSemester = reactive({
     description: '',
@@ -192,6 +198,19 @@ const canSaveNew = computed(() => {
     return newSemester.description.trim() && newSemester.startDate && newSemester.endDate
 })
 
+// Cargar semestres al montar el componente
+const loadSemesters = async () => {
+    isLoading.value = true
+    try {
+        semesters.value = await semesterService.getSemesters()
+    } catch (error) {
+        console.error('Error loading semesters:', error)
+        showErrorToast('Error al cargar los semestres')
+    } finally {
+        isLoading.value = false
+    }
+}
+
 // Funciones para crear
 const addNewSemesterRow = () => {
     if (editingId.value) {
@@ -201,18 +220,28 @@ const addNewSemesterRow = () => {
     isCreating.value = true
 }
 
-const saveNewSemester = () => {
-    if (!canSaveNew.value) return
+const saveNewSemester = async () => {
+    if (!canSaveNew.value || isSaving.value) return
 
-    const semester: Semester = {
-        id: Date.now().toString(),
+    const semesterData = {
         description: newSemester.description.trim(),
         startDate: newSemester.startDate,
         endDate: newSemester.endDate
     }
 
-    semesters.value.unshift(semester) // Agregar al inicio
-    cancelCreate()
+    isSaving.value = true
+    try {
+        await semesterService.createSemester(semesterData)
+        // Limpiar y recargar la lista para asegurar consistencia
+        await loadSemesters()
+        showSuccessToast('Semestre creado exitosamente')
+        cancelCreate()
+    } catch (error) {
+        console.error('Error creating semester:', error)
+        showErrorToast('Error al crear el semestre')
+    } finally {
+        isSaving.value = false
+    }
 }
 
 const cancelCreate = () => {
@@ -238,20 +267,26 @@ const startEdit = (semester: Semester) => {
     editForm.endDate = semester.endDate
 }
 
-const saveEdit = () => {
+const saveEdit = async () => {
     if (!editingId.value) return
 
-    const index = semesters.value.findIndex(s => s.id === editingId.value)
-    if (index !== -1) {
-        semesters.value[index] = {
-            ...semesters.value[index],
-            description: editForm.description.trim(),
-            startDate: editForm.startDate,
-            endDate: editForm.endDate
-        }
+    const updateData = {
+        id: editingId.value,
+        description: editForm.description.trim(),
+        startDate: editForm.startDate,
+        endDate: editForm.endDate
     }
 
-    cancelEdit()
+    try {
+        await semesterService.updateSemester(updateData)
+        // Recargar la lista para asegurar consistencia con el servidor
+        await loadSemesters()
+        showSuccessToast('Semestre actualizado exitosamente')
+        cancelEdit()
+    } catch (error) {
+        console.error('Error updating semester:', error)
+        showErrorToast('Error al actualizar el semestre')
+    }
 }
 
 const cancelEdit = () => {
@@ -262,7 +297,7 @@ const cancelEdit = () => {
 }
 
 // Funciones del dropdown
-const toggleDropdown = (semesterId: string) => {
+const toggleDropdown = (semesterId: number) => {
     openDropdown.value = openDropdown.value === semesterId ? null : semesterId
 }
 
@@ -271,19 +306,36 @@ const closeDropdown = () => {
 }
 
 // Función para eliminar
-const deleteSemester = (id: string) => {
+const deleteSemester = async (id: number) => {
     closeDropdown()
     if (confirm('¿Estás seguro de que quieres eliminar este semestre?')) {
-        const index = semesters.value.findIndex(s => s.id === id)
-        if (index !== -1) {
-            semesters.value.splice(index, 1)
+        try {
+            await semesterService.deleteSemester(id)
+            // Recargar la lista para asegurar consistencia
+            await loadSemesters()
+            showSuccessToast('Semestre eliminado exitosamente')
+        } catch (error) {
+            console.error('Error deleting semester:', error)
+            showErrorToast('Error al eliminar el semestre')
         }
     }
 }
 
 // Funciones de formato
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES')
+const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return ''
+
+    try {
+        const date = new Date(dateString)
+        // Verificar si la fecha es válida
+        if (isNaN(date.getTime())) {
+            return ''
+        }
+        return date.toLocaleDateString('es-ES')
+    } catch (error) {
+        console.error('Error formatting date:', error)
+        return ''
+    }
 }
 
 // Close dropdown when clicking outside
@@ -295,6 +347,7 @@ const handleClickOutside = (event: Event) => {
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside)
+    loadSemesters()
 })
 
 onUnmounted(() => {

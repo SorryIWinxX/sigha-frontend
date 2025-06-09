@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { userService, type User } from '@/services/userServices'
 
 interface TokenPayload {
   roles: string[]
@@ -11,6 +12,9 @@ interface TokenPayload {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || '',
+    currentUser: null as User | null,
+    userLoading: false,
+    userError: null as string | null,
   }),
   getters: {
     isAuthenticated: (state) => !!state.token,
@@ -50,6 +54,20 @@ export const useAuthStore = defineStore('auth', {
       return this.tokenPayload?.documento || null
     },
 
+    userDisplayName(): string {
+      if (this.currentUser) {
+        return `${this.currentUser.firstName} ${this.currentUser.lastName}`
+      }
+      return 'Usuario'
+    },
+
+    userRolesDisplay(): string {
+      if (this.currentUser && this.currentUser.rolesDescriptions.length > 0) {
+        return this.currentUser.rolesDescriptions.join(', ')
+      }
+      return 'Sin rol asignado'
+    },
+
     hasRole(): (role: string) => boolean {
       return (role: string): boolean => {
         return this.tokenPayload?.roles?.includes(role) || false
@@ -75,6 +93,8 @@ export const useAuthStore = defineStore('auth', {
 
     clearToken() {
       this.token = ''
+      this.currentUser = null
+      this.userError = null
       localStorage.removeItem('token')
     },
 
@@ -83,6 +103,38 @@ export const useAuthStore = defineStore('auth', {
       if (storedToken) {
         this.token = storedToken
       }
+    },
+
+    async fetchCurrentUser(force = false) {
+      // Si ya tenemos el usuario y no es forzado, no hacer nada
+      if (this.currentUser && !force) {
+        return this.currentUser
+      }
+
+      // Si no hay token, no hacer nada
+      if (!this.token) {
+        return null
+      }
+
+      try {
+        this.userLoading = true
+        this.userError = null
+
+        const user = await userService.getCurrentUser()
+        this.currentUser = user
+        return user
+      } catch (error) {
+        console.error('Error fetching current user:', error)
+        this.userError = error instanceof Error ? error.message : 'Error desconocido'
+        this.currentUser = null
+        return null
+      } finally {
+        this.userLoading = false
+      }
+    },
+
+    async refreshUser() {
+      return await this.fetchCurrentUser(true)
     },
   },
 })
