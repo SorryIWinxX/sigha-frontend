@@ -18,12 +18,8 @@
                     <Search placeholder="Buscar" />
                 </div>
                 <div class="flex items-center justify-end px-2 gap-5">
-                    <div>
-                        <Settings />
-                    </div>
-                    <div>
-                        <Bell />
-                    </div>
+                    <RoleToggle />
+
                     <div>
                         <UserConfig />
                     </div>
@@ -58,19 +54,30 @@
 import LogoSIGHA from '@/components/logos/LogoSIGHA.vue';
 import LogoUIS from '@/components/logos/LogoUIS.vue';
 import UserConfig from '@/components/UserConfig.vue';
+import RoleToggle from '@/components/RoleToggle.vue';
 import { Bell, Settings, Calendar, LogOut } from 'lucide-vue-next';
 import Sidebar from '@/components/Sidebar.vue';
 import Search from '@/components/common/Search.vue';
 import Button from '@/components/common/Button.vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
+import { useRoleStore } from '@/store/roleStore';
+import { onMounted } from 'vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const roleStore = useRoleStore();
+
+onMounted(() => {
+    // Inicializar el rol activo cuando se monta el componente
+    roleStore.loadFromStorage();
+});
 
 const logout = () => {
     // Limpiar el token del store de autenticación
     authStore.clearToken();
+    // Limpiar el rol activo
+    localStorage.removeItem('activeRole');
     // Redireccionar al login
     router.push('/login');
 };

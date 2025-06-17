@@ -2,143 +2,147 @@
     <MainLayout>
         <div class="flex h-full flex-col">
             <div class="flex-1 min-h-0 overflow-auto">
-                <h1 class="text-2xl font-bold text-gray-900 mb-4">Información de Usuario</h1>
+                <!-- Header con avatar y título -->
+                <div class="bg-white rounded-sm  border border-gray-300 p-4 mb-4">
+                    <div class="flex items-start gap-4">
+                        <!-- Avatar mejorado -->
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-100 ring-2 ring-white">
+                                <img v-if="userInfo.photo" :src="userInfo.photo" alt="Foto de perfil"
+                                    class="w-full h-full object-cover" />
+                                <div v-else class="w-full h-full flex items-center justify-center text-[#67B83C]">
+                                    <User size="32" />
+                                </div>
+                            </div>
+                            <label for="photo-upload"
+                                class="flex items-center gap-1 bg-[#67B83C] hover:bg-[#69a14a] text-white px-3 py-1.5 rounded-md cursor-pointer transition-all text-sm font-medium">
+                                <PlusCircle :size="18" />
+                                Cambiar foto
+                            </label>
+                            <input id="photo-upload" type="file" accept="image/*" class="hidden"
+                                @change="handlePhotoUpload" />
+                        </div>
+
+                        <!-- Información básica del header -->
+                        <div class="flex-1">
+                            <h1 class="text-xl font-bold text-gray-900">
+                                {{ userInfo.firstName && userInfo.lastName ? `${userInfo.firstName}
+                                ${userInfo.lastName}` : 'Información de Usuario' }}
+                            </h1>
+                            <p class="text-gray-600 ">{{ userInfo.email }}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-sm font-medium"
+                                    :class="userInfo.isActive ? 'bg-[#67B83C] text-white' : 'bg-gray-200 text-gray-800'">
+                                    {{ userInfo.isActive ? 'Activo' : 'Inactivo' }}
+                                </span>
+                                <span class=" text-gray-500">ID: {{ userInfo.id }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Información del Sistema -->
+                        <div class="min-w-[200px]">
+                            <h3 class="text-md font-semibold text-gray-900 mb-2">Información del Sistema</h3>
+                            <div class="space-y-2">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-gray-600">Fecha de Creación</span>
+                                    <span class="text-sm text-gray-900">{{ formatDate(userInfo.createAt) }}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-gray-600">Última Actualización</span>
+                                    <span class="text-sm text-gray-900">{{ formatDate(userInfo.updatedAt) }}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-gray-600">Último Login</span>
+                                    <span class="text-sm text-gray-900">{{ formatDate(userInfo.lastLogin) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado de cambios -->
+                        <div v-if="hasChanges" class="text-right">
+                            <div
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                Cambios pendientes
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div v-if="loading" class="flex justify-center items-center py-8">
                     <div class="text-gray-500">Cargando información del usuario...</div>
                 </div>
 
-                <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
                     <div class="text-red-700">{{ error }}</div>
                 </div>
 
                 <form v-else @submit.prevent="saveUserInfo" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Left Column -->
-                        <div class="space-y-4">
-                            <!-- Información Personal -->
-                            <div
-                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                <div class="p-4">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Información Personal</h2>
+                    <!-- Grid principal compacto -->
+                    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 xl:h-96">
+                        <!-- Información Personal - 2 columnas -->
+                        <div class="xl:col-span-2 h-full">
+                            <div class="bg-white rounded-sm border border-gray-300 p-4 h-full flex flex-col">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <h2 class="text-lg font-semibold text-gray-900">Información Personal</h2>
+                                </div>
 
-                                    <div class="flex flex-col md:flex-row gap-4 mb-4">
-                                        <!-- Foto de perfil -->
-                                        <div class="flex flex-col items-center">
-                                            <div
-                                                class="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 mb-2">
-                                                <img v-if="userInfo.photo" :src="userInfo.photo" alt="Foto de perfil"
-                                                    class="w-full h-full object-cover" />
-                                                <div v-else
-                                                    class="w-full h-full flex items-center justify-center text-gray-400">
-                                                    <User size="32" />
-                                                </div>
-                                            </div>
-                                            <label for="photo-upload"
-                                                class="cursor-pointer border border-gray-300 hover:border-gray-400 text-black px-2 py-1 rounded-md text-xs">
-                                                Cambiar foto
-                                            </label>
-                                            <input id="photo-upload" type="file" accept="image/*" class="hidden"
-                                                @change="handlePhotoUpload" />
+                                <div class="flex-1 flex flex-col justify-between">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <Input id="firstName" label="Nombres" v-model="userInfo.firstName"
+                                                type="text" required />
                                         </div>
 
-                                        <!-- Datos personales -->
-                                        <div class="flex-1 grid grid-cols-1 gap-3">
-                                            <div>
-                                                <Input id="firstName" label="Nombres" v-model="userInfo.firstName"
-                                                    type="text" required />
-                                            </div>
+                                        <div>
+                                            <Input id="lastName" label="Apellidos" v-model="userInfo.lastName"
+                                                type="text" required />
+                                        </div>
 
-                                            <div>
-                                                <Input id="lastName" label="Apellidos" v-model="userInfo.lastName"
-                                                    type="text" required />
-                                            </div>
+                                        <div>
+                                            <Input id="email" label="Correo Electrónico" v-model="userInfo.email"
+                                                type="email" required />
+                                        </div>
 
-                                            <div>
-                                                <label for="documento"
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Documento
-                                                    de Identidad</label>
-                                                <div class="flex gap-2">
-                                                    <Select id="type-document" v-model="userInfo.id_type_document"
-                                                        placeholder="Seleccionar tipo" width="w-auto"
-                                                        class="min-w-[120px]">
-                                                        <option v-for="tipo in tiposDocumento" :key="tipo.idSigla"
-                                                            :value="tipo.idSigla">
-                                                            {{ tipo.sigla }} - {{ tipo.description }}
-                                                        </option>
-                                                    </Select>
-                                                    <Input id="documento" v-model="userInfo.documento" type="text"
-                                                        placeholder="Número de documento" required class="flex-1" />
-                                                </div>
-                                            </div>
 
-                                            <div>
-                                                <label for="email"
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Correo
-                                                    Electrónico</label>
-                                                <Input id="email" v-model="userInfo.email" type="email" required />
-                                            </div>
+                                    </div>
 
-                                            <div>
-                                                <label for="roles"
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Roles</label>
-                                                <div id="roles"
-                                                    class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-700">
-                                                    {{ userInfo.rolesDescriptions.join(', ') || 'Sin roles asignados' }}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label for="isActive"
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                                                <div class="flex items-center">
-                                                    <input id="isActive" type="checkbox" v-model="userInfo.isActive"
-                                                        class="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
-                                                    <span class="text-sm text-gray-700">
-                                                        {{ userInfo.isActive ? 'Activo' : 'Inactivo' }}
-                                                    </span>
-                                                </div>
+                                    <!-- Documento de identidad -->
+                                    <div class="mt-3">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Documento de
+                                            Identidad</label>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <Select id="type-document" v-model="userInfo.idTipoDocumento"
+                                                placeholder="Tipo" class="col-span-1">
+                                                <option v-for="tipo in tiposDocumento" :key="tipo.id" :value="tipo.id">
+                                                    {{ tipo.sigla }}
+                                                </option>
+                                            </Select>
+                                            <div class="col-span-2">
+                                                <Input id="documento" v-model="userInfo.documento" type="text"
+                                                    placeholder="Número de documento" required />
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <!-- Información del Sistema -->
-                            <div
-                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                <div class="p-4">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Información del Sistema</h2>
-
-                                    <div class="space-y-2 text-sm text-gray-600">
-                                        <div>
-                                            <span class="font-medium">ID de Usuario:</span> {{ userInfo.id }}
-                                        </div>
-                                        <div>
-                                            <span class="font-medium">Fecha de Creación:</span> {{
-                                                formatDate(userInfo.createAt) }}
-                                        </div>
-                                        <div>
-                                            <span class="font-medium">Última Actualización:</span> {{
-                                                formatDate(userInfo.updatedAt) }}
-                                        </div>
-                                        <div>
-                                            <span class="font-medium">Último Login:</span> {{
-                                                formatDate(userInfo.lastLogin) }}
+                                    <!-- Roles -->
+                                    <div class="mt-3">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Roles
+                                            Asignados</label>
+                                        <div
+                                            class="min-h-[2.5rem] px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-700 flex items-center">
+                                            {{ userInfo.rolesDescriptions.join(', ') || 'Sin roles asignados' }}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <!-- Cambio de Contraseña -->
-                            <div
-                                class="border border-gray-200 hover:border-gray-400 transition-all duration-300 rounded-sm overflow-hidden">
-                                <div class="p-4">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-3">Cambio de Contraseña</h2>
+                        <!-- Cambio de Contraseña - 1 columna -->
+                        <div class="h-full">
+                            <div class="bg-white rounded-sm border border-gray-300 p-4 h-full flex flex-col">
+                                <h2 class="text-lg font-semibold text-gray-900 mb-3">Cambio de Contraseña</h2>
 
+                                <div class="flex-1 flex flex-col justify-between">
                                     <div class="space-y-3">
                                         <div>
                                             <Input id="current-password" label="Contraseña Actual"
@@ -158,28 +162,60 @@
                                         <div v-if="passwordError" class="text-red-500 text-sm">
                                             {{ passwordError }}
                                         </div>
-
-                                        <button type="button" @click="changePassword"
-                                            class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                                            :disabled="!canChangePassword">
-                                            Cambiar Contraseña
-                                        </button>
                                     </div>
+
+                                    <button type="button" @click="changePassword"
+                                        class="w-full cursor-pointer bg-[#67B83C] text-white px-4 py-2 rounded-md hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors mt-4"
+                                        :disabled="!canChangePassword">
+                                        Cambiar Contraseña
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Areas - 1 columna -->
+                        <div class="max-h-[500px] overflow-y-auto">
+                            <div class="bg-white rounded-sm border border-gray-300 p-4 h-full flex flex-col">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <h2 class="text-lg font-semibold text-gray-900">Áreas Asignadas</h2>
+                                </div>
+
+                                <div class="flex-1 space-y-2 overflow-y-auto">
+                                    <div v-for="area in userAreas" :key="area.id"
+                                        class="flex items-center justify-between p-2 border border-gray-300 rounded-sm hover:bg-gray-100 transition-colors">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-medium text-gray-900">{{ area.name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-if="userAreas.length === 0"
+                                    class="flex-1 flex items-center justify-center text-gray-500 text-sm">
+                                    Sin áreas asignadas
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Botones de acción -->
-                    <div class="flex justify-end space-x-4 pt-2">
-                        <button v-if="hasChanges" type="button" @click="resetForm"
-                            class="px-4 py-2 bg-gray-500 text-white rounded-md cursor-pointer hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                            Cancelar
-                        </button>
-                        <button v-if="hasChanges" type="submit" :disabled="saving"
-                            class="px-4 py-2 bg-[#67B83C] text-white rounded-md cursor-pointer hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
-                            {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
-                        </button>
+
+
+                    <!-- Botones de acción fijos en la parte inferior -->
+                    <div v-if="hasChanges" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-gray-600">
+                                Tienes cambios sin guardar
+                            </div>
+                            <div class="flex space-x-3">
+                                <button type="button" @click="resetForm"
+                                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                                    Cancelar
+                                </button>
+                                <button type="submit" :disabled="saving"
+                                    class="px-6 py-2 bg-[#67B83C] text-white rounded-md hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                    {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -195,6 +231,8 @@ import Input from '@/components/common/Input.vue';
 import Select from '@/components/common/Select.vue';
 import { userService } from '@/services/userServices';
 import { TipoDocumentoService } from '@/services/tipoDocumentoService';
+import { useAreasStore } from '@/store/areasStore';
+import { showSuccessToast } from '@/utils/toast.js';
 
 // Estados de la aplicación
 const loading = ref(true);
@@ -205,17 +243,24 @@ const saving = ref(false);
 const tipoDocumentoService = new TipoDocumentoService();
 const tiposDocumento = ref([]);
 
+// Store de áreas
+const areasStore = useAreasStore();
+
+// Áreas del usuario (ya no mock data)
+const userAreas = ref([]);
+
 // Datos del usuario
 const userInfo = ref({
     id: 0,
     email: '',
-    id_type_document: 1,
+    idTipoDocumento: 1,
     documento: '',
     firstName: '',
     lastName: '',
     isActive: true,
     idsRoles: [],
     rolesDescriptions: [],
+    idAreas: [], // IDs de áreas asignadas al usuario
     createAt: '',
     updatedAt: '',
     lastLogin: '',
@@ -254,8 +299,9 @@ const hasChanges = computed(() => {
         userInfo.value.lastName !== originalUserInfo.value.lastName ||
         userInfo.value.email !== originalUserInfo.value.email ||
         userInfo.value.documento !== originalUserInfo.value.documento ||
-        userInfo.value.id_type_document !== originalUserInfo.value.id_type_document ||
-        userInfo.value.isActive !== originalUserInfo.value.isActive
+        userInfo.value.idTipoDocumento !== originalUserInfo.value.idTipoDocumento ||
+        userInfo.value.isActive !== originalUserInfo.value.isActive ||
+        JSON.stringify(userInfo.value.idAreas) !== JSON.stringify(originalUserInfo.value.idAreas)
     );
 });
 
@@ -266,7 +312,60 @@ const loadTiposDocumento = async () => {
         tiposDocumento.value = tipos;
     } catch (err) {
         console.error('Error loading tipos de documento:', err);
+        // En caso de error, usar datos por defecto para no bloquear la UI
+        tiposDocumento.value = [
+            { id: 1, sigla: 'CC', description: 'Cédula de Ciudadanía' },
+            { id: 2, sigla: 'CE', description: 'Cédula de Extranjería' },
+            { id: 3, sigla: 'TI', description: 'Tarjeta de Identidad' },
+            { id: 4, sigla: 'PAS', description: 'Pasaporte' }
+        ];
     }
+};
+
+// Cargar áreas del usuario
+const loadUserAreas = async () => {
+    try {
+        // Asegurar que las áreas están cargadas en el store
+        if (!areasStore.isLoaded) {
+            await areasStore.fetchAreas();
+        }
+
+        // Filtrar las áreas del usuario basándose en sus idAreas
+        if (userInfo.value.idAreas && userInfo.value.idAreas.length > 0) {
+            userAreas.value = userInfo.value.idAreas.map(areaId => {
+                const area = areasStore.getAreaById(areaId);
+                if (area) {
+                    return {
+                        id: area.id,
+                        name: area.description,
+                        color: getAreaColor(area.id), // Función para asignar colores
+                        isActive: area.isActive || true
+                    };
+                }
+                return null;
+            }).filter(area => area !== null);
+        } else {
+            userAreas.value = [];
+        }
+    } catch (err) {
+        console.error('Error loading user areas:', err);
+        userAreas.value = [];
+    }
+};
+
+// Función auxiliar para asignar colores a las áreas
+const getAreaColor = (areaId) => {
+    const colors = [
+        'bg-blue-500',
+        'bg-green-500',
+        'bg-purple-500',
+        'bg-orange-500',
+        'bg-pink-500',
+        'bg-yellow-500',
+        'bg-indigo-500',
+        'bg-red-500'
+    ];
+    return colors[areaId % colors.length];
 };
 
 // Cargar datos del usuario
@@ -278,6 +377,9 @@ const loadUserData = async () => {
         const userData = await userService.getCurrentUser();
         userInfo.value = { ...userData, photo: null }; // Agregamos photo como null por defecto
         originalUserInfo.value = JSON.parse(JSON.stringify(userData));
+
+        // Cargar las áreas del usuario después de cargar sus datos
+        await loadUserAreas();
 
     } catch (err) {
         console.error('Error loading user data:', err);
@@ -299,7 +401,7 @@ const handlePhotoUpload = (event) => {
     }
 };
 
-const changePassword = () => {
+const changePassword = async () => {
     if (!canChangePassword.value) {
         if (passwordChange.value.newPassword !== passwordChange.value.confirmPassword) {
             passwordError.value = 'Las contraseñas no coinciden';
@@ -309,20 +411,30 @@ const changePassword = () => {
         return;
     }
 
-    // Aquí iría la lógica para cambiar la contraseña
-    // Por ejemplo, una llamada a una API
-    console.log('Cambiando contraseña...');
+    try {
+        passwordError.value = '';
 
-    // Reiniciar campos de contraseña
-    passwordChange.value = {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    };
-    passwordError.value = '';
+        const passwordData = {
+            documento: userInfo.value.documento,
+            password: passwordChange.value.newPassword,
+            lastPassword: passwordChange.value.currentPassword
+        };
 
-    // Mostrar mensaje de éxito (en un caso real usarías un sistema de notificaciones)
-    alert('Contraseña cambiada con éxito');
+        await userService.changePassword(passwordData);
+
+        // Reiniciar campos de contraseña
+        passwordChange.value = {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        };
+
+        showSuccessToast('Contraseña cambiada con éxito');
+
+    } catch (err) {
+        console.error('Error changing password:', err);
+        passwordError.value = 'Error al cambiar la contraseña. Verifique que la contraseña actual sea correcta.';
+    }
 };
 
 const saveUserInfo = async () => {
@@ -331,24 +443,16 @@ const saveUserInfo = async () => {
         error.value = '';
 
         const updateData = {
-            id: userInfo.value.id,
             email: userInfo.value.email,
-            id_type_document: userInfo.value.id_type_document,
+            idTipoDocumento: userInfo.value.idTipoDocumento,
             documento: userInfo.value.documento,
             firstName: userInfo.value.firstName,
-            lastName: userInfo.value.lastName,
-            isActive: userInfo.value.isActive,
-            idsRoles: userInfo.value.idsRoles,
-            rolesDescriptions: userInfo.value.rolesDescriptions
+            lastName: userInfo.value.lastName
         };
 
-        const updatedUser = await userService.updateUser(userInfo.value.id, updateData);
+        const updatedUser = await userService.updateCurrentUser(updateData);
 
-        // Actualizar los datos locales con la respuesta del servidor
-        userInfo.value = { ...updatedUser, photo: userInfo.value.photo };
-        originalUserInfo.value = JSON.parse(JSON.stringify(updatedUser));
-
-        alert('Información guardada con éxito');
+        window.location.reload();
 
     } catch (err) {
         console.error('Error saving user data:', err);

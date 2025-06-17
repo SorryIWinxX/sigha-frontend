@@ -79,6 +79,27 @@ export class SemesterService {
     }
   }
 
+  async updateAvailability(semesterId: number, newAvailability: boolean): Promise<Semester> {
+    try {
+      const response = await fetch(
+        `/api/api/v1/semesters/availability?newAvailability=${newAvailability}&semesterId=${semesterId}`,
+        {
+          method: 'PUT',
+          headers: this.getHeaders(),
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error updating semester availability:', error)
+      throw error
+    }
+  }
+
   async deleteSemester(id: number): Promise<void> {
     try {
       const response = await fetch(`/api/api/v1/semesters/${id}`, {

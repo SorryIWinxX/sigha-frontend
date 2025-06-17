@@ -177,9 +177,11 @@ import EmailOutline from 'vue-material-design-icons/EmailOutline.vue'
 import { AuthService } from '@/services/authService'
 import { showSuccessToast, showErrorToast, showInfoToast } from '@/utils/toast'
 import { useAuthStore } from '@/store/authStore'
+import { useRoleStore } from '@/store/roleStore'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const roleStore = useRoleStore()
 const router = useRouter()
 
 // Form state
@@ -227,19 +229,21 @@ const changePassword = async () => {
     if (success) {
         showSuccessToast('Contraseña cambiada exitosamente')
         isChangePasswordMode.value = false
-        redirectUser()
+        router.push('/')
     } else {
         showErrorToast(authService.getError().value || 'Error al cambiar la contraseña')
     }
 }
 
 const redirectUser = () => {
+    // Inicializar el rol activo
+    roleStore.initializeRole()
+
     // Redirigir según el rol del usuario
     const userRoles = authStore.userRoles
 
     if (userRoles.includes('DIRECTOR DE ESCUELA') || userRoles.includes('COORDINADOR ACADEMICO')) {
-        // Redirigir a vista de administrador
-        router.push('/groups')
+        router.push('/available-teacher')
     } else if (userRoles.includes('PROFESOR')) {
         // Redirigir a vista de profesor
         router.push('/available')

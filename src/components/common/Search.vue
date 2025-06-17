@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Search } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -16,6 +16,11 @@ const handleSearch = (e) => {
     e.preventDefault()
     emit('search', query.value)
 }
+
+// Watch for changes in the query and emit search event for real-time search
+watch(query, (newQuery) => {
+    emit('search', newQuery)
+})
 </script>
 
 <template>

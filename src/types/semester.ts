@@ -3,6 +3,7 @@ export interface Semester {
   description: string
   startDate: string
   endDate: string
+  availability: boolean
   createdAt?: string
   updatedAt?: string
 }
@@ -11,6 +12,7 @@ export interface SemesterRequest {
   description: string
   startDate: string
   endDate: string
+  availability?: boolean
 }
 
 export interface SemesterUpdateRequest {
@@ -18,4 +20,5 @@ export interface SemesterUpdateRequest {
   description: string
   startDate: string
   endDate: string
+  availability?: boolean
 }
