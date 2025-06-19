@@ -6,6 +6,7 @@ import UserView from '../views/UserView.vue'
 import GroupsView from '../views/GroupsView.vue'
 import UsersView from '../views/UsersView.vue'
 import { useAuthStore } from '@/store/authStore'
+import SettingsView from '../views/SettingsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),
@@ -70,9 +71,9 @@ const router = createRouter({
       },
     },
     {
-      path: '/admin/settings',
+      path: '/settings',
       name: 'settings',
-      component: () => import('../views/SettingsView.vue'),
+      component: SettingsView,
       meta: {
         requiresAuth: true,
         roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
@@ -101,7 +102,7 @@ router.beforeEach((to, from, next) => {
 
     if (!hasRequiredRole) {
       // Redirigir a una página de acceso denegado o a la página principal
-      next('/user') // O podrías crear una página de acceso denegado
+      next('/login')
       return
     }
   }
