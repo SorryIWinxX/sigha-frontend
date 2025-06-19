@@ -1,8 +1,7 @@
 import { useAuthStore } from '@/store/authStore'
 
 export interface TipoDocumento {
-  id?: string
-  idSigla: number
+  id: number
   description: string
   sigla: string
 }
@@ -67,7 +66,7 @@ export class TipoDocumentoService {
   }
 
   async updateTipoDocumento(
-    id: string,
+    id: number,
     tipoDocumento: Omit<TipoDocumento, 'id'>,
   ): Promise<TipoDocumento> {
     try {

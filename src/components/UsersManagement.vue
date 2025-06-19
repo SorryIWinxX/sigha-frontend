@@ -1,7 +1,7 @@
 <template>
     <div class="flex justify-between items-center py-4">
         <div class="w-1/3">
-            <Search />
+            <Search placeholder="Buscar usuarios" @search="handleSearch" />
         </div>
 
         <Button customClass="bg-[#67b83c] text-white py-2 px-4" @click="openNewUserModal">
@@ -12,11 +12,11 @@
         </Button>
     </div>
     <div class="w-full bg-white">
-        <TableUsers />
+        <TableUsers ref="tableUsersRef" :searchQuery="searchQuery" />
     </div>
 
     <!-- NewUser Modal -->
-    <NewUser v-if="showNewUserModal" @close="closeNewUserModal" />
+    <NewUser v-if="showNewUserModal" @close="closeNewUserModal" @userCreated="handleUserCreated" />
 </template>
 
 <script setup>
@@ -30,6 +30,9 @@ import NewUser from '@/components/NewUser.vue';
 // Modal state
 const showNewUserModal = ref(false);
 
+// Search state
+const searchQuery = ref('');
+
 // Modal methods
 const openNewUserModal = () => {
     showNewUserModal.value = true;
@@ -37,5 +40,18 @@ const openNewUserModal = () => {
 
 const closeNewUserModal = () => {
     showNewUserModal.value = false;
+};
+
+// Search methods
+const handleSearch = (query) => {
+    searchQuery.value = query;
+};
+
+const tableUsersRef = ref(null);
+
+const handleUserCreated = () => {
+    if (tableUsersRef.value) {
+        tableUsersRef.value.loadUsers();
+    }
 };
 </script>

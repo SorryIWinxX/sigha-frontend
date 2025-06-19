@@ -8,13 +8,32 @@
             <!-- Modal Header -->
             <div class="border-b border-[#dcdfe3] px-4 py-3">
                 <h1 class="text-xl font-semibold text-[#3b3e45] text-center">
-                    Nuevo usuario
+                    Editar Usuario
                 </h1>
             </div>
 
             <!-- Modal Content -->
             <div class="p-4">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- Loading state -->
+                <div v-if="loading" class="flex items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                    <span class="ml-3 text-gray-600">Cargando datos del usuario...</span>
+                </div>
+
+                <!-- Error state -->
+                <div v-else-if="error" class="text-center py-8">
+                    <div class="text-red-600">
+                        <p class="font-semibold">Error al cargar los datos del usuario</p>
+                        <p class="text-sm mt-1">{{ error }}</p>
+                        <button @click="loadUserData"
+                            class="mt-3 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 transition-colors">
+                            Reintentar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Left side - Personal Information -->
                     <div class="lg:col-span-2">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -37,6 +56,8 @@
                             <Input id="email" v-model="formData.email" type="email" label="Correo Electrónico"
                                 placeholder="ejemplo@correo.com" required />
 
+
+
                             <!-- Roles Section -->
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -49,38 +70,12 @@
                                             <CheckBox v-model="role.selected" :color="'#67b83c'" class="mt-0.5" />
                                             <div class="flex-1 min-w-0">
                                                 <span class="text-sm font-medium text-[#3b3e45] block">{{ role.label
-                                                    }}</span>
+                                                }}</span>
                                                 <p class="text-xs text-[#666e7d] mt-0.5">{{ role.description }}</p>
                                             </div>
                                         </div>
                                     </div>
-
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Temporary Password Section -->
-                        <div class="border border-[#dcdfe3] rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Clave Temporal
-                            </label>
-                            <div class="flex gap-2">
-                                <Input id="clavetemporal" v-model="formData.clavetemporal"
-                                    placeholder="Generar clave temporal" class="flex-1" />
-                                <Button @click="generateTemporaryPassword"
-                                    custom-class="bg-[#67b83c] hover:bg-[#5ba332] text-white px-3 py-2 text-sm"
-                                    title="Generar clave">
-                                    <template #icon>
-                                        <RefreshCcw class="h-4 w-4" />
-                                    </template>
-                                </Button>
-                                <Button @click="copyTemporaryPassword"
-                                    custom-class="bg-[#3C7CB8] hover:bg-[#3C7CB8] text-white px-3 py-2 text-sm"
-                                    title="Copiar clave" :disabled="!formData.clavetemporal">
-                                    <template #icon>
-                                        <ClipboardCopy class="h-4 w-4" />
-                                    </template>
-                                </Button>
                             </div>
                         </div>
                     </div>
@@ -133,10 +128,10 @@
                         custom-class="px-4 py-2 border border-[#cfd3d4] text-[#666e7d] bg-white hover:bg-[#f4f4f4] transition-colors text-sm">
                         Cancelar
                     </Button>
-                    <Button @click="createUser"
+                    <Button @click="updateUser"
                         custom-class="px-4 py-2 bg-[#67b83c] hover:bg-[#5ba332] text-white transition-colors text-sm"
-                        :disabled="!isFormValid || loadingAreas || loadingTiposDocumento">
-                        Crear Usuario
+                        :disabled="!isFormValid || loading || submitting || loadingAreas || loadingTiposDocumento">
+                        {{ submitting ? 'Guardando...' : 'Guardar Cambios' }}
                     </Button>
                 </div>
             </div>
@@ -145,43 +140,58 @@
 </template>
 
 <script setup>
-import { RefreshCcw, ClipboardCopy } from 'lucide-vue-next'
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import Input from './common/Input.vue'
 import Button from './common/Button.vue'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
-import { showSuccessToast, showWarningToast, showErrorToast, showInfoToast } from '@/utils/toast.js'
-import { newUserService } from '@/services/newUserService'
+import { showSuccessToast, showWarningToast, showErrorToast } from '@/utils/toast.js'
+import { userService } from '@/services/userServices'
 import { TipoDocumentoService } from '@/services/tipoDocumentoService'
-import { AreasService } from '@/services/areasService'
+import { useAreasStore } from '@/store/areasStore'
+
+// Props
+const props = defineProps({
+    show: {
+        type: Boolean,
+        default: false
+    },
+    userId: {
+        type: [String, Number],
+        required: true
+    }
+})
 
 // Define emits
-const emit = defineEmits(['close', 'userCreated'])
+const emit = defineEmits(['close', 'updated'])
 
 // Services instances
 const tipoDocumentoService = new TipoDocumentoService()
-const areasService = new AreasService()
+const areasStore = useAreasStore()
 
 // Animation state
 const isClosing = ref(false)
 
 // Loading states
+const loading = ref(false)
+const submitting = ref(false)
 const loadingTiposDocumento = ref(false)
 const loadingAreas = ref(false)
+const error = ref('')
 
 // Data from services
 const tiposDocumento = ref([])
-const availableAreas = ref([])
+const userData = ref(null)
 
 // Form data
 const formData = reactive({
+    id: 0,
     nombre: '',
     apellido: '',
     tipoDocumento: '',
     numeroDocumento: '',
     email: '',
-    clavetemporal: '',
+    isActive: true,
 })
 
 // Available roles (these seem to be static based on the original code)
@@ -191,12 +201,37 @@ const availableRoles = ref([
     { id: 3, label: 'PROFESOR', description: 'Acceso a cursos y materiales de estudio', selected: false },
 ])
 
+// Available areas (from store)
+const availableAreas = ref([])
+
 // Load data on component mount
 onMounted(async () => {
-    await Promise.all([
-        loadTiposDocumento(),
-        loadAreas()
-    ])
+    if (props.show && props.userId) {
+        await Promise.all([
+            loadTiposDocumento(),
+            loadAreas(),
+            loadUserData()
+        ])
+    }
+})
+
+// Watch for prop changes
+watch(() => props.show, (newShow) => {
+    if (newShow && props.userId) {
+        loadUserData()
+        if (tiposDocumento.value.length === 0) {
+            loadTiposDocumento()
+        }
+        if (availableAreas.value.length === 0) {
+            loadAreas()
+        }
+    }
+})
+
+watch(() => props.userId, (newUserId) => {
+    if (newUserId && props.show) {
+        loadUserData()
+    }
 })
 
 // Methods to load data from services
@@ -205,7 +240,6 @@ const loadTiposDocumento = async () => {
         loadingTiposDocumento.value = true
         const tipos = await tipoDocumentoService.getTiposDocumento()
         tiposDocumento.value = tipos
-        console.log('Loaded tipos de documento:', tipos)
     } catch (error) {
         console.error('Error loading tipos de documento:', error)
         showErrorToast('Error al cargar los tipos de documento')
@@ -217,8 +251,10 @@ const loadTiposDocumento = async () => {
 const loadAreas = async () => {
     try {
         loadingAreas.value = true
-        const areas = await areasService.getAreas()
-        availableAreas.value = areas.map(area => ({
+        await areasStore.fetchAreas()
+
+        // Initialize availableAreas with selected property
+        availableAreas.value = areasStore.getAllAreas.map(area => ({
             ...area,
             selected: false
         }))
@@ -227,6 +263,57 @@ const loadAreas = async () => {
         showErrorToast('Error al cargar las áreas')
     } finally {
         loadingAreas.value = false
+    }
+}
+
+const loadUserData = async () => {
+    if (!props.userId) return
+
+    loading.value = true
+    error.value = ''
+
+    try {
+        const user = await userService.getUserById(props.userId)
+        userData.value = user
+
+        // Populate form data
+        formData.id = user.id
+        formData.nombre = user.firstName
+        formData.apellido = user.lastName
+        formData.tipoDocumento = user.idTipoDocumento.toString()
+        formData.numeroDocumento = user.documento
+        formData.email = user.email
+        formData.isActive = user.isActive
+
+        // Update roles selection
+        availableRoles.value.forEach(role => {
+            role.selected = user.idsRoles.includes(role.id)
+        })
+
+        // Update areas selection
+        if (user.idAreas && user.idAreas.length > 0) {
+            // Wait for areas to be loaded if not already loaded
+            if (availableAreas.value.length === 0) {
+                await loadAreas()
+            }
+
+            // Mark selected areas
+            availableAreas.value.forEach(area => {
+                area.selected = user.idAreas.includes(area.id)
+            })
+        } else {
+            // If no areas assigned, make sure all are unselected
+            availableAreas.value.forEach(area => {
+                area.selected = false
+            })
+        }
+
+    } catch (err) {
+        error.value = err instanceof Error ? err.message : 'Error al cargar los datos del usuario'
+        showErrorToast(error.value)
+        console.error('Error loading user data:', err)
+    } finally {
+        loading.value = false
     }
 }
 
@@ -270,7 +357,6 @@ const hasFormData = computed(() => {
         formData.tipoDocumento ||
         formData.numeroDocumento ||
         formData.email ||
-        formData.clavetemporal ||
         availableRoles.value.some(role => role.selected) ||
         availableAreas.value.some(area => area.selected)
 })
@@ -287,12 +373,6 @@ watch(isProfesorSelected, (newValue, oldValue) => {
 
 // Methods
 const closeModal = () => {
-    if (hasFormData.value) {
-        if (!confirm('¿Estás seguro de que deseas salir? Los datos ingresados se perderán.')) {
-            return
-        }
-    }
-
     // Start closing animation
     isClosing.value = true
 
@@ -300,12 +380,13 @@ const closeModal = () => {
     setTimeout(() => {
         // Reset form data
         Object.assign(formData, {
+            id: 0,
             nombre: '',
             apellido: '',
             tipoDocumento: '',
             numeroDocumento: '',
             email: '',
-            clavetemporal: '',
+            isActive: true,
         })
 
         // Reset areas selection
@@ -318,48 +399,23 @@ const closeModal = () => {
             role.selected = false
         })
 
+        // Reset states
+        isClosing.value = false
+        error.value = ''
+
         // Emit close event
         emit('close')
     }, 500) // Wait for animation duration
-}
-
-const generateTemporaryPassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*'
-    let result = ''
-    for (let i = 0; i < 8; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    formData.clavetemporal = result
-}
-
-const copyTemporaryPassword = async () => {
-    if (!formData.clavetemporal) {
-        return
-    }
-
-    try {
-        await navigator.clipboard.writeText(formData.clavetemporal)
-        showSuccessToast('Clave temporal copiada al portapapeles')
-    } catch (err) {
-        console.error('Error al copiar al portapapeles:', err)
-        // Fallback para navegadores que no soportan la API Clipboard
-        const textArea = document.createElement('textarea')
-        textArea.value = formData.clavetemporal
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.body.removeChild(textArea)
-        showSuccessToast('Clave temporal copiada al portapapeles')
-    }
 }
 
 const cancelForm = () => {
     closeModal()
 }
 
-const createUser = async () => {
+const updateUser = async () => {
     // Validate form data
     if (!isFormValid.value) {
-        showWarningToast('Por favor complete todos los campos requeridos y seleccione al menos un área y un rol')
+        showWarningToast('Por favor complete todos los campos requeridos y seleccione al menos un rol')
         return
     }
 
@@ -369,94 +425,93 @@ const createUser = async () => {
         return
     }
 
-    // Get selected areas IDs
-    const selectedAreasIds = availableAreas.value
-        .filter(area => area.selected)
-        .map(area => {
-            const id = parseInt(area.id)
-            console.log('Area ID conversion:', area.id, '->', id)
-            return id
-        })
-        .filter(id => !isNaN(id)) // Filter out any NaN values
-
-    // Get selected roles IDs
-    const selectedRolesIds = availableRoles.value
-        .filter(role => role.selected)
-        .map(role => {
-            const id = parseInt(role.id)
-            console.log('Role ID conversion:', role.id, '->', id)
-            return id
-        })
-        .filter(id => !isNaN(id)) // Filter out any NaN values
-
-    // Parse and validate tipo documento idSigla
-    const idSigla = parseInt(formData.tipoDocumento)
-    if (isNaN(idSigla) || idSigla <= 0) {
-        showErrorToast('Tipo de documento inválido')
-        console.error('Invalid idSigla value:', formData.tipoDocumento)
-        return
-    }
-
-    // Generate temporary password if not provided
-    if (!formData.clavetemporal || formData.clavetemporal.trim() === '') {
-        generateTemporaryPassword()
-    }
-
-    // Additional validation
-    if (selectedRolesIds.length === 0) {
-        showErrorToast('Debe seleccionar al menos un rol')
-        return
-    }
-
-    // If PROFESOR is selected, areas are required
-    if (isProfesorSelected.value && selectedAreasIds.length === 0) {
-        showErrorToast('Debe seleccionar al menos un área cuando el rol PROFESOR está seleccionado')
-        return
-    }
-
-    // Prepare user data for API - ensure all values match the expected format
-    const userData = {
-        idTipoDocumento: idSigla,
-        email: formData.email.trim(),
-        documento: formData.numeroDocumento.trim(),
-        password: formData.clavetemporal.trim(),
-        firstName: formData.nombre.trim(),
-        lastName: formData.apellido.trim(),
-        idsRoles: selectedRolesIds,
-        idsAreas: selectedAreasIds
-    }
-
-    // Debug logging
-    console.log('Creating user with data:', userData)
+    submitting.value = true
 
     try {
+        // Get selected areas IDs
+        const selectedAreasIds = availableAreas.value
+            .filter(area => area.selected)
+            .map(area => parseInt(area.id))
+            .filter(id => !isNaN(id))
+
+        // Get selected roles IDs
+        const selectedRolesIds = availableRoles.value
+            .filter(role => role.selected)
+            .map(role => parseInt(role.id))
+            .filter(id => !isNaN(id))
+
+        // Get selected roles descriptions
+        const selectedRolesDescriptions = availableRoles.value
+            .filter(role => role.selected)
+            .map(role => role.label)
+
+        // Parse tipo documento
+        const idSigla = parseInt(formData.tipoDocumento)
+        if (isNaN(idSigla) || idSigla <= 0) {
+            showErrorToast('Tipo de documento inválido')
+            return
+        }
+
+        // Additional validation
+        if (selectedRolesIds.length === 0) {
+            showErrorToast('Debe seleccionar al menos un rol')
+            return
+        }
+
+        // If PROFESOR is selected, areas are required
+        if (isProfesorSelected.value && selectedAreasIds.length === 0) {
+            showErrorToast('Debe seleccionar al menos un área cuando el rol PROFESOR está seleccionado')
+            return
+        }
+
+        // Prepare user data for API
+        const updateData = {
+            id: formData.id,
+            email: formData.email.trim(),
+            idTipoDocumento: idSigla,
+            documento: formData.numeroDocumento.trim(),
+            firstName: formData.nombre.trim(),
+            lastName: formData.apellido.trim(),
+            isActive: formData.isActive,
+            idsRoles: selectedRolesIds,
+            rolesDescriptions: selectedRolesDescriptions,
+            idAreas: selectedAreasIds
+        }
+
+        console.log('Updating user with data:', updateData)
+
         // Call the API service
-        const response = await newUserService.createUser(userData)
+        const updatedUser = await userService.updateUser(formData.id, updateData)
 
         // Process successful response
-        console.log('User created successfully:', response)
+        console.log('User updated successfully:', updatedUser)
 
         // Show success message
-        showSuccessToast('Usuario creado exitosamente')
-        showInfoToast('La contraseña es: ' + response.password)
+        showSuccessToast('Usuario actualizado exitosamente')
 
-        // Emit userCreated event
-        emit('userCreated', response)
+        // Emit updated event
+        emit('updated', updatedUser)
 
         // Close modal
         closeModal()
     } catch (error) {
-        console.error('Error creating user:', error)
-        showErrorToast(error.message || 'Error al crear el usuario')
+        console.error('Error updating user:', error)
+        showErrorToast(error.message || 'Error al actualizar el usuario')
+    } finally {
+        submitting.value = false
     }
 }
 
 const handleOverlayClick = () => {
     if (hasFormData.value) {
-        if (!confirm('¿Estás seguro de que deseas salir? Los datos ingresados se perderán.')) {
+        if (!confirm('¿Estás seguro de que deseas salir? Los cambios no guardados se perderán.')) {
             return
         }
     }
     closeModal()
 }
 </script>
+
+<style scoped>
+/* Custom styles if needed */
+</style>

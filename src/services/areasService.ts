@@ -1,8 +1,14 @@
 import { useAuthStore } from '@/store/authStore'
 
+export interface Subject {
+  id: number
+  name: string
+}
+
 export interface Area {
-  id?: string
+  id?: number
   description: string
+  subjectList: Subject[]
 }
 
 export class AreasService {
@@ -64,7 +70,7 @@ export class AreasService {
     }
   }
 
-  async updateArea(id: string, area: Omit<Area, 'id'>): Promise<Area> {
+  async updateArea(id: number, area: Omit<Area, 'id'>): Promise<Area> {
     try {
       const response = await fetch(`/api/api/v1/area/${id}`, {
         method: 'PUT',

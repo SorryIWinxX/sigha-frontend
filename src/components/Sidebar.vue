@@ -1,13 +1,67 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, UsersRound } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blend, HelpCircle, SquareLibrary, LogOut } from 'lucide-vue-next';
 import { usePermissions } from '@/composables/usePermissions';
+import { useSidebarStore } from '@/store/sidebarStore';
 
-const isSidebarOpen = ref(true);
 const { isProfesor, isAdmin } = usePermissions();
+const router = useRouter();
+const sidebarStore = useSidebarStore();
+
+// Control de animaciones - solo animar después del primer toggle
+const hasBeenToggled = ref(false);
+
+// Inicializar el store desde localStorage al montar el componente
+onMounted(() => {
+    sidebarStore.initializeFromStorage();
+});
+
+// Computed para obtener el estado del sidebar desde el store
+const isSidebarOpen = computed(() => sidebarStore.isOpen);
+
+// Computed para las clases de animación de iconos
+const iconAnimationClasses = computed(() => {
+    if (!hasBeenToggled.value) return 'animate__animated'; // Sin animación específica en la carga inicial
+
+    return [
+        'animate__animated',
+        isSidebarOpen.value ? 'animate__fadeInLeft' : 'animate__fadeInRight'
+    ];
+});
+
+// Computed para las clases de animación de texto
+const textAnimationClasses = computed(() => {
+    if (!hasBeenToggled.value || !isSidebarOpen.value) return '';
+
+    return 'animate__animated animate__fadeInLeft';
+});
+
+// Computed para las clases de animación del título
+const titleAnimationClasses = computed(() => {
+    if (!hasBeenToggled.value || !isSidebarOpen.value) return '';
+
+    return 'animate__animated animate__fadeIn';
+});
+
+// Computed para las clases de animación de los botones toggle
+const toggleButtonAnimationClasses = computed(() => {
+    if (!hasBeenToggled.value) return '';
+
+    return 'animate__animated animate__fadeIn';
+});
 
 const toggleSidebar = () => {
-    isSidebarOpen.value = !isSidebarOpen.value;
+    hasBeenToggled.value = true; // Marcar que se ha hecho toggle
+    sidebarStore.toggleSidebar();
+};
+
+const handleLogout = () => {
+    // Limpiar tokens y datos de sesión
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Redirigir al login
+    router.push('/login');
 };
 
 const menuItems = computed(() => {
@@ -21,11 +75,7 @@ const menuItems = computed(() => {
                 icon: CalendarCog,
                 label: 'Disponibilidad',
             },
-            {
-                to: '/calendar-asigned',
-                icon: CalendarRange,
-                label: 'Calendario asignado',
-            }
+
         );
     }
 
@@ -33,9 +83,14 @@ const menuItems = computed(() => {
     if (isAdmin.value) {
         items.push(
             {
-                to: '/groups',
-                icon: UsersRound,
-                label: 'Grupos',
+                to: '/areas-subjects',
+                icon: SquareLibrary,
+                label: 'Areas y Materias',
+            },
+            {
+                to: '/available-teacher',
+                icon: CalendarRange,
+                label: 'Disponibilidades',
             },
             {
                 to: '/users',
@@ -46,7 +101,8 @@ const menuItems = computed(() => {
                 to: '/admin/settings',
                 icon: Settings,
                 label: 'Configuración',
-            }
+            },
+
         );
     }
 
@@ -58,10 +114,10 @@ const menuItems = computed(() => {
     <aside
         :class="[isSidebarOpen ? 'w-60' : 'w-20', 'bg-gray-50 flex rounded-r-lg flex-col transition-all duration-300 ease-in-out']">
         <div :class="['flex p-4 items-center', isSidebarOpen ? 'justify-between' : 'justify-center']">
-            <h1 v-if="isSidebarOpen" class=" font-semibold">Menu</h1>
+            <h1 v-if="isSidebarOpen" :class="['font-semibold', titleAnimationClasses]">Menu</h1>
             <button @click="toggleSidebar" class="p-2 rounded-md hover:bg-gray-200 transition-colors flex items-center">
-                <PanelLeftClose v-if="isSidebarOpen" :size="20" />
-                <PanelLeftOpen v-else :size="20" />
+                <PanelLeftClose v-if="isSidebarOpen" :size="20" :class="toggleButtonAnimationClasses" />
+                <PanelLeftOpen v-else :size="20" :class="toggleButtonAnimationClasses" />
             </button>
         </div>
         <nav class="flex-1">
@@ -70,22 +126,30 @@ const menuItems = computed(() => {
                     <router-link :to="item.to"
                         :class="['flex items-center py-3 text-gray-600 hover:bg-gray-100 rounded-r-sm transition-colors', isSidebarOpen ? 'px-6' : 'px-4 justify-center']"
                         active-class="text-black font-semibold bg-gray-200 rounded-r-sm">
-                        <component :is="item.icon" :class="isSidebarOpen ? 'mr-3' : 'mr-0'" :size="20" />
-                        <span v-if="isSidebarOpen">{{ item.label }}</span>
+                        <component :is="item.icon" :class="[
+                            isSidebarOpen ? 'mr-3' : 'mr-0',
+                            iconAnimationClasses
+                        ]" :size="20" />
+                        <span v-if="isSidebarOpen" :class="textAnimationClasses">
+                            {{ item.label }}
+                        </span>
                     </router-link>
                 </li>
             </ul>
         </nav>
         <div
             :class="['group flex items-center gap-2 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer', isSidebarOpen ? 'p-4 px-6' : 'p-4 justify-center']">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-help-circle group-hover:stroke-gray-800">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <path d="M12 17h.01" />
-            </svg>
-            <span v-if="isSidebarOpen">Ayuda</span>
+            <HelpCircle :class="iconAnimationClasses" />
+            <span v-if="isSidebarOpen" :class="textAnimationClasses">
+                Ayuda
+            </span>
+        </div>
+        <div @click="handleLogout"
+            :class="['group flex items-center gap-2 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors cursor-pointer border-t border-gray-200', isSidebarOpen ? 'p-4 px-6' : 'p-4 justify-center']">
+            <LogOut :class="iconAnimationClasses" />
+            <span v-if="isSidebarOpen" :class="textAnimationClasses">
+                Cerrar sesión
+            </span>
         </div>
     </aside>
 </template>

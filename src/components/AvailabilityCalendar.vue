@@ -1,8 +1,31 @@
 <template>
     <div class="w-full h-full flex flex-col overflow-hidden bg-white">
-        <div v-if="internalSelectedSlots.length > 0"
-            class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg flex-shrink-0">
+        <!-- Mensaje cuando la disponibilidad está deshabilitada -->
+        <div v-if="!props.semesterAvailability"
+            class="mb-4 p-4 bg-red-50 border-2 border-red-500 rounded-lg flex-shrink-0">
             <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <X :size="20" class="text-red-500" />
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">
+                        Disponibilidad Deshabilitada
+                    </h3>
+                    <div class="mt-1 text-sm text-red-700">
+                        <p>La configuración de disponibilidad está deshabilitada para este semestre. Todas las casillas
+                            están bloqueadas y no se pueden realizar modificaciones.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-else-if="internalSelectedSlots.length > 0 && !isInfoMessageClosed"
+            class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg flex-shrink-0 relative">
+            <button @click="closeInfoMessage"
+                class="absolute top-2 right-2 p-1 hover:bg-yellow-100 rounded transition-colors"
+                aria-label="Cerrar mensaje">
+                <X :size="24" class="text-yellow-600" />
+            </button>
+            <div class="flex items-start pr-8">
                 <div class="flex-shrink-0">
                     <Info :size="20" class="text-yellow-500" />
                 </div>
@@ -20,11 +43,15 @@
                             </span>
                             <span
                                 class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 mr-2">
-                                Amarillo: Debe cambiar las áreas seleccionadas
+                                Amarillo: Rechazada
                             </span>
                             <span
-                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                Azul: Aun no se ha revisado
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                                Azul: Enviada
+                            </span>
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                Gris: Sin estado
                             </span>
                         </p>
                     </div>
@@ -43,36 +70,41 @@
                 <span v-if="availabilityError" class="ml-2 text-xs text-red-600">Error al cargar</span>
             </div>
             <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                <Button @click="clearAllSelections"
-                    customClass="py-1.5 px-3 bg-[#B83C3C] hover:bg-[#A33434] text-white">
+                <Button @click="clearAllSelections" :disabled="!props.semesterAvailability"
+                    customClass="py-1.5 px-3 bg-[#B83C3C] hover:bg-[#A33434] text-white"
+                    :class="{ 'opacity-50 cursor-not-allowed': !props.semesterAvailability }">
                     <template #icon>
                         <Trash2 :size="18" />
                     </template>
                     Eliminar todas
                 </Button>
-                <Button @click="undoSelection" :disabled="!canUndo"
-                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800">
+                <Button @click="undoSelection" :disabled="!canUndo || !props.semesterAvailability"
+                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800"
+                    :class="{ 'opacity-50 cursor-not-allowed': !canUndo || !props.semesterAvailability }">
                     <template #icon>
                         <Undo2 :size="18" />
                     </template>
                     Deshacer
                 </Button>
-                <Button @click="redoSelection" :disabled="!canRedo"
-                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800">
+                <Button @click="redoSelection" :disabled="!canRedo || !props.semesterAvailability"
+                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800"
+                    :class="{ 'opacity-50 cursor-not-allowed': !canRedo || !props.semesterAvailability }">
                     <template #icon>
                         <Redo2 :size="18" />
                     </template>
                     Rehacer
                 </Button>
-                <button
-                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#3c8bb8] hover:bg-[#345fa3] transition-all text-white text-sm font-normal cursor-pointer">
+                <button :disabled="!props.semesterAvailability"
+                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#3c8bb8] hover:bg-[#345fa3] transition-all text-white text-sm font-normal"
+                    :class="props.semesterAvailability ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'">
                     Disponibilidad Anterior
                     <ClipboardCopy :size="18" />
                 </button>
                 <button
-                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#67B83C] hover:bg-[#57A334] transition-all text-white text-sm font-normal cursor-pointer"
-                    @click="sendAvailability" :disabled="isAvailabilitySent || loadingAvailability"
-                    :class="{ 'opacity-50 cursor-not-allowed': isAvailabilitySent || loadingAvailability }">
+                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#67B83C] hover:bg-[#57A334] transition-all text-white text-sm font-normal"
+                    @click="sendAvailability"
+                    :disabled="isAvailabilitySent || loadingAvailability || !props.semesterAvailability"
+                    :class="{ 'opacity-50 cursor-not-allowed': isAvailabilitySent || loadingAvailability || !props.semesterAvailability }">
                     <Send :size="18" />
                     {{ loadingAvailability ? 'Cargando...' : 'Enviar Disponibilidad' }}
                 </button>
@@ -80,20 +112,27 @@
         </div>
 
         <div class="flex-1 min-h-0 overflow-hidden">
-            <Calendar @day-header-clicked="toggleSelectAllHoursInDay">
+            <Calendar @day-header-clicked="props.semesterAvailability ? toggleSelectAllHoursInDay : () => { }">
                 <template #day-cell="{ day, hour }">
                     <div class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group"
-                        :class="{
-                            'bg-[#3c67b8] hover:bg-[#315495]': isSelected(day.value, hour.value),
-                            'bg-[#3c67b89a]': isSelecting(day.value, hour.value),
-                            'bg-gray-800 ': isLunchTime(hour.value) || isSunday(day.value),
-                            'hover:bg-[#3C67B8] hover:text-white cursor-pointer': !isLunchTime(hour.value) && !isSunday(day.value),
-                            'cursor-not-allowed': isLunchTime(hour.value) || isSunday(day.value)
-                        }"
-                        @mousedown="!isLunchTime(hour.value) && !isSunday(day.value) && startSelection($event, day.value, hour.value)"
-                        @mousemove="handleMouseMove($event, day.value, hour.value)" @mouseup="endSelection()"
-                        @mouseleave="handleMouseLeave(day.value, hour.value)"
-                        @click="!isLunchTime(hour.value) && !isSunday(day.value) && toggleSelection(day.value, hour.value)">
+                        :class="[
+                            {
+                                'bg-gray-800': isLunchTime(hour.value) || isSunday(day.value),
+                                'bg-[#3c67b89a]': isSelecting(day.value, hour.value) && props.semesterAvailability,
+                                'hover:bg-[#3C67B8] hover:text-white cursor-pointer': !isLunchTime(hour.value) && !isSunday(day.value) && !isSelected(day.value, hour.value) && props.semesterAvailability,
+                                'cursor-not-allowed': isLunchTime(hour.value) || isSunday(day.value) || !props.semesterAvailability
+                            },
+                            isSelected(day.value, hour.value) ? [
+                                getStatusColors(getSlotStatus(day.value, hour.value)).bg,
+                                getStatusColors(getSlotStatus(day.value, hour.value)).hover,
+                                getStatusColors(getSlotStatus(day.value, hour.value)).text
+                            ] : []
+                        ]"
+                        @mousedown="!isLunchTime(hour.value) && !isSunday(day.value) && props.semesterAvailability && startSelection($event, day.value, hour.value)"
+                        @mousemove="props.semesterAvailability && handleMouseMove($event, day.value, hour.value)"
+                        @mouseup="props.semesterAvailability && endSelection()"
+                        @mouseleave="props.semesterAvailability && handleMouseLeave(day.value, hour.value)"
+                        @click="!isLunchTime(hour.value) && !isSunday(day.value) && props.semesterAvailability && toggleSelection(day.value, hour.value)">
                         <div class="flex flex-col items-center justify-center w-full h-full">
                             <span class="text-xs transition-opacity" :class="{
                                 'opacity-0 group-hover:opacity-100 text-gray-400': !isSelected(day.value, hour.value) && !isLunchTime(hour.value) && !isSunday(day.value),
@@ -112,12 +151,21 @@
                                 :class="{ 'opacity-100': isSunday(day.value) }">
                                 Festivo
                             </span>
+                            <span v-if="!props.semesterAvailability && !isLunchTime(hour.value) && !isSunday(day.value)"
+                                class="text-[10px] bg-gray-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                :class="{ 'opacity-100': !props.semesterAvailability }">
+                                Bloqueado
+                            </span>
                         </div>
 
                         <!-- Tooltip -->
                         <div
                             class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-3 rounded text-xs whitespace-nowrap opacity-0 pointer-events-none transition-opacity z-20 shadow-lg group-hover:opacity-100">
-                            {{ day.label }} {{ hour.label }}
+                            <div>{{ day.label }} {{ hour.label }}</div>
+                            <div v-if="isSelected(day.value, hour.value) && getSlotStatus(day.value, hour.value)"
+                                class="text-xs opacity-80">
+                                Estado: {{ getStatusDescription(getSlotStatus(day.value, hour.value)) }}
+                            </div>
                             <div
                                 class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
                             </div>
@@ -136,6 +184,8 @@ import Button from '@/components/common/Button.vue';
 import Calendar from '@/components/common/Calendar.vue';
 import availabilityService from '@/services/availabilityService';
 import { showSuccessToast, showErrorToast } from '@/utils/toast';
+import { useStatusStore } from '@/store/statusStore';
+import { useAuthStore } from '@/store/authStore';
 
 // Props y emits
 const props = defineProps({
@@ -146,10 +196,18 @@ const props = defineProps({
     semesterId: {
         type: [String, Number],
         required: true
+    },
+    semesterAvailability: {
+        type: Boolean,
+        default: true
     }
 });
 
 const emit = defineEmits(['update:modelValue']);
+
+// Store
+const statusStore = useStatusStore();
+const authStore = useAuthStore();
 
 // Estado
 const isSelectionActive = ref(false);
@@ -166,6 +224,7 @@ const internalSelectedSlots = ref([]);
 const isAvailabilitySent = ref(false);
 const loadingAvailability = ref(false);
 const availabilityError = ref(null);
+const isInfoMessageClosed = ref(false);
 
 // Computed properties
 const sortedSelectedSlots = computed(() => {
@@ -195,6 +254,45 @@ function isSelected(day, hour) {
     return internalSelectedSlots.value.some(slot => slot.day === day && slot.hour === hour);
 }
 
+function getSlotStatus(day, hour) {
+    const slot = internalSelectedSlots.value.find(slot => slot.day === day && slot.hour === hour);
+    return slot?.statusId || null;
+}
+
+function getStatusColors(statusId) {
+    switch (statusId) {
+        case 1: // ENVIADO
+            return {
+                bg: 'bg-blue-500',
+                hover: 'hover:bg-blue-600',
+                text: 'text-white'
+            };
+        case 2: // APROBADO
+            return {
+                bg: 'bg-green-500',
+                hover: 'hover:bg-green-600',
+                text: 'text-white'
+            };
+        case 3: // RECHAZADO
+            return {
+                bg: 'bg-yellow-500',
+                hover: 'hover:bg-yellow-600',
+                text: 'text-white'
+            };
+        default: // Sin estado o nuevo
+            return {
+                bg: 'bg-[#3c67b8]',
+                hover: 'hover:bg-[#315495]',
+                text: 'text-white'
+            };
+    }
+}
+
+function getStatusDescription(statusId) {
+    const status = statusStore.getStatusById(statusId);
+    return status?.description || 'Sin estado';
+}
+
 function isSelecting(day, hour) {
     return temporarySelection.value.some(slot => slot.day === day && slot.hour === hour);
 }
@@ -211,6 +309,10 @@ function isSunday(day) {
 function toggleSelection(day, hour) {
     // No permitir seleccionar horas de almuerzo o domingos
     if (isLunchTime(hour) || isSunday(day)) return;
+
+    // Verificar si el slot está aprobado o rechazado
+    const currentStatus = getSlotStatus(day, hour);
+    if (currentStatus === 2 || currentStatus === 3) return;
 
     if (!isDragging.value) {
         if (isSelected(day, hour)) {
@@ -243,7 +345,7 @@ function selectAllHoursInDay(day) {
         // Agregar todas las horas que faltan para este día (excepto almuerzo)
         selectableHours.forEach(hour => {
             if (!isSelected(day, hour)) {
-                newSelection.push({ day, hour });
+                newSelection.push({ day, hour, statusId: null });
             }
         });
         internalSelectedSlots.value = newSelection;
@@ -305,7 +407,9 @@ function endSelection() {
         const newSelection = [...internalSelectedSlots.value];
 
         temporarySelection.value.forEach(slot => {
-            if (!isSelected(slot.day, slot.hour) && !isLunchTime(slot.hour)) {
+            // Verificar si el slot está aprobado o rechazado
+            const currentStatus = getSlotStatus(slot.day, slot.hour);
+            if (!isSelected(slot.day, slot.hour) && !isLunchTime(slot.hour) && currentStatus !== 2 && currentStatus !== 3) {
                 newSelection.push(slot);
             }
         });
@@ -330,9 +434,12 @@ function calculateRange(start, end) {
     // Generar todas las celdas dentro del rango
     for (let day = startDay; day <= endDay; day++) {
         for (let hour = startHour; hour <= endHour; hour++) {
-            // Excluir horas de almuerzo y domingos
+            // Excluir horas de almuerzo, domingos y slots aprobados/rechazados
             if (!isLunchTime(hour) && !isSunday(day)) {
-                range.push({ day, hour });
+                const currentStatus = getSlotStatus(day, hour);
+                if (currentStatus !== 2 && currentStatus !== 3) {
+                    range.push({ day, hour, statusId: null });
+                }
             }
         }
     }
@@ -340,19 +447,27 @@ function calculateRange(start, end) {
     return range;
 }
 
-function addSelection(day, hour) {
+function addSelection(day, hour, statusId = null) {
     // No permitir seleccionar horas de almuerzo o domingos
     if (isLunchTime(hour) || isSunday(day)) return;
 
+    // Verificar si el slot está aprobado o rechazado
+    const currentStatus = getSlotStatus(day, hour);
+    if (currentStatus === 2 || currentStatus === 3) return;
+
     if (!isSelected(day, hour)) {
         // Crear una nueva copia del array para asegurar la reactividad
-        const newSelection = [...internalSelectedSlots.value, { day, hour }];
+        const newSelection = [...internalSelectedSlots.value, { day, hour, statusId }];
         internalSelectedSlots.value = newSelection;
         saveToHistory();
     }
 }
 
 function removeSelection(day, hour) {
+    // Verificar si el slot está aprobado o rechazado
+    const currentStatus = getSlotStatus(day, hour);
+    if (currentStatus === 2 || currentStatus === 3) return;
+
     const index = internalSelectedSlots.value.findIndex(slot => slot.day === day && slot.hour === hour);
     if (index !== -1) {
         const newSelection = [...internalSelectedSlots.value];
@@ -363,8 +478,14 @@ function removeSelection(day, hour) {
 }
 
 function clearAllSelections() {
-    if (internalSelectedSlots.value.length > 0) {
-        internalSelectedSlots.value = [];
+    // Filtrar los slots que no están aprobados ni rechazados
+    const slotsToKeep = internalSelectedSlots.value.filter(slot => {
+        const status = slot.statusId;
+        return status === 2 || status === 3;
+    });
+
+    if (slotsToKeep.length !== internalSelectedSlots.value.length) {
+        internalSelectedSlots.value = slotsToKeep;
         saveToHistory();
     }
 }
@@ -427,25 +548,40 @@ function toggleSelectAllHoursInDay(dayValue) {
         .filter(slot => slot.day === dayValue && !isLunchTime(slot.hour))
         .map(slot => slot.hour);
 
+    // Verificar si hay slots aprobados o rechazados
+    const hasApprovedOrRejectedSlots = internalSelectedSlots.value.some(
+        slot => slot.day === dayValue && (slot.statusId === 2 || slot.statusId === 3)
+    );
+
     let allSelected = true;
-    if (selectableHours.length === 0 && currentDaySelections.length > 0) { // Should not happen if day is not Sunday
-        allSelected = true; // Consider all selected if no selectable hours but some are selected (edge case cleanup)
+    if (selectableHours.length === 0 && currentDaySelections.length > 0) {
+        allSelected = true;
     } else if (selectableHours.length === 0 && currentDaySelections.length === 0) {
-        allSelected = false; // No selectable hours and none selected, so not all selected
+        allSelected = false;
     } else {
         allSelected = selectableHours.every(h => currentDaySelections.includes(h)) &&
             currentDaySelections.length === selectableHours.length;
     }
 
     if (allSelected) {
-        // Deselect all for this day
-        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot => slot.day !== dayValue);
+        // Deselect all for this day, but keep approved/rejected slots
+        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot =>
+            slot.day !== dayValue || slot.statusId === 2 || slot.statusId === 3
+        );
     } else {
         // Select all for this day
         // First, remove any existing selections for this day to avoid duplicates and ensure clean select all
-        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot => slot.day !== dayValue);
+        // But keep approved/rejected slots
+        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot =>
+            slot.day !== dayValue || slot.statusId === 2 || slot.statusId === 3
+        );
+
+        // Add new selections for non-approved/rejected hours
         selectableHours.forEach(hour => {
-            internalSelectedSlots.value.push({ day: dayValue, hour });
+            const currentStatus = getSlotStatus(dayValue, hour);
+            if (currentStatus !== 2 && currentStatus !== 3) {
+                internalSelectedSlots.value.push({ day: dayValue, hour, statusId: null });
+            }
         });
     }
     saveToHistory();
@@ -458,24 +594,44 @@ async function loadAvailability() {
         loadingAvailability.value = true;
         availabilityError.value = null;
 
-        const response = await availabilityService.getAvailability(props.semesterId);
-
-        if (response.disponibilidad) {
-            // Convertir la disponibilidad de la API al formato interno
-            const loadedSlots = convertApiToInternalFormat(response.disponibilidad);
-            internalSelectedSlots.value = loadedSlots;
-
-            // Limpiar historial y guardar el estado cargado
-            history.value = [];
-            historyIndex.value = -1;
-            saveToHistory();
-        } else {
-            // Si no hay disponibilidad, asegurarse de que esté vacío
-            internalSelectedSlots.value = [];
-            history.value = [];
-            historyIndex.value = -1;
-            saveToHistory();
+        // Cargar estados si no están cargados
+        if (!statusStore.isLoaded) {
+            await statusStore.fetchStatusAvailability();
         }
+
+        // Intentar cargar disponibilidad global si tenemos userId
+        const userId = authStore.userId;
+        let loadedSlots = [];
+
+        if (userId) {
+            try {
+                const globalResponse = await availabilityService.getGlobalAvailability(userId, props.semesterId);
+                if (globalResponse.disponibilidad) {
+                    loadedSlots = convertGlobalApiToInternalFormat(globalResponse.disponibilidad);
+                }
+            } catch (globalError) {
+                console.warn('Error loading global availability, falling back to simple availability:', globalError);
+
+                // Fallback a la API simple
+                const response = await availabilityService.getAvailability(props.semesterId);
+                if (response.disponibilidad) {
+                    loadedSlots = convertApiToInternalFormat(response.disponibilidad);
+                }
+            }
+        } else {
+            // Si no hay userId, usar la API simple
+            const response = await availabilityService.getAvailability(props.semesterId);
+            if (response.disponibilidad) {
+                loadedSlots = convertApiToInternalFormat(response.disponibilidad);
+            }
+        }
+
+        internalSelectedSlots.value = loadedSlots;
+
+        // Limpiar historial y guardar el estado cargado
+        history.value = [];
+        historyIndex.value = -1;
+        saveToHistory();
 
         // Reset availability sent status
         isAvailabilitySent.value = false;
@@ -511,7 +667,36 @@ function convertApiToInternalFormat(apiData) {
             apiData[dayName].forEach(slot => {
                 slots.push({
                     day: dayValue,
-                    hour: slot.hour
+                    hour: slot.hour,
+                    statusId: slot.statusId || null
+                });
+            });
+        }
+    });
+
+    return slots;
+}
+
+function convertGlobalApiToInternalFormat(globalApiData) {
+    const slots = [];
+    const dayMapping = {
+        'LUNES': 1,
+        'MARTES': 2,
+        'MIERCOLES': 3,
+        'JUEVES': 4,
+        'VIERNES': 5,
+        'SABADO': 6,
+        'DOMINGO': 7
+    };
+
+    Object.keys(globalApiData).forEach(dayName => {
+        const dayValue = dayMapping[dayName];
+        if (dayValue) {
+            globalApiData[dayName].forEach(slot => {
+                slots.push({
+                    day: dayValue,
+                    hour: slot.hour,
+                    statusId: slot.statusId
                 });
             });
         }
@@ -576,6 +761,10 @@ async function sendAvailability() {
         showErrorToast('Error al enviar la disponibilidad');
         // Opcional: mostrar un mensaje de error al usuario
     }
+}
+
+function closeInfoMessage() {
+    isInfoMessageClosed.value = true;
 }
 
 // Watchers

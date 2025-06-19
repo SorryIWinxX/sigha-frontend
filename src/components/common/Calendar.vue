@@ -13,8 +13,10 @@
         <!-- Filas de horas -->
         <template v-for="hour in hours" :key="hour.value">
             <!-- Celda de hora -->
-            <div
-                class="h-14 flex items-center justify-center border-b border-gray-200 text-xs text-gray-500 font-semibold">
+            <div :class="[
+                'flex items-center justify-center border-b border-gray-200 text-xs text-gray-500 font-semibold',
+                cellHeight
+            ]">
                 {{ hour.label }}
             </div>
 
@@ -22,8 +24,10 @@
             <template v-for="day in days" :key="`${day.value}-${hour.value}`">
                 <!-- Uso del slot para cada celda de día -->
                 <slot name="day-cell" :day="day" :hour="hour">
-                    <div
-                        class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group">
+                    <div :class="[
+                        'border-b border-l border-gray-200 relative flex items-center justify-center transition-all group',
+                        cellHeight
+                    ]">
                         <div class="flex flex-col items-center justify-center w-full h-full">
                             <span class="text-xs transition-opacity opacity-0 group-hover:opacity-100 text-gray-400">
                                 {{ formatHourShort(hour.value) }}
@@ -37,6 +41,14 @@
 </template>
 
 <script setup>
+// Props
+const props = defineProps({
+    cellHeight: {
+        type: String,
+        default: 'h-14' // 56px por defecto
+    }
+});
+
 const emit = defineEmits(['day-header-clicked']);
 
 const days = [

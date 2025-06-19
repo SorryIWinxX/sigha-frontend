@@ -1,128 +1,159 @@
 <template>
-    <div class="areas-config p-4 rounded-sm">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-lg font-medium text-gray-900">Áreas</h2>
-            <button @click="addNewAreaRow"
-                class="px-4 py-2 bg-[#67B83C] text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200"
-                :disabled="isCreating || isLoading"
-                :class="{ 'opacity-50 cursor-not-allowed': isCreating || isLoading }">
-                + Crear Área
-            </button>
+    <div class="bg-gray-50 h-[calc(100vh-20vh)] flex flex-col">
+        <!-- Fixed Header -->
+        <div class="flex-shrink-0 px-6 py-4 bg-white border-b border-gray-200">
+            <div class="flex gap-4 items-center">
+                <Search v-model="searchQuery" />
+                <Button
+                    customClass="px-4 py-2.5 border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2">
+                    <Filter class="w-4 h-4" />
+                    Filtros
+                </Button>
+                <Button customClass="bg-[#67b83c] w-40 text-white py-2.5 px-4" @click="addNewAreaRow">
+                    <template #icon>
+                        <Plus :size="20" />
+                    </template>
+                    Crear area
+                </Button>
+            </div>
         </div>
 
-        <!-- Indicador de carga -->
-        <div v-if="isLoading && areas.length === 0" class="text-center py-8">
-            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#67B83C]"></div>
-            <p class="mt-2 text-gray-500 text-sm">Cargando áreas...</p>
-        </div>
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-auto px-6 py-6">
+            <!-- Indicador de carga -->
+            <div v-if="isLoading && areas.length === 0" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#67B83C]"></div>
+                <p class="mt-4 text-gray-500">Cargando áreas...</p>
+            </div>
 
-        <!-- Tabla usando el componente del sistema -->
-        <div v-if="!isLoading || areas.length > 0" class="w-full bg-white">
-            <div class="overflow-hidden border border-gray-200 rounded-sm">
-                <table class="w-full">
-                    <thead class="bg-gray-100 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-3 text-left">
-                                <span class="text-gray-900 font-semibold text-sm">Descripción</span>
-                            </th>
-                            <th class="px-6 py-3 text-center">
-                                <span class="text-gray-900 font-semibold text-sm">Acciones</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
-                        <!-- Fila para crear nueva área -->
-                        <tr v-if="isCreating" class="bg-blue-50 border-l-4 border-l-blue-500">
-                            <td class="px-6 py-4">
-                                <input v-model="newArea.description" type="text"
-                                    placeholder="Ej: MATEMÁTICAS COMPUTACIONALES"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    @keyup.enter="saveNewArea" @keyup.escape="cancelCreate">
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center justify-center gap-2">
-                                    <button @click="saveNewArea"
-                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-sm transition-colors duration-200 flex items-center gap-2"
-                                        :disabled="!canSaveNew || isSaving" :class="(canSaveNew && !isSaving)
-                                            ? 'bg-green-600 hover:bg-green-700'
-                                            : 'bg-gray-400 cursor-not-allowed'">
-                                        <div v-if="isSaving"
-                                            class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                        {{ isSaving ? 'Guardando...' : 'Guardar' }}
-                                    </button>
-                                    <button @click="cancelCreate"
-                                        class="px-3 py-1.5 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
-                                        Cancelar
-                                    </button>
+            <!-- Fila para crear nueva área -->
+            <div v-if="isCreating" class="bg-white rounded-lg border border-gray-200 mb-4 p-6">
+                <div class="flex items-center gap-4">
+                    <input v-model="newArea.description" type="text" placeholder="Ej: MATEMÁTICAS COMPUTACIONALES"
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
+                        @keyup.enter="saveNewArea" @keyup.escape="cancelCreate">
+                    <div class="flex gap-2">
+                        <button @click="saveNewArea"
+                            class="px-4 py-2 text-sm font-medium text-white rounded-sm transition-colors duration-200 flex items-center gap-2"
+                            :disabled="!canSaveNew || isSaving"
+                            :class="(canSaveNew && !isSaving) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'">
+                            <div v-if="isSaving" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white">
+                            </div>
+                            {{ isSaving ? 'Guardando...' : 'Guardar' }}
+                        </button>
+                        <button @click="cancelCreate"
+                            class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Áreas -->
+            <div class="space-y-4">
+                <div v-for="area in filteredAreas" :key="area.id"
+                    class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <!-- Header del área -->
+                    <div class="p-6">
+                        <div class="flex items-center justify-between" v-if="editingId !== area.id">
+                            <div class="flex items-center gap-4 flex-1">
+                                <button @click="toggleArea(area.id || 0)"
+                                    class="p-1 hover:bg-gray-100 rounded-sm transition-colors duration-200">
+                                    <svg class="w-5 h-5 text-gray-500 transition-transform duration-200"
+                                        :class="{ 'rotate-90': expandedAreas.has(area.id || 0) }" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7">
+                                        </path>
+                                    </svg>
+                                </button>
+
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ area.description }}</h3>
+                                    <p class="text-sm text-gray-600">{{ getAreaSubtitle(area.description) }}</p>
                                 </div>
-                            </td>
-                        </tr>
+                            </div>
 
-                        <!-- Filas de áreas existentes -->
-                        <tr v-for="(area, index) in areas" :key="area.id" :class="[
-                            'hover:bg-gray-50 transition-colors duration-150',
-                            { 'bg-gray-50/30': index % 2 === 0 }
-                        ]">
-                            <!-- Modo edición -->
-                            <template v-if="editingId === area.id">
-                                <td class="px-6 py-4">
-                                    <input v-model="editForm.description" type="text"
-                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                        @keyup.enter="saveEdit" @keyup.escape="cancelEdit">
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button @click="saveEdit"
-                                            class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200">
-                                            Guardar
-                                        </button>
-                                        <button @click="cancelEdit"
-                                            class="px-3 py-1.5 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
-                                            Cancelar
-                                        </button>
-                                    </div>
-                                </td>
-                            </template>
+                            <div class="flex items-center gap-6">
+                                <div class="flex gap-4">
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 font-medium">
+                                        {{ getSubjectsCount(area.id || 0) }} materias
+                                    </span>
+                                </div>
 
-                            <!-- Modo vista -->
-                            <template v-else>
-                                <td class="px-6 py-4">
-                                    <span class="text-gray-900 font-medium text-sm">{{ area.description }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="relative flex items-center justify-center">
-                                        <button @click="toggleDropdown(area.id || '')"
-                                            class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-white rounded-sm flex items-center justify-center hover:bg-[#67b83c] hover:border-gray-300">
-                                            <MoreHorizontal class="h-4 w-4 transition-colors duration-200" />
-                                        </button>
-                                        <div v-if="openDropdown === (area.id || '')" :class="[
-                                            'absolute z-50 w-32 bg-white rounded-sm border border-gray-200 shadow-lg overflow-hidden',
-                                            index >= areas.length - 2 ? 'bottom-10 right-0' : 'top-10 right-0'
-                                        ]">
-                                            <div class="flex">
-                                                <button @click="startEdit(area)"
-                                                    class="flex items-center justify-center flex-1 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-r border-gray-100 cursor-pointer">
-                                                    <Edit class="h-5 w-5 text-gray-900" />
-                                                </button>
-                                                <button @click="deleteArea(area.id || '')"
-                                                    class="flex items-center justify-center flex-1 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer">
-                                                    <Trash2 class="h-5 w-5 text-red-500" />
-                                                </button>
-                                            </div>
+                                <div class="relative">
+                                    <button @click="toggleDropdown(area.id || 0)"
+                                        class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-gray-300 rounded-sm flex items-center justify-center hover:bg-[#67b83c] transition-colors duration-200">
+                                        <MoreHorizontal class="h-4 w-4" />
+                                    </button>
+                                    <div v-if="openDropdown === (area.id || 0)"
+                                        class="absolute z-50 w-32 bg-white rounded-sm border border-gray-200 shadow-lg overflow-hidden top-10 right-0">
+                                        <div class="flex">
+                                            <button @click="startEdit(area)"
+                                                class="flex items-center justify-center flex-1 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-r border-gray-100 cursor-pointer">
+                                                <Edit class="h-5 w-5 text-gray-900" />
+                                            </button>
+                                            <button @click="deleteArea(area.id || 0)"
+                                                class="flex items-center justify-center flex-1 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer">
+                                                <Trash2 class="h-5 w-5 text-red-500" />
+                                            </button>
                                         </div>
                                     </div>
-                                </td>
-                            </template>
-                        </tr>
+                                </div>
+                            </div>
+                        </div>
 
-                        <!-- Estado vacío -->
-                        <tr v-if="areas.length === 0 && !isCreating">
-                            <td colspan="2" class="px-6 py-8 text-center text-gray-500">
-                                No hay áreas configuradas. Haz clic en "Crear Área" para agregar una.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                        <!-- Modo edición -->
+                        <div v-if="editingId === area.id" class="flex items-center gap-4">
+                            <input v-model="editForm.description" type="text"
+                                class="flex-1 px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
+                                @keyup.enter="saveEdit" @keyup.escape="cancelEdit">
+                            <div class="flex gap-2">
+                                <button @click="saveEdit"
+                                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200">
+                                    Guardar
+                                </button>
+                                <button @click="cancelEdit"
+                                    class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Materias expandidas -->
+                    <div v-if="expandedAreas.has(area.id || 0)" class="border-t border-gray-200 bg-gray-50">
+                        <div class="p-6">
+                            <div class="space-y-3">
+                                <div v-for="subject in getSubjectsByArea(area.id || 0)" :key="subject.id"
+                                    class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">{{ subject.name }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado vacío -->
+            <div v-if="areas.length === 0 && !isCreating && !isLoading"
+                class="text-center py-12 bg-white rounded-lg border border-gray-200">
+                <div class="text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                        </path>
+                    </svg>
+                    <p class="text-lg font-medium text-gray-900 mb-1">No hay áreas configuradas</p>
+                    <p class="text-gray-600">Haz clic en "Crear Área" para agregar una nueva área de estudio.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -130,10 +161,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { MoreHorizontal, Edit, Trash2 } from 'lucide-vue-next'
-import { AreasService } from '@/services/areasService'
+import { MoreHorizontal, Edit, Trash2, Filter, Plus } from 'lucide-vue-next'
+import { AreasService, type Area, type Subject } from '@/services/areasService'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
-import type { Area } from '@/services/areasService'
+import Search from '@/components/common/Search.vue'
+import Button from '@/components/common/Button.vue'
 
 // Instanciar el servicio
 const areasService = new AreasService()
@@ -143,21 +175,71 @@ const areas = ref<Area[]>([])
 const isLoading = ref(false)
 const isCreating = ref(false)
 const isSaving = ref(false)
-const editingId = ref<string | null>(null)
-const openDropdown = ref<string | null>(null)
+const editingId = ref<number | null>(null)
+const openDropdown = ref<number | null>(null)
+const expandedAreas = ref<Set<number>>(new Set())
+const searchQuery = ref('')
 
 const newArea = reactive({
-    description: ''
+    description: '',
+    subjectList: [] as Subject[]
 })
 
 const editForm = reactive({
-    description: ''
+    description: '',
+    subjectList: [] as Subject[]
 })
 
 // Computed properties
 const canSaveNew = computed(() => {
     return newArea.description.trim()
 })
+
+const filteredAreas = computed(() => {
+    if (!searchQuery.value.trim()) {
+        return areas.value
+    }
+
+    const query = searchQuery.value.toLowerCase()
+    return areas.value.filter(area => {
+        const areaMatches = area.description.toLowerCase().includes(query)
+        const subjectMatches = area.subjectList.some(subject =>
+            subject.name.toLowerCase().includes(query)
+        )
+        return areaMatches || subjectMatches
+    })
+})
+
+// Funciones para materias
+const getSubjectsByArea = (areaId: number): Subject[] => {
+    const area = areas.value.find(area => area.id === areaId)
+    return area?.subjectList || []
+}
+
+const getSubjectsCount = (areaId: number): number => {
+    const area = areas.value.find(area => area.id === areaId)
+    return area?.subjectList.length || 0
+}
+
+const getAreaSubtitle = (description: string): string => {
+    if (description.toLowerCase().includes('matemáticas') || description.toLowerCase().includes('matematicas')) {
+        return 'Fundamentos matemáticos para la computación'
+    } else if (description.toLowerCase().includes('arquitectura') || description.toLowerCase().includes('computador')) {
+        return 'Hardware y arquitectura de sistemas'
+    } else if (description.toLowerCase().includes('software')) {
+        return 'Desarrollo y gestión de software'
+    }
+    return 'Área de conocimiento especializado'
+}
+
+// Función para expandir/colapsar áreas
+const toggleArea = (areaId: number) => {
+    if (expandedAreas.value.has(areaId)) {
+        expandedAreas.value.delete(areaId)
+    } else {
+        expandedAreas.value.add(areaId)
+    }
+}
 
 // Cargar áreas al montar el componente
 const loadAreas = async () => {
@@ -185,13 +267,13 @@ const saveNewArea = async () => {
     if (!canSaveNew.value || isSaving.value) return
 
     const areaData = {
-        description: newArea.description.trim()
+        description: newArea.description.trim(),
+        subjectList: newArea.subjectList
     }
 
     isSaving.value = true
     try {
         await areasService.createArea(areaData)
-        // Limpiar y recargar la lista para asegurar consistencia
         await loadAreas()
         showSuccessToast('Área creada exitosamente')
         cancelCreate()
@@ -210,6 +292,7 @@ const cancelCreate = () => {
 
 const resetNewArea = () => {
     newArea.description = ''
+    newArea.subjectList = []
 }
 
 // Funciones para editar
@@ -218,20 +301,21 @@ const startEdit = (area: Area) => {
         cancelCreate()
     }
     closeDropdown()
-    editingId.value = area.id || ''
+    editingId.value = area.id || null
     editForm.description = area.description
+    editForm.subjectList = [...area.subjectList]
 }
 
 const saveEdit = async () => {
     if (!editingId.value) return
 
     const updateData = {
-        description: editForm.description.trim()
+        description: editForm.description.trim(),
+        subjectList: editForm.subjectList
     }
 
     try {
         await areasService.updateArea(editingId.value, updateData)
-        // Recargar la lista para asegurar consistencia con el servidor
         await loadAreas()
         showSuccessToast('Área actualizada exitosamente')
         cancelEdit()
@@ -244,10 +328,11 @@ const saveEdit = async () => {
 const cancelEdit = () => {
     editingId.value = null
     editForm.description = ''
+    editForm.subjectList = []
 }
 
 // Funciones del dropdown
-const toggleDropdown = (areaId: string) => {
+const toggleDropdown = (areaId: number) => {
     openDropdown.value = openDropdown.value === areaId ? null : areaId
 }
 
@@ -255,8 +340,8 @@ const closeDropdown = () => {
     openDropdown.value = null
 }
 
-// Función para eliminar (no disponible según requerimientos)
-const deleteArea = (id: string) => {
+// Función para eliminar
+const deleteArea = (id: number) => {
     closeDropdown()
     alert('La función de eliminar no está disponible para áreas.')
 }

@@ -2,17 +2,18 @@
     <div class="semester-config p-4 rounded-sm">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-medium text-gray-900">Semestres</h2>
-            <button @click="addNewSemesterRow"
-                class="px-4 py-2 bg-[#67B83C] text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200"
-                :disabled="isCreating || isLoading"
-                :class="{ 'opacity-50 cursor-not-allowed': isCreating || isLoading }">
-                + Crear Semestre
-            </button>
+            <Button @click="addNewSemesterRow" custom-class="px-4 py-2 bg-[#67B83C] text-white hover:bg-green-700"
+                :disabled="isCreating || isLoading">
+                <template #icon>
+                    <Plus :size="16" />
+                </template>
+                Crear Semestre
+            </Button>
         </div>
 
         <!-- Tabla usando el componente del sistema -->
         <div class="w-full bg-white">
-            <div class="overflow-hidden border border-gray-200 rounded-sm">
+            <div class="overflow-x-auto border border-gray-200 rounded-sm">
                 <table class="w-full">
                     <thead class="bg-gray-100 border-b border-gray-200">
                         <tr>
@@ -50,19 +51,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button @click="saveNewSemester"
-                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-sm transition-colors duration-200 flex items-center gap-2"
-                                        :disabled="!canSaveNew || isSaving" :class="(canSaveNew && !isSaving)
-                                            ? 'bg-green-600 hover:bg-green-700'
-                                            : 'bg-gray-400 cursor-not-allowed'">
-                                        <div v-if="isSaving"
-                                            class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                        {{ isSaving ? 'Guardando...' : 'Guardar' }}
-                                    </button>
-                                    <button @click="cancelCreate"
-                                        class="px-3 py-1.5 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
-                                        Cancelar
-                                    </button>
+                                    <ButtonIcon :icon="Check" title="Guardar cambios" @click="saveNewSemester" />
+                                    <ButtonIcon :icon="X" title="Cancelar edición" @click="cancelCreate"
+                                        variant="danger" />
                                 </div>
                             </td>
                         </tr>
@@ -91,14 +82,9 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button @click="saveEdit"
-                                            class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200">
-                                            Guardar
-                                        </button>
-                                        <button @click="cancelEdit"
-                                            class="px-3 py-1.5 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
-                                            Cancelar
-                                        </button>
+                                        <ButtonIcon :icon="Check" title="Guardar cambios" @click="saveEdit" />
+                                        <ButtonIcon :icon="X" title="Cancelar edición" @click="cancelEdit"
+                                            variant="danger" />
                                     </div>
                                 </td>
                             </template>
@@ -115,26 +101,8 @@
                                     <span class="text-gray-600 text-sm">{{ formatDate(semester.endDate) }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="relative flex items-center justify-center">
-                                        <button @click="toggleDropdown(semester.id)"
-                                            class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-white rounded-sm flex items-center justify-center hover:bg-[#67b83c] hover:border-gray-300">
-                                            <MoreHorizontal class="h-4 w-4 transition-colors duration-200" />
-                                        </button>
-                                        <div v-if="openDropdown === semester.id" :class="[
-                                            'absolute z-50 w-32 bg-white rounded-sm border border-gray-200 shadow-lg overflow-hidden',
-                                            index >= semesters.length - 2 ? 'bottom-10 right-0' : 'top-10 right-0'
-                                        ]">
-                                            <div class="flex">
-                                                <button @click="startEdit(semester)"
-                                                    class="flex items-center justify-center flex-1 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-r border-gray-100 cursor-pointer">
-                                                    <Edit class="h-5 w-5 text-gray-900" />
-                                                </button>
-                                                <button @click="deleteSemester(semester.id)"
-                                                    class="flex items-center justify-center flex-1 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer">
-                                                    <Trash2 class="h-5 w-5 text-red-500" />
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="flex items-center justify-center">
+                                        <ButtonIcon :icon="Edit" title="Editar semestre" @click="startEdit(semester)" />
                                     </div>
                                 </td>
                             </template>
@@ -165,10 +133,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { MoreHorizontal, Edit, Trash2 } from 'lucide-vue-next'
+import { Edit, Plus, Check, X } from 'lucide-vue-next'
 import { SemesterService } from '@/services/semesterService'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import type { Semester } from '@/types/semester'
+import Button from '@/components/common/Button.vue'
+import ButtonIcon from '@/components/common/ButtonIcon.vue'
 
 // Instanciar el servicio
 const semesterService = new SemesterService()
@@ -260,7 +230,6 @@ const startEdit = (semester: Semester) => {
     if (isCreating.value) {
         cancelCreate()
     }
-    closeDropdown()
     editingId.value = semester.id
     editForm.description = semester.description
     editForm.startDate = semester.startDate
@@ -296,31 +265,6 @@ const cancelEdit = () => {
     editForm.endDate = ''
 }
 
-// Funciones del dropdown
-const toggleDropdown = (semesterId: number) => {
-    openDropdown.value = openDropdown.value === semesterId ? null : semesterId
-}
-
-const closeDropdown = () => {
-    openDropdown.value = null
-}
-
-// Función para eliminar
-const deleteSemester = async (id: number) => {
-    closeDropdown()
-    if (confirm('¿Estás seguro de que quieres eliminar este semestre?')) {
-        try {
-            await semesterService.deleteSemester(id)
-            // Recargar la lista para asegurar consistencia
-            await loadSemesters()
-            showSuccessToast('Semestre eliminado exitosamente')
-        } catch (error) {
-            console.error('Error deleting semester:', error)
-            showErrorToast('Error al eliminar el semestre')
-        }
-    }
-}
-
 // Funciones de formato
 const formatDate = (dateString: string | undefined) => {
     if (!dateString) return ''
@@ -338,20 +282,10 @@ const formatDate = (dateString: string | undefined) => {
     }
 }
 
-// Close dropdown when clicking outside
-const handleClickOutside = (event: Event) => {
-    if (!event.target || !(event.target as Element).closest('.relative')) {
-        openDropdown.value = null
-    }
-}
+
 
 onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
     loadSemesters()
-})
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside)
 })
 </script>
 

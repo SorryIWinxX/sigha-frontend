@@ -53,6 +53,12 @@
                                 </div>
                             </button>
                         </th>
+                        <th class="px-6 py-3 text-right">
+                            <button
+                                class="flex items-center justify-center gap-2 text-gray-900 font-semibold cursor-pointer hover:text-green-600">
+                                Activo
+                            </button>
+                        </th>
                         <th class="px-6 py-3 text-center">
                             <span class="text-gray-900 font-semibold">Acciones</span>
                         </th>
@@ -61,7 +67,7 @@
                 <tbody class="bg-white divide-y divide-gray-100">
                     <!-- Loading state -->
                     <tr v-if="loading">
-                        <td colspan="6" class="px-6 py-8 text-center">
+                        <td colspan="7" class="px-6 py-8 text-center">
                             <div class="flex items-center justify-center">
                                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                                 <span class="ml-3 text-gray-600">Cargando usuarios...</span>
@@ -70,7 +76,7 @@
                     </tr>
                     <!-- Error state -->
                     <tr v-else-if="error && users.length === 0">
-                        <td colspan="6" class="px-6 py-8 text-center">
+                        <td colspan="7" class="px-6 py-8 text-center">
                             <div class="text-red-600">
                                 <p class="font-semibold">Error al cargar usuarios</p>
                                 <p class="text-sm mt-1">{{ error }}</p>
@@ -82,9 +88,10 @@
                         </td>
                     </tr>
                     <!-- Empty state -->
-                    <tr v-else-if="!loading && users.length === 0">
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                            No se encontraron usuarios
+                    <tr v-else-if="!loading && filteredUsers.length === 0">
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            {{ props.searchQuery.trim() ? 'No se encontraron usuarios que coincidan con la búsqueda' :
+                                'No se encontraron usuarios' }}
                         </td>
                     </tr>
                     <!-- User rows -->
@@ -119,6 +126,18 @@
                             </span>
                         </td>
                         <td class="px-6 py-3">
+                            <div class="flex items-center justify-center">
+                                <span :class="[
+                                    'inline-flex items-center px-3 py-1 rounded-sm font-medium',
+                                    user.isActive
+                                        ? 'bg-[#67b83c] text-white'
+                                        : 'bg-[#f87171] text-white'
+                                ]">
+                                    {{ user.isActive ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3">
                             <div class="relative flex items-center  justify-center">
                                 <button @click="toggleDropdown(user.id)"
                                     class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-white rounded-sm flex items-center justify-center hover:bg-[#67b83c] hover:border-gray-300">
@@ -133,13 +152,17 @@
                                             class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
                                             Ver detalles
                                         </button>
-                                        <button
+                                        <button @click.stop="editUser(user.id)"
                                             class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
                                             Editar usuario
                                         </button>
-                                        <button
-                                            class="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 cursor-pointer">
-                                            Eliminar usuario
+                                        <button @click.stop="toggleUserStatus(user.id, user.isActive)" :class="[
+                                            'block w-full text-left px-4 py-2.5 text-sm transition-colors duration-150 cursor-pointer',
+                                            user.isActive
+                                                ? 'text-red-600 hover:bg-red-50'
+                                                : 'text-green-600 hover:bg-green-50'
+                                        ]">
+                                            {{ user.isActive ? 'Deshabilitar usuario' : 'Habilitar usuario' }}
                                         </button>
                                     </div>
                                 </div>
@@ -203,17 +226,30 @@
         <!-- User Details Modal -->
         <UserDetailsModal v-if="showUserDetailsModal" :show="showUserDetailsModal" :userId="selectedUserId"
             @close="closeUserDetailsModal" />
+
+        <!-- Edit User Modal -->
+        <EditUser v-if="showEditUserModal" :show="showEditUserModal" :userId="selectedUserIdForEdit"
+            @close="closeEditUserModal" @updated="handleUserUpdated" />
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
 import UserDetailsModal from './UserDetailsModal.vue'
+import EditUser from './EditUser.vue'
 import { userService } from '@/services/userServices'
 import { showErrorToast, showSuccessToast } from '@/utils/toast'
+
+// Props
+const props = defineProps({
+    searchQuery: {
+        type: String,
+        default: ''
+    }
+})
 
 // Reactive data
 const users = ref([])
@@ -225,15 +261,30 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const showUserDetailsModal = ref(false)
 const selectedUserId = ref(null)
+const showEditUserModal = ref(false)
+const selectedUserIdForEdit = ref(null)
 
 // Computed properties
-const totalUsers = computed(() => users.value.length)
+const filteredUsers = computed(() => {
+    if (!props.searchQuery.trim()) {
+        return users.value
+    }
+
+    const query = props.searchQuery.toLowerCase().trim()
+    return users.value.filter(user =>
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.permission.toLowerCase().includes(query)
+    )
+})
+
+const totalUsers = computed(() => filteredUsers.value.length)
 const totalPages = computed(() => Math.ceil(totalUsers.value / itemsPerPage.value))
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 const endIndex = computed(() => startIndex.value + itemsPerPage.value)
 
 const paginatedUsers = computed(() => {
-    let sortedUsers = [...users.value]
+    let sortedUsers = [...filteredUsers.value]
 
     if (sortConfig.value) {
         sortedUsers.sort((a, b) => {
@@ -270,6 +321,12 @@ const visiblePages = computed(() => {
     return pages
 })
 
+// Watch for search query changes
+watch(() => props.searchQuery, () => {
+    // Reset page to 1 when search query changes
+    currentPage.value = 1
+})
+
 // Methods
 const loadUsers = async () => {
     loading.value = true
@@ -278,7 +335,7 @@ const loadUsers = async () => {
     try {
         const apiUsers = await userService.getUsers()
         users.value = userService.formatUsersForTable(apiUsers)
-        showSuccessToast('Usuarios cargados correctamente')
+
     } catch (err) {
         error.value = err instanceof Error ? err.message : 'Error al cargar usuarios'
         showErrorToast(error.value)
@@ -338,6 +395,50 @@ const viewUserDetails = (userId) => {
 const closeUserDetailsModal = () => {
     showUserDetailsModal.value = false
     selectedUserId.value = null
+}
+
+const editUser = (userId) => {
+    console.log('EditUser called with userId:', userId, typeof userId)
+    selectedUserIdForEdit.value = userId
+    showEditUserModal.value = true
+    openDropdown.value = null // Close the dropdown
+}
+
+const closeEditUserModal = () => {
+    showEditUserModal.value = false
+    selectedUserIdForEdit.value = null
+}
+
+const handleUserUpdated = (updatedUser) => {
+    // Refresh the users list to show the updated data
+    loadUsers()
+    showSuccessToast('La tabla de usuarios ha sido actualizada')
+}
+
+const toggleUserStatus = async (userId, currentStatus) => {
+    try {
+        const user = users.value.find(u => u.id === userId)
+        if (!user) {
+            showErrorToast('Usuario no encontrado')
+            return
+        }
+
+        // Toggle the user status using the service method
+        await userService.toggleUserStatus(parseInt(userId), !currentStatus)
+
+        // Refresh the table
+        await loadUsers()
+
+        const statusText = !currentStatus ? 'habilitado' : 'deshabilitado'
+        showSuccessToast(`Usuario ${statusText} exitosamente`)
+
+        // Close dropdown
+        openDropdown.value = null
+
+    } catch (error) {
+        console.error('Error toggling user status:', error)
+        showErrorToast('Error al cambiar el estado del usuario')
+    }
 }
 
 // Close dropdown when clicking outside

@@ -12,9 +12,7 @@
             <div class=" border border-gray-200 rounded-sm mt-4">
                 <DocumentConfig />
             </div>
-            <div class="border border-gray-200 rounded-sm mt-4">
-                <AreasConfig />
-            </div>
+
 
         </div>
 
