@@ -6,21 +6,32 @@ const props = defineProps({
     placeholder: {
         type: String,
         default: 'Search'
+    },
+    modelValue: {
+        type: String,
+        default: ''
     }
 })
 
-const emit = defineEmits(['search'])
-const query = ref('')
+const emit = defineEmits(['update:modelValue', 'search'])
+
+const query = ref(props.modelValue)
+
+// Watch for prop changes (parent updates)
+watch(() => props.modelValue, (newValue) => {
+    query.value = newValue
+})
+
+// Watch for local changes and emit to parent
+watch(query, (newQuery) => {
+    emit('update:modelValue', newQuery)
+    emit('search', newQuery)
+})
 
 const handleSearch = (e) => {
     e.preventDefault()
     emit('search', query.value)
 }
-
-// Watch for changes in the query and emit search event for real-time search
-watch(query, (newQuery) => {
-    emit('search', newQuery)
-})
 </script>
 
 <template>

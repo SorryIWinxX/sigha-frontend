@@ -18,7 +18,7 @@
                 </div>
 
                 <!-- Subjects Filter -->
-                <div class="flex-1 min-w-[200px]">
+                <div class="flex-1 max-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Materia</label>
                     <Select v-model="selectedSubjectFilter" placeholder="Todas las materias">
                         <option value="">Todas las materias</option>
@@ -83,12 +83,10 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { CheckCircle2, XCircle, Clock, Maximize2 } from 'lucide-vue-next'
 import Select from '@/components/common/Select.vue'
 import Button from '@/components/common/Button.vue'
-import { userService, type User } from '@/services/userServices'
-import availabilityService, {
-    type GlobalAvailabilitySlot,
-    type AllProfessorsAvailabilityResponse,
-    type ProfessorAvailability
-} from '@/services/availabilityService'
+import { userService } from '@/services/userServices'
+import type { User } from '@/types/user'
+import type { ProfessorAvailability, GlobalAvailabilitySlot } from '@/types/availability'
+import availabilityService from '@/services/availabilityService'
 import { useStatusStore } from '@/store/statusStore'
 import { useAreasStore } from '@/store/areasStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast.js'

@@ -1,15 +1,5 @@
 import { useAuthStore } from '@/store/authStore'
-
-export interface Subject {
-  id: number
-  name: string
-}
-
-export interface Area {
-  id?: number
-  description: string
-  subjectList: Subject[]
-}
+import type { Area, Subject } from '@/types/areas'
 
 export class AreasService {
   private authStore = useAuthStore()
@@ -85,6 +75,60 @@ export class AreasService {
       return await response.json()
     } catch (error) {
       console.error('Error updating area:', error)
+      throw error
+    }
+  }
+
+  async createSubject(areaId: number, subject: Omit<Subject, 'id'>): Promise<Subject> {
+    try {
+      const response = await fetch(`/api/api/v1/area/${areaId}/subject`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(subject),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating subject:', error)
+      throw error
+    }
+  }
+
+  async updateSubject(areaId: number, subjectId: number, subject: Omit<Subject, 'id'>): Promise<Subject> {
+    try {
+      const response = await fetch(`/api/api/v1/area/${areaId}/subject/${subjectId}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(subject),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error updating subject:', error)
+      throw error
+    }
+  }
+
+  async deleteSubject(areaId: number, subjectId: number): Promise<void> {
+    try {
+      const response = await fetch(`/api/api/v1/area/${areaId}/subject/${subjectId}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+    } catch (error) {
+      console.error('Error deleting subject:', error)
       throw error
     }
   }

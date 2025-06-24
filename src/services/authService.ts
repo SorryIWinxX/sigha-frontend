@@ -1,18 +1,6 @@
 import { useAuthStore } from '@/store/authStore'
 import { ref, type Ref } from 'vue'
-const API_BASE_URL = '/public/auth'
-
-export interface LoginResponse {
-  token: string
-  forcePasswordReset?: boolean
-}
-
-export interface ErrorResponse {
-  error: string
-  status?: number
-  timestamp?: string
-  message?: string
-}
+import type { LoginResponse } from '@/types/auth'
 
 export class AuthService {
   private jwt: Ref<string>
@@ -44,7 +32,7 @@ export class AuthService {
 
   async login(documento: string, password: string): Promise<boolean> {
     try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
+      const res = await fetch(`/public/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,10 +51,8 @@ export class AuthService {
 
       const loginResponse = response as LoginResponse
       this.jwt.value = loginResponse.token
-      // Asegurar que el token se almacene en el authStore
       this.authStore.setToken(loginResponse.token)
       this.forcePasswordReset.value = loginResponse.forcePasswordReset || false
-      // Store documento and password for potential password change
       this.documento.value = documento
       this.lastPassword.value = password
 

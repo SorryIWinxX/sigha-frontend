@@ -478,13 +478,11 @@ const updateUser = async () => {
             idAreas: selectedAreasIds
         }
 
-        console.log('Updating user with data:', updateData)
 
         // Call the API service
         const updatedUser = await userService.updateUser(formData.id, updateData)
 
         // Process successful response
-        console.log('User updated successfully:', updatedUser)
 
         // Show success message
         showSuccessToast('Usuario actualizado exitosamente')

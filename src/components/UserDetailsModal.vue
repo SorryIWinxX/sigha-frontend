@@ -245,15 +245,12 @@ const loadUserDetails = async () => {
     try {
         // Convert string ID to number if needed
         const userId = typeof props.userId === 'string' ? parseInt(props.userId) : props.userId
-        console.log('Loading user details for ID:', userId)
 
         const response = await userService.getUserById(userId)
         userDetails.value = response
-        console.log('User details loaded:', response)
     } catch (err) {
         error.value = err instanceof Error ? err.message : 'Error al cargar los detalles del usuario'
         showErrorToast(error.value)
-        console.error('Error loading user details:', err)
     } finally {
         loading.value = false
     }
@@ -292,7 +289,6 @@ const handleOverlayClick = () => {
 
 // Watch for show prop changes
 watch(() => props.show, (newValue) => {
-    console.log('Modal show changed:', newValue, 'userId:', props.userId)
     if (newValue && props.userId) {
         loadUserDetails()
     }
@@ -300,7 +296,6 @@ watch(() => props.show, (newValue) => {
 
 // Also watch for userId changes
 watch(() => props.userId, (newValue) => {
-    console.log('UserId changed:', newValue)
     if (props.show && newValue) {
         loadUserDetails()
     }

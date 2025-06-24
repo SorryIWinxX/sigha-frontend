@@ -120,7 +120,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { Edit, Plus, Check, X } from 'lucide-vue-next'
 import { TipoDocumentoService } from '@/services/tipoDocumentoService'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
-import type { TipoDocumento } from '@/services/tipoDocumentoService'
+import type { TipoDocumento } from '@/types/tipoDocumento'
 import Button from '@/components/common/Button.vue'
 import ButtonIcon from '@/components/common/ButtonIcon.vue'
 
@@ -224,7 +224,6 @@ const startEdit = (document: TipoDocumento) => {
     editingId.value = document.id
     editForm.description = document.description
     editForm.sigla = document.sigla
-    console.log('Editando documento con ID:', document.id)
 }
 
 const saveEdit = async () => {
@@ -247,14 +246,11 @@ const saveEdit = async () => {
 
     isEditing.value = true
     try {
-        console.log('Actualizando documento con ID:', editingId.value, 'Data:', updateData)
 
         const updatedDocument = await tipoDocumentoService.updateTipoDocumento(editingId.value, updateData)
 
-        console.log('Documento actualizado exitosamente:', updatedDocument)
-
         // Actualizar el documento en la lista local
-        const documentIndex = documents.value.findIndex(doc => doc.id === editingId.value)
+        const documentIndex = documents.value.findIndex((doc: TipoDocumento) => doc.id === editingId.value)
         if (documentIndex !== -1) {
             documents.value[documentIndex] = updatedDocument
         }

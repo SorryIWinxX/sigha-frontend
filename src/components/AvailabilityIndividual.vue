@@ -3,14 +3,16 @@
         <!-- Professor Selector -->
         <div class="mt-4">
             <div class="flex items-center justify-between">
-                <Select id="professor-select" v-model="selectedProfessor" placeholder="Seleccionar profesor"
+                <div class="w-1/4">
+                    <Select id="professor-select" v-model="selectedProfessor"  placeholder="Seleccionar profesor"
                     :disabled="loading || !props.selectedSemester">
                     <option v-for="professor in professors" :key="professor.id" :value="professor.id">
-                        {{ professor.firstName }} {{ professor.lastName }}
-                    </option>
-                </Select>
+                            {{ professor.firstName }} {{ professor.lastName }}
+                        </option>
+                    </Select>
+                </div>
 
-                <div class="flex justify-end gap-2">
+                <div class="flex gap-2">
                     <Button
                         customClass="px-4 py-2 text-sm font-medium text-white bg-[#63B83C] hover:bg-[#4A8C2C] rounded-sm transition-colors"
                         @click="approveAll">

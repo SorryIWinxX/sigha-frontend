@@ -7,7 +7,7 @@ import UsersView from '../views/UsersView.vue'
 import { useAuthStore } from '@/store/authStore'
 import AreasSubjectsView from '@/views/AreasSubjectsView.vue'
 import AvailableTeacherView from '@/views/AvailableTeacherView.vue'
-
+import SettingsView from '@/views/SettingsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),

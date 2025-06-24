@@ -112,7 +112,7 @@
         </div>
 
         <div class="flex-1 min-h-0 overflow-hidden">
-            <Calendar @day-header-clicked="props.semesterAvailability ? toggleSelectAllHoursInDay : () => { }">
+            <Calendar @day-header-clicked="handleDayHeaderClick">
                 <template #day-cell="{ day, hour }">
                     <div class="h-14 border-b border-l border-gray-200 relative flex items-center justify-center transition-all group"
                         :class="[
@@ -532,9 +532,20 @@ function redoSelection() {
     }
 }
 
+function handleDayHeaderClick(dayValue) {
+    if (!props.semesterAvailability) {
+        return;
+    }
+    
+    toggleSelectAllHoursInDay(dayValue);
+}
+
 function toggleSelectAllHoursInDay(dayValue) {
+    
     // Sundays (day 7) are holidays and cannot have all hours selected.
-    if (isSunday(dayValue)) return;
+    if (isSunday(dayValue)) {
+        return;
+    }
 
     const selectableHours = [];
     // Hours are from 6 to 22 as per Calendar.vue generateHours
@@ -548,40 +559,25 @@ function toggleSelectAllHoursInDay(dayValue) {
         .filter(slot => slot.day === dayValue && !isLunchTime(slot.hour))
         .map(slot => slot.hour);
 
-    // Verificar si hay slots aprobados o rechazados
-    const hasApprovedOrRejectedSlots = internalSelectedSlots.value.some(
-        slot => slot.day === dayValue && (slot.statusId === 2 || slot.statusId === 3)
-    );
-
     let allSelected = true;
-    if (selectableHours.length === 0 && currentDaySelections.length > 0) {
-        allSelected = true;
+    if (selectableHours.length === 0 && currentDaySelections.length > 0) { // Should not happen if day is not Sunday
+        allSelected = true; // Consider all selected if no selectable hours but some are selected (edge case cleanup)
     } else if (selectableHours.length === 0 && currentDaySelections.length === 0) {
-        allSelected = false;
+        allSelected = false; // No selectable hours and none selected, so not all selected
     } else {
         allSelected = selectableHours.every(h => currentDaySelections.includes(h)) &&
             currentDaySelections.length === selectableHours.length;
     }
 
     if (allSelected) {
-        // Deselect all for this day, but keep approved/rejected slots
-        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot =>
-            slot.day !== dayValue || slot.statusId === 2 || slot.statusId === 3
-        );
+        // Deselect all for this day
+        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot => slot.day !== dayValue);
     } else {
         // Select all for this day
         // First, remove any existing selections for this day to avoid duplicates and ensure clean select all
-        // But keep approved/rejected slots
-        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot =>
-            slot.day !== dayValue || slot.statusId === 2 || slot.statusId === 3
-        );
-
-        // Add new selections for non-approved/rejected hours
+        internalSelectedSlots.value = internalSelectedSlots.value.filter(slot => slot.day !== dayValue);
         selectableHours.forEach(hour => {
-            const currentStatus = getSlotStatus(dayValue, hour);
-            if (currentStatus !== 2 && currentStatus !== 3) {
-                internalSelectedSlots.value.push({ day: dayValue, hour, statusId: null });
-            }
+            internalSelectedSlots.value.push({ day: dayValue, hour, statusId: null });
         });
     }
     saveToHistory();
@@ -745,21 +741,14 @@ async function sendAvailability() {
         // Convertir al formato de la API
         const apiFormatData = convertInternalToApiFormat(internalSelectedSlots.value);
 
-        // Log para depuración
-        console.log("Disponibilidad a enviar:", apiFormatData);
-
         // Enviar a la API
         await availabilityService.sendAvailability(props.semesterId, apiFormatData);
 
         showSuccessToast("Disponibilidad enviada exitosamente");
         isAvailabilitySent.value = true;
 
-        // Opcional: recargar la disponibilidad para confirmar
-        // await loadAvailability();
-
     } catch (error) {
         showErrorToast('Error al enviar la disponibilidad');
-        // Opcional: mostrar un mensaje de error al usuario
     }
 }
 
