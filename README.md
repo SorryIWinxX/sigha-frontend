@@ -1,6 +1,9 @@
-![Logo](src/assets/logo.svg)
-
 # SIGHA - FRONTEND - DESARROLLO
+
+<div style="display: flex; align-items: center; gap: 20px; justify-content: center; padding-bottom: 30px">
+  <img src="src/assets/logoSIGHA.svg" alt="Logo SIGHA" height="200">
+  <img src="src/assets/logo.svg" alt="Logo Vue" height="200">
+</div>
 
 Este es el entorno de desarrollo para el proyecto SIGHA Frontend. Aquí se implementan y prueban las primeras actualizaciones del software, por lo que puede contener fallos.
 

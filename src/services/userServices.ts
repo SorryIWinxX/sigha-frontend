@@ -1,5 +1,11 @@
 import { useAuthStore } from '@/store/authStore'
-import type { User, UserTableFormat, UpdateUserRequest, UpdateCurrentUserRequest, ChangePasswordRequest } from '@/types/user'
+import type {
+  User,
+  UserTableFormat,
+  UpdateUserRequest,
+  UpdateCurrentUserRequest,
+  ChangePasswordRequest,
+} from '@/types/user'
 
 export const userService = {
   async getUsers(): Promise<User[]> {
@@ -16,7 +22,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/api/v1/users', {
+      const response = await fetch('/api/v1/users', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -51,7 +57,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/api/v1/users/me', {
+      const response = await fetch('/api/v1/users/me', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +92,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/api/v1/users/me', {
+      const response = await fetch('/api/v1/users/me', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +128,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/api/v1/changePassword', {
+      const response = await fetch('/api/v1/changePassword', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +168,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch(`/api/api/v1/users/${id}`, {
+      const response = await fetch(`/api/v1/users/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +203,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch(`/api/api/v1/users/${id}`, {
+      const response = await fetch(`/api/v1/users/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
