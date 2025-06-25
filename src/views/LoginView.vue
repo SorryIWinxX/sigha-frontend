@@ -53,7 +53,8 @@
                         </div>
 
                         <button type="submit" @click.prevent="authUser"
-                            class="w-full bg-[#67b83c] cursor-pointer hover:bg-[#5aa534] text-white py-3 rounded-md shadow-md font-medium transition-colors mt-4"
+                            class="w-full bg-[#67b83c] hover:bg-[#5aa534] text-white py-3 rounded-md shadow-md font-medium transition-colors mt-4 cursor-pointer"
+                            :class="{ 'opacity-50 !cursor-not-allowed hover:bg-[#67b83c]': !documento || !password }"
                             :disabled="!documento || !password">
                             Iniciar sesión
                         </button>
@@ -84,6 +85,7 @@
                         </div>
 
                         <div class="flex justify-end space-x-3 mt-6">
+                            <h1 class="text-red-500"> FUNCION NO DISPONIBLE</h1>
                             <button type="button" @click="isForgotPasswordMode = false; forgotPasswordDocumento = ''"
                                 class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                                 Volver
@@ -202,6 +204,7 @@ const isPasswordValid = computed(() => {
 })
 
 const authUser = async () => {
+
     const success = await authService.login(documento.value, password.value)
 
     if (success) {
