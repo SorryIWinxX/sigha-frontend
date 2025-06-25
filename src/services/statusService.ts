@@ -1,9 +1,5 @@
 import { useAuthStore } from '@/store/authStore'
-
-export interface StatusAvailability {
-  id: number
-  description: string
-}
+import type { StatusAvailability } from '@/types/status'
 
 class StatusService {
   private getHeaders() {

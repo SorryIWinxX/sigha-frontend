@@ -98,7 +98,7 @@ const menuItems = computed(() => {
                 label: 'Usuarios',
             },
             {
-                to: '/admin/settings',
+                to: '/settings',
                 icon: Settings,
                 label: 'Configuración',
             },

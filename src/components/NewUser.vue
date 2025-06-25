@@ -5,6 +5,31 @@
         <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full animate__animated"
             :class="isClosing ? 'animate__fadeOutDown animate__faster' : 'animate__fadeInUp animate__faster'"
             @click.stop>
+            
+            <!-- Confirmation Modal Overlay -->
+            <div v-if="showConfirmation" class="absolute inset-0 bg-black/50 flex items-center justify-center z-10 ">
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="text-center">
+                        <h3 class="text-lg font-semibold text-[#3b3e45] mb-4">
+                            Confirmar salida
+                        </h3>
+                        <p class="text-sm text-[#666e7d] mb-6">
+                            ¿Estás seguro de que deseas salir? Los datos ingresados se perderán.
+                        </p>
+                        <div class="flex justify-center gap-3">
+                            <Button @click="showConfirmation = false"
+                                custom-class="px-4 py-2 border border-[#cfd3d4] text-gray-600 bg-white hover:bg-[#f4f4f4] transition-colors text-sm">
+                                Cancelar
+                            </Button>
+                            <Button @click="confirmClose"
+                                custom-class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white transition-colors text-sm">
+                                Salir
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Modal Header -->
             <div class="border-b border-[#dcdfe3] px-4 py-3">
                 <h1 class="text-xl font-semibold text-[#3b3e45] text-center">
@@ -35,7 +60,46 @@
                                 placeholder="Ingrese el número" required />
 
                             <Input id="email" v-model="formData.email" type="email" label="Correo Electrónico"
-                                placeholder="ejemplo@correo.com" required />
+                                placeholder="ejemplo@correo.com" required 
+                                :class="formData.email && !isEmailValid ? 'border-red-500' : ''" />
+                            
+                            <!-- Email Error Message -->
+                            <div v-if="emailError" class="md:col-span-2">
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0">
+                                            <TriangleAlert   class="h-5 w-5 text-red-400" />
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-red-800">
+                                                Error de validación
+                                            </h3>
+                                            <div class="mt-1 text-sm text-red-700">
+                                                <p>{{ emailError }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Email Warning -->
+                            <div v-if="formData.email && !emailError && isEmailValid" class="md:col-span-2">
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0">
+                                            <TriangleAlert class="h-5 w-5 text-yellow-400" />
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-yellow-800">
+                                                Importante
+                                            </h3>
+                                            <div class="mt-1 text-sm text-yellow-700">
+                                                <p>Este debe ser el correo electrónico real de la persona. La contraseña temporal será enviada a esta dirección.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Roles Section -->
                             <div class="md:col-span-2">
@@ -145,7 +209,7 @@
 </template>
 
 <script setup>
-import { RefreshCcw, ClipboardCopy } from 'lucide-vue-next'
+import { RefreshCcw, ClipboardCopy, TriangleAlert } from 'lucide-vue-next'
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import Input from './common/Input.vue'
 import Button from './common/Button.vue'
@@ -165,6 +229,7 @@ const areasService = new AreasService()
 
 // Animation state
 const isClosing = ref(false)
+const showConfirmation = ref(false)
 
 // Loading states
 const loadingTiposDocumento = ref(false)
@@ -183,6 +248,10 @@ const formData = reactive({
     email: '',
     clavetemporal: '',
 })
+
+// Email validation state
+const emailError = ref('')
+const isEmailValid = ref(false)
 
 // Available roles (these seem to be static based on the original code)
 const availableRoles = ref([
@@ -205,7 +274,6 @@ const loadTiposDocumento = async () => {
         loadingTiposDocumento.value = true
         const tipos = await tipoDocumentoService.getTiposDocumento()
         tiposDocumento.value = tipos
-        console.log('Loaded tipos de documento:', tipos)
     } catch (error) {
         console.error('Error loading tipos de documento:', error)
         showErrorToast('Error al cargar los tipos de documento')
@@ -249,6 +317,7 @@ const isFormValid = computed(() => {
         formData.apellido &&
         formData.numeroDocumento &&
         formData.email &&
+        isEmailValid.value &&
         formData.tipoDocumento &&
         selectedRolesCount.value > 0 &&
         (isProfesorSelected.value ? selectedAreasCount.value > 0 : true)
@@ -261,6 +330,45 @@ watch(() => formData.nombre, (newValue) => {
 
 watch(() => formData.apellido, (newValue) => {
     formData.apellido = newValue.toUpperCase()
+})
+
+// Email validation function
+const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    
+    if (!email) {
+        emailError.value = ''
+        isEmailValid.value = false
+        return
+    }
+    
+    if (!emailRegex.test(email)) {
+        emailError.value = 'Por favor ingrese un correo electrónico válido'
+        isEmailValid.value = false
+        return
+    }
+    
+    // Additional validation for common domains
+    const domain = email.split('@')[1]?.toLowerCase()
+    const commonDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'live.com', 'msn.com']
+    
+    if (domain && !commonDomains.includes(domain)) {
+        // Check if it's a valid domain format
+        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/
+        if (!domainRegex.test(domain)) {
+            emailError.value = 'El dominio del correo electrónico no es válido'
+            isEmailValid.value = false
+            return
+        }
+    }
+    
+    emailError.value = ''
+    isEmailValid.value = true
+}
+
+// Watch for email changes to validate
+watch(() => formData.email, (newValue) => {
+    validateEmail(newValue)
 })
 
 // Computed property to check if form has any data
@@ -288,9 +396,8 @@ watch(isProfesorSelected, (newValue, oldValue) => {
 // Methods
 const closeModal = () => {
     if (hasFormData.value) {
-        if (!confirm('¿Estás seguro de que deseas salir? Los datos ingresados se perderán.')) {
-            return
-        }
+        showConfirmation.value = true
+        return
     }
 
     // Start closing animation
@@ -318,6 +425,81 @@ const closeModal = () => {
             role.selected = false
         })
 
+        // Reset email validation
+        emailError.value = ''
+        isEmailValid.value = false
+
+        // Emit close event
+        emit('close')
+    }, 500) // Wait for animation duration
+}
+
+const confirmClose = () => {
+    showConfirmation.value = false
+    // Start closing animation
+    isClosing.value = true
+
+    // Wait for animation to complete before closing
+    setTimeout(() => {
+        // Reset form data
+        Object.assign(formData, {
+            nombre: '',
+            apellido: '',
+            tipoDocumento: '',
+            numeroDocumento: '',
+            email: '',
+            clavetemporal: '',
+        })
+
+        // Reset areas selection
+        availableAreas.value.forEach(area => {
+            area.selected = false
+        })
+
+        // Reset roles selection
+        availableRoles.value.forEach(role => {
+            role.selected = false
+        })
+
+        // Reset email validation
+        emailError.value = ''
+        isEmailValid.value = false
+
+        // Emit close event
+        emit('close')
+    }, 500) // Wait for animation duration
+}
+
+const closeModalWithoutConfirmation = () => {
+    // Start closing animation
+    isClosing.value = true
+
+    // Wait for animation to complete before closing
+    setTimeout(() => {
+        // Reset form data
+        Object.assign(formData, {
+            nombre: '',
+            apellido: '',
+            tipoDocumento: '',
+            numeroDocumento: '',
+            email: '',
+            clavetemporal: '',
+        })
+
+        // Reset areas selection
+        availableAreas.value.forEach(area => {
+            area.selected = false
+        })
+
+        // Reset roles selection
+        availableRoles.value.forEach(role => {
+            role.selected = false
+        })
+
+        // Reset email validation
+        emailError.value = ''
+        isEmailValid.value = false
+
         // Emit close event
         emit('close')
     }, 500) // Wait for animation duration
@@ -342,7 +524,6 @@ const copyTemporaryPassword = async () => {
         showSuccessToast('Clave temporal copiada al portapapeles')
     } catch (err) {
         console.error('Error al copiar al portapapeles:', err)
-        // Fallback para navegadores que no soportan la API Clipboard
         const textArea = document.createElement('textarea')
         textArea.value = formData.clavetemporal
         document.body.appendChild(textArea)
@@ -363,6 +544,12 @@ const createUser = async () => {
         return
     }
 
+    // Additional validation for email
+    if (!isEmailValid.value) {
+        showErrorToast('Por favor ingrese un correo electrónico válido')
+        return
+    }
+
     // Additional validation for tipo documento
     if (!formData.tipoDocumento) {
         showErrorToast('Por favor seleccione un tipo de documento')
@@ -374,7 +561,6 @@ const createUser = async () => {
         .filter(area => area.selected)
         .map(area => {
             const id = parseInt(area.id)
-            console.log('Area ID conversion:', area.id, '->', id)
             return id
         })
         .filter(id => !isNaN(id)) // Filter out any NaN values
@@ -384,7 +570,6 @@ const createUser = async () => {
         .filter(role => role.selected)
         .map(role => {
             const id = parseInt(role.id)
-            console.log('Role ID conversion:', role.id, '->', id)
             return id
         })
         .filter(id => !isNaN(id)) // Filter out any NaN values
@@ -393,7 +578,6 @@ const createUser = async () => {
     const idSigla = parseInt(formData.tipoDocumento)
     if (isNaN(idSigla) || idSigla <= 0) {
         showErrorToast('Tipo de documento inválido')
-        console.error('Invalid idSigla value:', formData.tipoDocumento)
         return
     }
 
@@ -426,25 +610,19 @@ const createUser = async () => {
         idsAreas: selectedAreasIds
     }
 
-    // Debug logging
-    console.log('Creating user with data:', userData)
-
     try {
         // Call the API service
         const response = await newUserService.createUser(userData)
 
         // Process successful response
-        console.log('User created successfully:', response)
 
         // Show success message
         showSuccessToast('Usuario creado exitosamente')
-        showInfoToast('La contraseña es: ' + response.password)
+        showInfoToast("Se envió un correo de bienvenida al usuario con la contraseña temporal")
 
-        // Emit userCreated event
         emit('userCreated', response)
 
-        // Close modal
-        closeModal()
+        closeModalWithoutConfirmation()
     } catch (error) {
         console.error('Error creating user:', error)
         showErrorToast(error.message || 'Error al crear el usuario')
@@ -453,9 +631,8 @@ const createUser = async () => {
 
 const handleOverlayClick = () => {
     if (hasFormData.value) {
-        if (!confirm('¿Estás seguro de que deseas salir? Los datos ingresados se perderán.')) {
-            return
-        }
+        showConfirmation.value = true
+        return
     }
     closeModal()
 }

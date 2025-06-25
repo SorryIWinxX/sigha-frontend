@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { AreasService, type Area, type Subject } from '@/services/areasService'
+import { AreasService } from '@/services/areasService'
+import type { Area, Subject } from '@/types/areas'
 
 export const useAreasStore = defineStore('areas', {
   state: () => ({

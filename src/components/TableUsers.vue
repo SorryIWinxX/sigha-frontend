@@ -339,7 +339,6 @@ const loadUsers = async () => {
     } catch (err) {
         error.value = err instanceof Error ? err.message : 'Error al cargar usuarios'
         showErrorToast(error.value)
-        console.error('Error loading users:', err)
     } finally {
         loading.value = false
     }
@@ -386,7 +385,6 @@ const handleItemsPerPageChange = (value) => {
 }
 
 const viewUserDetails = (userId) => {
-    console.log('ViewUserDetails called with userId:', userId, typeof userId)
     selectedUserId.value = userId
     showUserDetailsModal.value = true
     openDropdown.value = null // Close the dropdown
@@ -398,7 +396,6 @@ const closeUserDetailsModal = () => {
 }
 
 const editUser = (userId) => {
-    console.log('EditUser called with userId:', userId, typeof userId)
     selectedUserIdForEdit.value = userId
     showEditUserModal.value = true
     openDropdown.value = null // Close the dropdown
@@ -436,7 +433,6 @@ const toggleUserStatus = async (userId, currentStatus) => {
         openDropdown.value = null
 
     } catch (error) {
-        console.error('Error toggling user status:', error)
         showErrorToast('Error al cambiar el estado del usuario')
     }
 }
@@ -453,7 +449,7 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside)
-    loadUsers() // Load users when component mounts
+    loadUsers()
 })
 
 onUnmounted(() => {

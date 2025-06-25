@@ -1,10 +1,5 @@
 import { useAuthStore } from '@/store/authStore'
-
-export interface TipoDocumento {
-  id: number
-  description: string
-  sigla: string
-}
+import type { TipoDocumento } from '@/types/tipoDocumento'
 
 export class TipoDocumentoService {
   private authStore = useAuthStore()

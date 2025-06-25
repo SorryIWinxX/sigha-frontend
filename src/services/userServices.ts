@@ -1,67 +1,12 @@
 import { useAuthStore } from '@/store/authStore'
-
-export interface User {
-  id: number
-  email: string
-  idTipoDocumento: number
-  documento: string
-  firstName: string
-  lastName: string
-  isActive: boolean
-  idsRoles: number[]
-  rolesDescriptions: string[]
-  createAt: string
-  updatedAt: string
-  lastLogin: string
-  photo?: string
-  idAreas?: number[]
-}
-
-export interface UserTableFormat {
-  id: string
-  name: string
-  email: string
-  lastLogin: string
-  permission: string
-  isActive: boolean
-  selected?: boolean
-}
-
-export interface UpdateUserRequest {
-  id: number
-  email: string
-  idTipoDocumento: number
-  documento: string
-  firstName: string
-  lastName: string
-  isActive: boolean
-  idsRoles: number[]
-  rolesDescriptions: string[]
-  idAreas: number[]
-}
-
-export interface UpdateCurrentUserRequest {
-  email: string
-  idTipoDocumento: number
-  documento: string
-  firstName: string
-  lastName: string
-}
-
-export interface ChangePasswordRequest {
-  documento: string
-  password: string
-  lastPassword: string
-}
+import type { User, UserTableFormat, UpdateUserRequest, UpdateCurrentUserRequest, ChangePasswordRequest } from '@/types/user'
 
 export const userService = {
   async getUsers(): Promise<User[]> {
     const authStore = useAuthStore()
     const token = authStore.getToken()
     const userId = authStore.userId
-    console.log('token', token)
 
-    console.log('userId', userId)
     if (!token) {
       throw new Error('No authentication token available')
     }
