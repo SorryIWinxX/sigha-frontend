@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/authStore'
 import AreasSubjectsView from '@/views/AreasSubjectsView.vue'
 import AvailableTeacherView from '@/views/AvailableTeacherView.vue'
 import SettingsView from '@/views/SettingsView.vue'
+import GroupsView from '@/views/GroupsView.vue'
+import ScheduleGroupsView from '@/views/ScheduleGroupsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),
@@ -84,6 +86,24 @@ const router = createRouter({
       path: '/areas-subjects',
       name: 'areas-subjects',
       component: AreasSubjectsView,
+      meta: {
+        requiresAuth: true,
+        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
+      },
+    },
+    {
+      path: '/groups',
+      name: 'groups',
+      component: GroupsView,
+      meta: {
+        requiresAuth: true,
+        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
+      },
+    },
+    {
+      path: '/schedule-groups',
+      name: 'schedule-groups',
+      component: ScheduleGroupsView,
       meta: {
         requiresAuth: true,
         roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],

@@ -66,19 +66,23 @@ const hours = generateHours();
 function generateHours() {
     const hours = [];
     for (let i = 6; i <= 22; i++) {
-        const hour = i % 12 || 12;
-        const ampm = i < 12 ? 'AM' : 'PM';
+        const startHour = i % 12 || 12;
+        const endHour = (i + 1) % 12 || 12;
+        const startAmpm = i < 12 ? 'AM' : 'PM';
+        const endAmpm = (i + 1) < 12 ? 'AM' : 'PM';
         hours.push({
             value: i,
-            label: `${hour}:00 ${ampm}`
+            label: `${startHour}:00 ${startAmpm} - ${endHour}:00 ${endAmpm}`
         });
     }
     return hours;
 }
 
 function formatHourShort(hourValue) {
-    const hour = hourValue % 12 || 12;
-    const ampm = hourValue < 12 ? 'a' : 'p';
-    return `${hour}${ampm}`;
+    const startHour = hourValue % 12 || 12;
+    const endHour = (hourValue + 1) % 12 || 12;
+    const startAmpm = hourValue < 12 ? 'AM' : 'PM';
+    const endAmpm = (hourValue + 1) < 12 ? 'AM' : 'PM';
+    return `${startHour}:00 ${startAmpm} - ${endHour}:00 ${endAmpm}`;
 }
 </script>
