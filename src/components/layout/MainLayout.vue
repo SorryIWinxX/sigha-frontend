@@ -25,10 +25,9 @@
                     </div>
                     <div>
                         <router-link to="/">
-                            <Button @click="logout"
-                                customClass="flex items-center cursor-pointer hover:bg-gray-200 rounded-md p-2">
+                            <Button variant="secondary" @click="logout">
                                 <template #icon>
-                                    <LogOut class="text-gray-700" :size="20" />
+                                    <LogOut :size="20" />
                                 </template>
                             </Button>
                         </router-link>

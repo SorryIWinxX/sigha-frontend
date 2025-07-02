@@ -1,34 +1,10 @@
 <template>
-    <div class="fixed inset-0 flex items-center justify-center p-4 z-50 animate__animated"
+    <div class="fixed inset-0 flex items-center justify-center p-4 z-50 animate__animated bg-black/50"
         :class="isClosing ? 'animate__fadeOut animate__faster' : 'animate__fadeIn animate__faster'"
-        style="background-color: rgba(0, 0, 0, 0.7);" @click="handleOverlayClick">
+        @click="handleOverlayClick">
         <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full animate__animated"
             :class="isClosing ? 'animate__fadeOutDown animate__faster' : 'animate__fadeInUp animate__faster'"
             @click.stop>
-            
-            <!-- Confirmation Modal Overlay -->
-            <div v-if="showConfirmation" class="absolute inset-0 bg-black/50 flex items-center justify-center z-10 ">
-                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                    <div class="text-center">
-                        <h3 class="text-lg font-semibold text-[#3b3e45] mb-4">
-                            Confirmar salida
-                        </h3>
-                        <p class="text-sm text-[#666e7d] mb-6">
-                            ¿Estás seguro de que deseas salir? Los datos ingresados se perderán.
-                        </p>
-                        <div class="flex justify-center gap-3">
-                            <Button @click="showConfirmation = false"
-                                custom-class="px-4 py-2 border border-[#cfd3d4] text-gray-600 bg-white hover:bg-[#f4f4f4] transition-colors text-sm">
-                                Cancelar
-                            </Button>
-                            <Button @click="confirmClose"
-                                custom-class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white transition-colors text-sm">
-                                Salir
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Modal Header -->
             <div class="border-b border-[#dcdfe3] px-4 py-3">
@@ -60,15 +36,15 @@
                                 placeholder="Ingrese el número" required />
 
                             <Input id="email" v-model="formData.email" type="email" label="Correo Electrónico"
-                                placeholder="ejemplo@correo.com" required 
+                                placeholder="ejemplo@correo.com" required
                                 :class="formData.email && !isEmailValid ? 'border-red-500' : ''" />
-                            
+
                             <!-- Email Error Message -->
                             <div v-if="emailError" class="md:col-span-2">
                                 <div class="bg-red-50 border border-red-200 rounded-lg p-3">
                                     <div class="flex items-start">
                                         <div class="flex-shrink-0">
-                                            <TriangleAlert   class="h-5 w-5 text-red-400" />
+                                            <TriangleAlert class="h-5 w-5 text-red-400" />
                                         </div>
                                         <div class="ml-3">
                                             <h3 class="text-sm font-medium text-red-800">
@@ -81,7 +57,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Email Warning -->
                             <div v-if="formData.email && !emailError && isEmailValid" class="md:col-span-2">
                                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
@@ -94,7 +70,8 @@
                                                 Importante
                                             </h3>
                                             <div class="mt-1 text-sm text-yellow-700">
-                                                <p>Este debe ser el correo electrónico real de la persona. La contraseña temporal será enviada a esta dirección.</p>
+                                                <p>Este debe ser el correo electrónico real de la persona. La contraseña
+                                                    temporal será enviada a esta dirección.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -113,7 +90,7 @@
                                             <CheckBox v-model="role.selected" :color="'#67b83c'" class="mt-0.5" />
                                             <div class="flex-1 min-w-0">
                                                 <span class="text-sm font-medium text-[#3b3e45] block">{{ role.label
-                                                    }}</span>
+                                                }}</span>
                                                 <p class="text-xs text-[#666e7d] mt-0.5">{{ role.description }}</p>
                                             </div>
                                         </div>
@@ -131,16 +108,13 @@
                             <div class="flex gap-2">
                                 <Input id="clavetemporal" v-model="formData.clavetemporal"
                                     placeholder="Generar clave temporal" class="flex-1" />
-                                <Button @click="generateTemporaryPassword"
-                                    custom-class="bg-[#67b83c] hover:bg-[#5ba332] text-white px-3 py-2 text-sm"
-                                    title="Generar clave">
+                                <Button variant="primary" @click="generateTemporaryPassword" title="Generar clave">
                                     <template #icon>
                                         <RefreshCcw class="h-4 w-4" />
                                     </template>
                                 </Button>
-                                <Button @click="copyTemporaryPassword"
-                                    custom-class="bg-[#3C7CB8] hover:bg-[#3C7CB8] text-white px-3 py-2 text-sm"
-                                    title="Copiar clave" :disabled="!formData.clavetemporal">
+                                <Button variant="info" @click="copyTemporaryPassword" title="Copiar clave"
+                                    :disabled="!formData.clavetemporal">
                                     <template #icon>
                                         <ClipboardCopy class="h-4 w-4" />
                                     </template>
@@ -193,8 +167,7 @@
             <!-- Modal Footer -->
             <div class="border-t border-[#dcdfe3] px-4 py-3 bg-[#f8f9fa]">
                 <div class="flex justify-end gap-2">
-                    <Button @click="cancelForm"
-                        custom-class="px-4 py-2 border border-[#cfd3d4] text-[#666e7d] bg-white hover:bg-[#f4f4f4] transition-colors text-sm">
+                    <Button variant="secondary" @click="cancelForm">
                         Cancelar
                     </Button>
                     <Button @click="createUser"
@@ -206,6 +179,12 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal :isVisible="showConfirmation" title="Confirmar salida"
+        message="¿Estás seguro de que deseas salir? Los datos ingresados se perderán." confirmText="Salir"
+        cancelText="Cancelar" confirmVariant="danger" cancelVariant="secondary" @confirm="confirmClose"
+        @cancel="showConfirmation = false" />
 </template>
 
 <script setup>
@@ -215,6 +194,7 @@ import Input from './common/Input.vue'
 import Button from './common/Button.vue'
 import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
+import ConfirmationModal from './common/ConfirmationModal.vue'
 import { showSuccessToast, showWarningToast, showErrorToast, showInfoToast } from '@/utils/toast.js'
 import { newUserService } from '@/services/newUserService'
 import { TipoDocumentoService } from '@/services/tipoDocumentoService'
@@ -335,23 +315,23 @@ watch(() => formData.apellido, (newValue) => {
 // Email validation function
 const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    
+
     if (!email) {
         emailError.value = ''
         isEmailValid.value = false
         return
     }
-    
+
     if (!emailRegex.test(email)) {
         emailError.value = 'Por favor ingrese un correo electrónico válido'
         isEmailValid.value = false
         return
     }
-    
+
     // Additional validation for common domains
     const domain = email.split('@')[1]?.toLowerCase()
     const commonDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'live.com', 'msn.com']
-    
+
     if (domain && !commonDomains.includes(domain)) {
         // Check if it's a valid domain format
         const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/
@@ -361,7 +341,7 @@ const validateEmail = (email) => {
             return
         }
     }
-    
+
     emailError.value = ''
     isEmailValid.value = true
 }

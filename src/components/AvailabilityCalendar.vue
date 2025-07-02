@@ -1,57 +1,57 @@
 <template>
     <div class="w-full h-full flex flex-col overflow-hidden bg-white">
         <!-- Mensaje cuando la disponibilidad está deshabilitada -->
-        <div v-if="!props.semesterAvailability"
-            class="mb-4 p-4 bg-red-50 border-2 border-red-500 rounded-lg flex-shrink-0">
+        <div v-if="!props.semesterAvailability" class="mb-4 p-4 bg-danger-500  rounded-sm flex-shrink-0">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
-                    <X :size="20" class="text-red-500" />
+                    <X :size="20" class="text-white" />
                 </div>
                 <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">
+                    <h3 class="text-sm font-medium text-white">
                         Disponibilidad Deshabilitada
                     </h3>
-                    <div class="mt-1 text-sm text-red-700">
-                        <p>La configuración de disponibilidad está deshabilitada para este semestre. Todas las casillas
-                            están bloqueadas y no se pueden realizar modificaciones.</p>
+                    <div class="mt-1 text-sm text-white">
+                        <p>La gestión de disponibilidad se encuentra inhabilitada para este período académico. No es
+                            posible realizar cambios en la selección de horarios en este momento. Si necesita hacer
+                            cambios por favor contacte con el coordinador académico.</p>
                     </div>
                 </div>
             </div>
         </div>
         <div v-else-if="internalSelectedSlots.length > 0 && !isInfoMessageClosed"
-            class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-500 rounded-lg flex-shrink-0 relative">
+            class="mb-4 p-4 bg-gray-50 border-2 border-gray-300 rounded-sm flex-shrink-0 relative">
             <button @click="closeInfoMessage"
-                class="absolute top-2 right-2 p-1 hover:bg-yellow-100 rounded transition-colors"
+                class="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded transition-colors"
                 aria-label="Cerrar mensaje">
-                <X :size="24" class="text-yellow-600" />
+                <X :size="24" class="text-gray-600" />
             </button>
             <div class="flex items-start pr-8">
                 <div class="flex-shrink-0">
-                    <Info :size="20" class="text-yellow-500" />
+                    <Info :size="24" class="text-gray-700" />
                 </div>
                 <div class="ml-3">
-                    <h3 class="text-sm font-medium text-yellow-800">
-                        Estado de Disponibilidad
+                    <h3 class="text-sm font-medium text-gray-800">
+                        Información sobre Estados de Disponibilidad
                     </h3>
-                    <div class="mt-1 text-sm text-yellow-700">
-                        <p>La disponibilidad seleccionada será revisada por el coordinador académico. Dependiendo de su
-                            decisión, la disponibilidad será aprobada o rechazada.</p>
-                        <p class="mt-1">
+                    <div class="mt-1 text-sm text-gray-700">
+                        <p>Una vez enviada tu disponibilidad, será evaluada por la coordinación académica. El estado de
+                            cada franja horaria se indicará mediante colores:</p>
+                        <p class="mt-2">
                             <span
-                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                class="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-green-500 text-white mr-2">
                                 Verde: Aprobada
                             </span>
                             <span
-                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 mr-2">
+                                class="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-yellow-500 text-white mr-2">
                                 Amarillo: Rechazada
                             </span>
                             <span
-                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                                Azul: Enviada
+                                class="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-info-500 text-white mr-2">
+                                Azul: Pendiente de revisión
                             </span>
                             <span
-                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                Gris: Sin estado
+                                class="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium border bg-white border-gray-300 text-gray-700">
+                                Blanco: Sin definir
                             </span>
                         </p>
                     </div>
@@ -70,44 +70,28 @@
                 <span v-if="availabilityError" class="ml-2 text-xs text-red-600">Error al cargar</span>
             </div>
             <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                <Button @click="clearAllSelections" :disabled="!props.semesterAvailability"
-                    customClass="py-1.5 px-3 bg-[#B83C3C] hover:bg-[#A33434] text-white"
-                    :class="{ 'opacity-50 cursor-not-allowed': !props.semesterAvailability }">
-                    <template #icon>
-                        <Trash2 :size="18" />
-                    </template>
+                <Button @click="clearAllSelections" :disabled="!props.semesterAvailability" variant="danger">
+                    <Trash2 :size="18" />
                     Eliminar todas
                 </Button>
-                <Button @click="undoSelection" :disabled="!canUndo || !props.semesterAvailability"
-                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800"
-                    :class="{ 'opacity-50 cursor-not-allowed': !canUndo || !props.semesterAvailability }">
-                    <template #icon>
-                        <Undo2 :size="18" />
-                    </template>
+                <Button @click="undoSelection" :disabled="!canUndo || !props.semesterAvailability" variant="secondary">
+                    <Undo2 :size="18" />
                     Deshacer
                 </Button>
-                <Button @click="redoSelection" :disabled="!canRedo || !props.semesterAvailability"
-                    customClass="py-1.5 px-3 border border-[#DCDFE3] hover:border-[#C3C8CC] text-gray-800"
-                    :class="{ 'opacity-50 cursor-not-allowed': !canRedo || !props.semesterAvailability }">
-                    <template #icon>
-                        <Redo2 :size="18" />
-                    </template>
+                <Button @click="redoSelection" :disabled="!canRedo || !props.semesterAvailability" variant="secondary">
+                    <Redo2 :size="18" />
                     Rehacer
                 </Button>
-                <button :disabled="!props.semesterAvailability"
-                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#3c8bb8] hover:bg-[#345fa3] transition-all text-white text-sm font-normal"
-                    :class="props.semesterAvailability ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'">
-                    Disponibilidad Anterior
+                <Button variant="info" :disabled="!props.semesterAvailability">
                     <ClipboardCopy :size="18" />
-                </button>
-                <button
-                    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-sm bg-[#67B83C] hover:bg-[#57A334] transition-all text-white text-sm font-normal"
-                    @click="sendAvailability"
-                    :disabled="isAvailabilitySent || loadingAvailability || !props.semesterAvailability"
-                    :class="{ 'opacity-50 cursor-not-allowed': isAvailabilitySent || loadingAvailability || !props.semesterAvailability }">
+                    Disponibilidad Anterior
+
+                </Button>
+                <Button variant="primary" @click="sendAvailability"
+                    :disabled="isAvailabilitySent || loadingAvailability || !props.semesterAvailability">
                     <Send :size="18" />
                     {{ loadingAvailability ? 'Cargando...' : 'Enviar Disponibilidad' }}
-                </button>
+                </Button>
             </div>
         </div>
 
@@ -134,28 +118,24 @@
                         @mouseleave="props.semesterAvailability && handleMouseLeave(day.value, hour.value)"
                         @click="!isLunchTime(hour.value) && !isSunday(day.value) && props.semesterAvailability && toggleSelection(day.value, hour.value)">
                         <div class="flex flex-col items-center justify-center w-full h-full">
-                            <span class="text-xs transition-opacity" :class="{
-                                'opacity-0 group-hover:opacity-100 text-gray-400': !isSelected(day.value, hour.value) && !isLunchTime(hour.value) && !isSunday(day.value),
-                                'opacity-100 text-white font-semibold': isSelected(day.value, hour.value),
-                                'text-white opacity-80': isLunchTime(hour.value) || isSunday(day.value)
-                            }">
+                            <span v-if="!isLunchTime(hour.value) && !isSunday(day.value)"
+                                class="text-xs transition-opacity" :class="{
+                                    'opacity-0 group-hover:opacity-100 text-gray-400': !isSelected(day.value, hour.value),
+                                    'opacity-100 text-white font-semibold': isSelected(day.value, hour.value)
+                                }">
                                 {{ formatHourShort(hour.value) }}
                             </span>
-                            <span v-if="isLunchTime(hour.value)"
-                                class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                :class="{ 'opacity-100': isLunchTime(hour.value) }">
-                                Almuerzo
-                            </span>
                             <span v-if="isSunday(day.value)"
-                                class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                class="text-sm bg-danger-500 text-white px-3 py-1.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                 :class="{ 'opacity-100': isSunday(day.value) }">
                                 Festivo
                             </span>
-                            <span v-if="!props.semesterAvailability && !isLunchTime(hour.value) && !isSunday(day.value)"
-                                class="text-[10px] bg-gray-500 text-white px-1.5 py-0.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                :class="{ 'opacity-100': !props.semesterAvailability }">
-                                Bloqueado
+                            <span v-else-if="isLunchTime(hour.value)"
+                                class="text-sm bg-danger-500 text-white px-3 py-1.5 rounded mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                :class="{ 'opacity-100': isLunchTime(hour.value) }">
+                                Almuerzo
                             </span>
+
                         </div>
 
                         <!-- Tooltip -->
@@ -536,12 +516,12 @@ function handleDayHeaderClick(dayValue) {
     if (!props.semesterAvailability) {
         return;
     }
-    
+
     toggleSelectAllHoursInDay(dayValue);
 }
 
 function toggleSelectAllHoursInDay(dayValue) {
-    
+
     // Sundays (day 7) are holidays and cannot have all hours selected.
     if (isSunday(dayValue)) {
         return;

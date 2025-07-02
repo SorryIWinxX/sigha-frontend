@@ -1,26 +1,23 @@
 <template>
     <div class="bg-gray-50 h-[calc(100vh-20vh)] flex flex-col">
         <!-- Fixed Header -->
-        <div class="flex-shrink-0 px-6 py-4 bg-white border-b border-gray-200">
-            <div class="flex gap-4 items-center">
+        <div class=" px-6 py-4 bg-white border-b border-gray-200">
+            <div class="flex gap-4 items-center justify-between">
                 <Search v-model="searchQuery" />
-                <Button
-                    customClass="px-4 py-2.5 border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2"
-                    @click="toggleFilters">
+                <Button variant="secondary" @click="toggleFilters">
                     <Filter class="w-4 h-4" />
                     Filtros
-                    <span v-if="activeFiltersCount > 0" class="ml-1 bg-[#67b83c] text-white text-xs rounded-full px-2 py-0.5">
+                    <span v-if="activeFiltersCount > 0"
+                        class="ml-1 bg-primary-500 text-white text-xs rounded-full px-2 py-0.5">
                         {{ activeFiltersCount }}
                     </span>
                 </Button>
-                <Button customClass="bg-[#67b83c] w-40 text-white py-2.5 px-4" @click="addNewAreaRow">
-                    <template #icon>
-                        <Plus :size="20" />
-                    </template>
-                    Crear area
+                <Button variant="primary" @click="addNewAreaRow">
+                    <Plus :size="18" />
+                    Crear área
                 </Button>
             </div>
-            
+
             <!-- Filter Panel -->
             <div v-if="showFilters" class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-sm">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -35,7 +32,7 @@
                             <option value="11+">Más de 10 materias</option>
                         </Select>
                     </div>
-                    
+
                     <!-- Filter by subject level -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nivel de materias</label>
@@ -48,7 +45,7 @@
                             <option value="5">Nivel 5</option>
                         </Select>
                     </div>
-                    
+
                     <!-- Filter by area type -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de área</label>
@@ -61,11 +58,9 @@
                         </Select>
                     </div>
                 </div>
-                
+
                 <div class="mt-4 flex gap-2">
-                    <Button 
-                        customClass="px-4 py-2 bg-[#67b83c] text-white text-sm rounded-sm hover:bg-[#5ba632] transition-colors"
-                        @click="clearFilters">
+                    <Button variant="primary" @click="clearFilters">
                         Limpiar filtros
                     </Button>
                     <span class="text-sm text-gray-600 flex items-center">
@@ -78,9 +73,10 @@
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-auto px-6 py-6">
             <!-- Search results info -->
-            <div v-if="searchQuery.trim() || (!searchQuery.trim() && hasActiveFilters)" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-sm">
+            <div v-if="searchQuery.trim() || (!searchQuery.trim() && hasActiveFilters)"
+                class="mb-4 p-3 bg-info-500 rounded-sm">
                 <div class="flex items-center justify-between">
-                    <div class="text-sm text-blue-800">
+                    <div class="text-sm text-white">
                         <span v-if="searchQuery.trim()">
                             Buscando "<strong>{{ searchQuery }}</strong>" en nombres de áreas, asignaturas y códigos
                             - {{ filteredAreas.length }} área(s) encontrada(s)
@@ -89,9 +85,7 @@
                             Filtros aplicados - {{ filteredAreas.length }} área(s) encontrada(s)
                         </span>
                     </div>
-                    <Button 
-                        customClass="text-xs px-2 py-1 text-blue-600 hover:text-blue-800"
-                        @click="clearSearchAndFilters">
+                    <Button variant="primary" @click="clearSearchAndFilters">
                         Limpiar
                     </Button>
                 </div>
@@ -110,18 +104,14 @@
                         class="flex-1 px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
                         @keyup.enter="saveNewArea" @keyup.escape="cancelCreate">
                     <div class="flex gap-2">
-                        <button @click="saveNewArea"
-                            class="px-4 py-2 text-sm font-medium text-white rounded-sm transition-colors duration-200 flex items-center gap-2"
-                            :disabled="!canSaveNew || isSaving"
-                            :class="(canSaveNew && !isSaving) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'">
+                        <Button variant="primary" @click="saveNewArea" :disabled="!canSaveNew || isSaving">
                             <div v-if="isSaving" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white">
                             </div>
                             {{ isSaving ? 'Guardando...' : 'Guardar' }}
-                        </button>
-                        <button @click="cancelCreate"
-                            class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
+                        </Button>
+                        <Button variant="secondary" @click="cancelCreate">
                             Cancelar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -141,7 +131,8 @@
                                 </button>
 
                                 <div class="flex-1">
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-1" v-html="highlightSearchTerm(area.description)"></h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-1"
+                                        v-html="highlightSearchTerm(area.description)"></h3>
                                     <p class="text-sm text-gray-600">{{ getAreaSubtitle(area.description) }}</p>
                                 </div>
                             </div>
@@ -149,32 +140,31 @@
                             <div class="flex items-center gap-6">
                                 <div class="flex gap-4">
                                     <span
-                                        class="inline-flex items-center px-3 py-1 rounded-sm text-sm bg-[#3C6EB8] text-white font-medium">
+                                        class="inline-flex items-center px-3 py-1.5 rounded-sm text-sm bg-info-500 text-white font-medium">
                                         {{ getSubjectsCount(area.id || 0) }} materias
                                     </span>
                                 </div>
 
                                 <div class="relative">
-                                    <button @click="toggleDropdown(area.id || 0)"
-                                        class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-gray-300 rounded-sm flex items-center justify-center hover:bg-[#67b83c] transition-colors duration-200">
-                                        <MoreHorizontal class="h-4 w-4" />
+                                    <button @click="toggleDropdown(area.id || 0)" data-dropdown-trigger
+                                        class="h-9 w-9 p-0 border border-gray-200 text-gray-500 cursor-pointer hover:text-white hover:border-white rounded-sm flex items-center justify-center hover:bg-[#67b83c] hover:border-gray-300">
+                                        <MoreHorizontal class="h-4 w-4 transition-colors duration-200" />
                                     </button>
-                                    <div v-if="openDropdown === (area.id || 0)"
-                                        class="absolute z-[9999] w-48 bg-white py-2 rounded-sm border border-gray-200 shadow-xl overflow-hidden top-10 right-0"
-                                        >
-                                        <div class="flex flex-col">
-                                            <button @click="startEdit(area)"
-                                                class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-200 transition-colors duration-150 border-t border-b border-gray-100 cursor-pointer text-left">
-                                                <Edit class="h-4 w-4 text-gray-600" />
-                                                <span class="text-sm">Editar área</span>
+                                    <div v-if="openDropdown === (area.id || 0)" data-dropdown-menu :class="[
+                                        'absolute z-50 w-48 bg-white rounded-sm border border-gray-200 shadow-lg overflow-hidden',
+                                        getDropdownPosition(area) ? 'bottom-10 right-0' : 'top-10 right-0'
+                                    ]">
+                                        <div class="py-1">
+                                            <button @click.stop="startEdit(area)"
+                                                class="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-info-500 hover:text-white transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
+                                                <Edit class="h-4 w-4" />
+                                                Editar área
                                             </button>
-                                            <button @click="createSubject(area.id || 0)"
-                                                class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:text-white hover:bg-[#67b83c] transition-colors duration-150 border-b border-gray-100 cursor-pointer text-left">
-
+                                            <button @click.stop="createSubject(area.id || 0)"
+                                                class="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-500 hover:text-white transition-colors duration-150 cursor-pointer">
                                                 <Plus class="h-4 w-4" />
-                                                <span class="text-sm">Crear asignatura</span>
+                                                Crear asignatura
                                             </button>
-                                         
                                         </div>
                                     </div>
                                 </div>
@@ -187,14 +177,12 @@
                                 class="flex-1 px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
                                 @keyup.enter="saveEdit" @keyup.escape="cancelEdit">
                             <div class="flex gap-2">
-                                <button @click="saveEdit"
-                                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200">
+                                <Button variant="primary" @click="saveEdit">
                                     Guardar
-                                </button>
-                                <button @click="cancelEdit"
-                                    class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
+                                </Button>
+                                <Button variant="secondary" @click="cancelEdit">
                                     Cancelar
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -203,7 +191,8 @@
                     <div v-if="expandedAreas.has(area.id || 0)" class="border-t border-gray-200 bg-gray-50 relative">
                         <div class="p-6">
                             <!-- Formulario para crear nueva asignatura -->
-                            <div v-if="creatingSubjectForArea === area.id" class="bg-white rounded-sm border border-gray-200 mb-4 p-4">
+                            <div v-if="creatingSubjectForArea === area.id"
+                                class="bg-white rounded-sm border border-gray-200 mb-4 p-4">
                                 <div class="grid grid-cols-3 gap-4 mb-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Código</label>
@@ -213,14 +202,14 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
-                                        <input v-model="newSubject.name" type="text" placeholder="Ej: Cálculo Diferencial"
+                                        <input v-model="newSubject.name" type="text"
+                                            placeholder="Ej: Cálculo Diferencial"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
                                             @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                                        <Select v-model="newSubject.level"
-                                            >
+                                        <Select v-model="newSubject.level">
                                             <option value="">Seleccionar nivel</option>
                                             <option value="1">Nivel 1</option>
                                             <option value="2">Nivel 2</option>
@@ -231,16 +220,13 @@
                                     </div>
                                 </div>
                                 <div class="flex gap-2 justify-end">
-                                    <button @click="saveNewSubject"
-                                        class="px-4 py-2 text-sm font-medium text-white rounded-sm transition-colors duration-200"
-                                        :disabled="!canSaveNewSubject || isSavingSubject"
-                                        :class="(canSaveNewSubject && !isSavingSubject) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'">
+                                    <Button variant="primary" @click="saveNewSubject"
+                                        :disabled="!canSaveNewSubject || isSavingSubject">
                                         {{ isSavingSubject ? 'Guardando...' : 'Guardar Asignatura' }}
-                                    </button>
-                                    <button @click="cancelCreateSubject"
-                                        class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
+                                    </Button>
+                                    <Button variant="secondary" @click="cancelCreateSubject">
                                         Cancelar
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -248,17 +234,22 @@
                             <div class="space-y-3">
                                 <div v-for="subject in getSubjectsByArea(area.id || 0)" :key="subject.id"
                                     class="bg-white rounded-sm border border-gray-200 transition-colors duration-200">
-                                    
+
                                     <!-- Modo visualización -->
-                                    <div v-if="editingSubjectId !== subject.id" class="flex items-center justify-between p-4">
+                                    <div v-if="editingSubjectId !== subject.id"
+                                        class="flex items-center justify-between p-4">
                                         <div class="flex gap-6 flex-1">
                                             <div class="min-w-0">
                                                 <span class="text-sm text-gray-500">Código</span>
-                                                <p class="font-medium text-gray-900" v-html="highlightSearchTerm(subject.code)"></p>
+                                                <p class="font-medium text-gray-900"
+                                                    v-html="highlightSearchTerm(subject.code)">
+                                                </p>
                                             </div>
                                             <div class="min-w-0 flex-1">
                                                 <span class="text-sm text-gray-500">Asignatura</span>
-                                                <p class="font-medium text-gray-900" v-html="highlightSearchTerm(subject.name)"></p>
+                                                <p class="font-medium text-gray-900"
+                                                    v-html="highlightSearchTerm(subject.name)">
+                                                </p>
                                             </div>
                                             <div class="min-w-0 pr-6">
                                                 <span class="text-sm text-gray-500">Nivel</span>
@@ -266,7 +257,8 @@
                                             </div>
                                         </div>
                                         <div class="flex gap-2">
-                                            <ButtonIcon :icon="Edit" title="Editar asignatura" @click="startEditSubject(subject, area.id || 0)" />
+                                            <ButtonIcon :icon="Edit" title="Editar asignatura"
+                                                @click="startEditSubject(subject, area.id || 0)" />
                                         </div>
                                     </div>
 
@@ -274,21 +266,23 @@
                                     <div v-if="editingSubjectId === subject.id" class="p-4">
                                         <div class="grid grid-cols-3 gap-4 mb-4">
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Código</label>
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 mb-2">Código</label>
                                                 <input v-model="editSubjectForm.code" type="text"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
                                                     @keyup.enter="saveEditSubject" @keyup.escape="cancelEditSubject">
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
                                                 <input v-model="editSubjectForm.name" type="text"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
                                                     @keyup.enter="saveEditSubject" @keyup.escape="cancelEditSubject">
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                                                <Select v-model="editSubjectForm.level"
-                                                    >
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
+                                                <Select v-model="editSubjectForm.level">
                                                     <option value="">Seleccionar nivel</option>
                                                     <option value="1">Nivel 1</option>
                                                     <option value="2">Nivel 2</option>
@@ -299,21 +293,19 @@
                                             </div>
                                         </div>
                                         <div class="flex gap-2 justify-end">
-                                            <button @click="saveEditSubject"
-                                                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-sm hover:bg-green-700 transition-colors duration-200">
+                                            <Button variant="primary" @click="saveEditSubject">
                                                 Guardar
-                                            </button>
-                                            <button @click="cancelEditSubject"
-                                                class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-sm hover:bg-gray-600 transition-colors duration-200">
+                                            </Button>
+                                            <Button variant="secondary" @click="cancelEditSubject">
                                                 Cancelar
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Botón para agregar asignatura cuando no hay ninguna -->
-                                <div v-if="getSubjectsByArea(area.id || 0).length === 0 && creatingSubjectForArea !== area.id" 
-                                     class="text-center py-8">
+                                <div v-if="getSubjectsByArea(area.id || 0).length === 0 && creatingSubjectForArea !== area.id"
+                                    class="text-center py-8">
                                     <p class="text-gray-500 mb-4">No hay asignaturas en esta área</p>
                                     <button @click="createSubject(area.id || 0)"
                                         class="px-4 py-2 bg-[#67b83c] text-white text-sm font-medium rounded-sm hover:bg-[#5ba632] transition-colors duration-200 flex items-center gap-2 mx-auto">
@@ -340,9 +332,7 @@
                     <p class="text-gray-600 mb-4">
                         Intenta con diferentes términos de búsqueda o ajusta los filtros.
                     </p>
-                    <Button 
-                        customClass="px-4 py-2 bg-[#67b83c] text-white text-sm rounded-sm hover:bg-[#5ba632]"
-                        @click="clearSearchAndFilters">
+                    <Button variant="primary" @click="clearSearchAndFilters">
                         Limpiar búsqueda y filtros
                     </Button>
                 </div>
@@ -455,28 +445,28 @@ const filteredAreas = computed(() => {
     // Aplicar filtro de búsqueda - solo busca en área, asignatura y código
     if (searchQuery.value.trim()) {
         const query = searchQuery.value.toLowerCase().trim()
-        
+
         result = result.filter(area => {
             try {
                 // Buscar en el nombre del área
                 const areaNameMatch = area.description?.toLowerCase().includes(query) || false
-                
+
                 // Buscar en las asignaturas (nombre y código)
                 const subjectMatch = area.subjectList?.some(subject => {
                     const nameMatch = subject.name?.toLowerCase().includes(query) || false
                     const codeMatch = subject.code?.toLowerCase().includes(query) || false
                     return nameMatch || codeMatch
                 }) || false
-                
+
                 const matches = areaNameMatch || subjectMatch
-                
+
                 return matches
             } catch (error) {
                 console.error('Error filtering area:', area, error)
                 return false
             }
         })
-        
+
     }
 
     // Aplicar filtros adicionales solo si no hay búsqueda activa
@@ -516,9 +506,9 @@ const filteredAreas = computed(() => {
                     case 'software':
                         return description.includes('software')
                     case 'other':
-                        return !(description.includes('matemáticas') || description.includes('matematicas') || 
-                               description.includes('arquitectura') || description.includes('computador') || 
-                               description.includes('hardware') || description.includes('software'))
+                        return !(description.includes('matemáticas') || description.includes('matematicas') ||
+                            description.includes('arquitectura') || description.includes('computador') ||
+                            description.includes('hardware') || description.includes('software'))
                     default:
                         return true
                 }
@@ -554,7 +544,7 @@ const highlightSearchTerm = (text: string): string => {
     if (!searchQuery.value.trim() || !text) {
         return text || ''
     }
-    
+
     const query = searchQuery.value.trim()
     const regex = new RegExp(`(${query})`, 'gi')
     return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>')
@@ -589,6 +579,12 @@ const toggleArea = (areaId: number) => {
     } else {
         expandedAreas.value.add(areaId)
     }
+}
+
+// Función para determinar la posición del dropdown
+const getDropdownPosition = (area: Area): boolean => {
+    const areaIndex = filteredAreas.value.findIndex(a => a.id === area.id)
+    return areaIndex >= filteredAreas.value.length - 2
 }
 
 // Cargar áreas al montar el componente
@@ -752,7 +748,7 @@ const startEditSubject = (subject: Subject, areaId: number) => {
     if (editingId.value) {
         cancelEdit()
     }
-    
+
     editingSubjectId.value = subject.id || null
     currentEditingAreaId.value = areaId
     editSubjectForm.code = subject.code
@@ -790,7 +786,7 @@ const cancelEditSubject = () => {
 
 const deleteSubjectConfirm = async (subject: Subject, areaId: number) => {
     if (!subject.id) return
-    
+
     if (confirm(`¿Estás seguro de que deseas eliminar la asignatura "${subject.name}"?`)) {
         try {
             await areasService.deleteSubject(areaId, subject.id)
@@ -805,8 +801,18 @@ const deleteSubjectConfirm = async (subject: Subject, areaId: number) => {
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
-    if (!event.target || !(event.target as Element).closest('.relative')) {
-        openDropdown.value = null
+    const target = event.target as Element
+    if (!target) return
+
+    // Si el dropdown está abierto y el click no fue dentro del dropdown o su botón
+    if (openDropdown.value !== null) {
+        const dropdownButton = target.closest('[data-dropdown-trigger]')
+        const dropdownMenu = target.closest('[data-dropdown-menu]')
+
+        // Si no se hizo click en el botón del dropdown ni en el menú del dropdown
+        if (!dropdownButton && !dropdownMenu) {
+            openDropdown.value = null
+        }
     }
 }
 

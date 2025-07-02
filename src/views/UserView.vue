@@ -61,7 +61,7 @@
                         <!-- Estado de cambios -->
                         <div v-if="hasChanges" class="text-right">
                             <div
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-warning-500 text-white">
                                 Cambios pendientes
                             </div>
                         </div>
@@ -163,12 +163,10 @@
                                             {{ passwordError }}
                                         </div>
                                     </div>
-
-                                    <button type="button" @click="changePassword"
-                                        class="w-full cursor-pointer bg-[#67B83C] text-white px-4 py-2 rounded-md hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors mt-4"
+                                    <Button @click="showPasswordConfirmation" variant="primary" customClass=""
                                         :disabled="!canChangePassword">
                                         Cambiar Contraseña
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -206,20 +204,29 @@
                                 Tienes cambios sin guardar
                             </div>
                             <div class="flex space-x-3">
-                                <button type="button" @click="resetForm"
-                                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                                <Button type="button" @click="showCancelConfirmation" variant="secondary">
                                     Cancelar
-                                </button>
-                                <button type="submit" :disabled="saving"
-                                    class="px-6 py-2 bg-[#67B83C] text-white rounded-md hover:bg-[#69a14a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                </Button>
+                                <Button type="submit" :disabled="saving" variant="primary">
                                     {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+
+        <!-- Confirmation Modals -->
+        <ConfirmationModal :isVisible="showCancelModal" title="Cancelar Cambios"
+            message="¿Estás seguro de que deseas cancelar los cambios? Se perderán todos los datos no guardados."
+            confirmText="Sí, cancelar" cancelText="No, continuar editando" confirmVariant="danger"
+            cancelVariant="secondary" @confirm="confirmCancelChanges" @cancel="showCancelModal = false" />
+
+        <ConfirmationModal :isVisible="showPasswordModal" title="Cambiar Contraseña"
+            message="¿Estás seguro de que deseas cambiar tu contraseña? Esta acción no se puede deshacer."
+            confirmText="Sí, cambiar" cancelText="Cancelar" confirmVariant="primary" cancelVariant="secondary"
+            @confirm="confirmChangePassword" @cancel="showPasswordModal = false" />
     </MainLayout>
 </template>
 
@@ -233,11 +240,17 @@ import { userService } from '@/services/userServices';
 import { TipoDocumentoService } from '@/services/tipoDocumentoService';
 import { useAreasStore } from '@/store/areasStore';
 import { showSuccessToast } from '@/utils/toast.js';
+import Button from '@/components/common/Button.vue';
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue';
 
 // Estados de la aplicación
 const loading = ref(true);
 const error = ref('');
 const saving = ref(false);
+
+// Estados para los modales de confirmación
+const showCancelModal = ref(false);
+const showPasswordModal = ref(false);
 
 // Servicio de tipos de documento
 const tipoDocumentoService = new TipoDocumentoService();
@@ -463,10 +476,8 @@ const saveUserInfo = async () => {
 };
 
 const resetForm = () => {
-    if (confirm('¿Estás seguro de que deseas cancelar los cambios?')) {
-        if (originalUserInfo.value) {
-            userInfo.value = { ...originalUserInfo.value, photo: userInfo.value.photo };
-        }
+    if (originalUserInfo.value) {
+        userInfo.value = { ...originalUserInfo.value, photo: userInfo.value.photo };
     }
 };
 
@@ -485,6 +496,25 @@ const formatDate = (dateString) => {
     } catch (error) {
         return dateString;
     }
+};
+
+// Funciones para los modales de confirmación
+const showCancelConfirmation = () => {
+    showCancelModal.value = true;
+};
+
+const showPasswordConfirmation = () => {
+    showPasswordModal.value = true;
+};
+
+const confirmCancelChanges = () => {
+    showCancelModal.value = false;
+    resetForm();
+};
+
+const confirmChangePassword = () => {
+    showPasswordModal.value = false;
+    changePassword();
 };
 
 // Cargar datos al montar el componente

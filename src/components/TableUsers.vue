@@ -113,25 +113,23 @@
                         <td class="px-6 py-3">
                             <span class="text-gray-500">{{ user.lastLogin }}</span>
                         </td>
-                        <td class="px-6 py-3">
+                        <td class="px-3 py-1.5">
                             <span :class="[
-                                'inline-flex items-center px-4 py-1 rounded-sm  justify-center',
+                                'inline-flex items-center px-3 py-1.5 rounded-sm justify-center text-white text-sm',
                                 user.permission === 'DIRECTOR DE ESCUELA' || user.permission === 'COORDINADOR ACADEMICO'
-                                    ? 'text-white '
-                                    : 'text-white'
-                            ]" :style="{
-                                backgroundColor: user.permission === 'DIRECTOR DE ESCUELA' || user.permission === 'COORDINADOR ACADEMICO' ? '#67b83c' : '#94a3b8'
-                            }">
+                                    ? 'bg-primary-500'
+                                    : 'bg-slate-400'
+                            ]">
                                 {{ user.permission }}
                             </span>
                         </td>
                         <td class="px-6 py-3">
                             <div class="flex items-center justify-center">
                                 <span :class="[
-                                    'inline-flex items-center px-3 py-1 rounded-sm font-medium',
+                                    'inline-flex items-center px-3 py-1.5 rounded-sm text-sm',
                                     user.isActive
-                                        ? 'bg-[#67b83c] text-white'
-                                        : 'bg-[#f87171] text-white'
+                                        ? 'bg-primary-500 text-white'
+                                        : 'bg-danger-500 text-white'
                                 ]">
                                     {{ user.isActive ? 'Activo' : 'Inactivo' }}
                                 </span>

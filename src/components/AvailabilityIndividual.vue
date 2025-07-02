@@ -4,34 +4,28 @@
         <div class="mt-4">
             <div class="flex items-center justify-between">
                 <div class="w-1/4">
-                    <Select id="professor-select" v-model="selectedProfessor"  placeholder="Seleccionar profesor"
-                    :disabled="loading || !props.selectedSemester">
-                    <option v-for="professor in professors" :key="professor.id" :value="professor.id">
+                    <Select id="professor-select" v-model="selectedProfessor" placeholder="Seleccionar profesor"
+                        :disabled="loading || !props.selectedSemester">
+                        <option v-for="professor in professors" :key="professor.id" :value="professor.id">
                             {{ professor.firstName }} {{ professor.lastName }}
                         </option>
                     </Select>
                 </div>
 
                 <div class="flex gap-2">
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#63B83C] hover:bg-[#4A8C2C] rounded-sm transition-colors"
-                        @click="approveAll">
+                    <Button variant="primary" @click="approveAll">
                         <template #icon>
                             <CheckCircle2 :size="16" />
                         </template>
                         Aprobar todo
                     </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#B83C3C] hover:bg-[#8C2C2C] rounded-sm transition-colors"
-                        @click="rejectAll">
+                    <Button variant="danger" @click="rejectAll">
                         <template #icon>
                             <XCircle :size="16" />
                         </template>
                         Rechazar todo
                     </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#3C70B8] hover:bg-[#2C5A8C] rounded-sm transition-colors"
-                        @click="pendingAll">
+                    <Button variant="info" @click="pendingAll">
                         <template #icon>
                             <Clock :size="16" />
                         </template>
@@ -68,7 +62,7 @@
                     <h3 class="text-sm font-medium text-gray-700 mb-2">Áreas</h3>
                     <div class="flex flex-wrap gap-2">
                         <span v-for="areaId in globalAvailability.areas" :key="areaId"
-                            class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm border border-blue-200">
+                            class="px-3 py-1.5 bg-info-500 text-white rounded-full text-sm ">
                             {{ areasStore.getAreaById(areaId)?.description || `Área ${areaId}` }}
                         </span>
                     </div>
@@ -88,7 +82,7 @@
                         <template v-for="areaId in globalAvailability.areas" :key="areaId">
                             <span v-for="(subject, index) in areasStore.getSubjectsByArea(areaId)"
                                 :key="`${areaId}-${subject.id}`" v-show="showAllSubjects || index < 3"
-                                class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs border border-gray-200">
+                                class="px-3 py-1.5 bg-gray-200 text-black rounded-full text-sm ">
                                 {{ subject.name }}
                             </span>
                             <span v-if="!showAllSubjects && areasStore.getSubjectsByArea(areaId).length > 3"

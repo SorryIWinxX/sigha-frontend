@@ -13,11 +13,14 @@
                     </option>
                 </Select>
             </div>
+            <div>
+
+            </div>
 
             <!-- Botón crear -->
-            <Button customClass="bg-[#67b83c] text-white px-4 py-2.5" @click="openCreateModal">
+            <Button variant="primary" @click="openCreateModal">
                 <template #icon>
-                    <Plus :size="20" />
+                    <Plus :size="18" />
                 </template>
                 Crear grupo
             </Button>

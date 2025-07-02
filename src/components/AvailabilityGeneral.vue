@@ -30,41 +30,33 @@
 
                 <!-- Clear Filters Button -->
                 <div class="flex items-end gap-2">
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-sm transition-colors"
-                        @click="clearFilters">
+                    <Button variant="secondary" @click="clearFilters">
                         Limpiar filtros
                     </Button>
-                    <Button customClass="ml-2 p-2 hover:bg-gray-100 rounded-sm transition-colors"
-                        @click="toggleFullscreen"
+                    <Button variant="secondary" @click="toggleFullscreen"
                         :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                         <template #icon>
                             <Maximize2 :size="20" class="text-gray-600" />
                         </template>
                     </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#63B83C] hover:bg-[#4A8C2C] rounded-sm transition-colors"
-                        @click="approveAll">
-                        <template #icon>
-                            <CheckCircle2 :size="16" />
-                        </template>
-                        Aprobar todo
-                    </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#B83C3C] hover:bg-[#8C2C2C] rounded-sm transition-colors"
-                        @click="rejectAll">
+
+                    <Button variant="danger" @click="rejectAll">
                         <template #icon>
                             <XCircle :size="16" />
                         </template>
                         Rechazar todo
                     </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#3C70B8] hover:bg-[#2C5A8C] rounded-sm transition-colors"
-                        @click="pendingAll">
+                    <Button variant="info" @click="pendingAll">
                         <template #icon>
                             <Clock :size="16" />
                         </template>
                         Pendiente todo
+                    </Button>
+                    <Button variant="primary" @click="approveAll">
+                        <template #icon>
+                            <CheckCircle2 :size="16" />
+                        </template>
+                        Aprobar todo
                     </Button>
                 </div>
             </div>

@@ -16,17 +16,23 @@
             </div>
 
             <div class="w-full sm:w-auto flex gap-2">
-                <Button class="bg-[#B83C3C] px-4 py-2 text-white w-full sm:w-auto">
-                    Eliminar Cambios
-                    <template #icon>
-                        <Trash2 />
-                    </template>
+                <Button variant="secondary" @click="toggleFullscreen"
+                    :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+                    <Maximize2 :size="18" />
                 </Button>
-                <Button class="bg-[#67B83C] px-4 py-2 text-white w-full sm:w-auto">
+                <Button variant="info">
+                    Horario anterior
+                    <ClipboardCopy :size="18" />
+                </Button>
+                <Button variant="danger">
+                    Deshacer Cambios
+
+                    <Trash2 :size="18" />
+                </Button>
+
+                <Button variant="primary">
                     Guardar cambios
-                    <template #icon>
-                        <Save />
-                    </template>
+                    <Save :size="18" />
                 </Button>
 
 
@@ -34,8 +40,14 @@
         </div>
 
         <!-- Schedule Table -->
-        <div class="rounded-sm border border-gray-300">
-            <div class="overflow-auto max-h-[80vh]">
+        <div class="rounded-sm border border-gray-300 schedule-table-container" :class="{
+            'fixed inset-0 z-50 bg-white': isFullscreen,
+            'relative': !isFullscreen
+        }">
+            <div class="overflow-auto" :class="{
+                'h-screen': isFullscreen,
+                'max-h-[80vh]': !isFullscreen
+            }">
                 <table class="w-full border-collapse">
                     <!-- Fixed Header -->
                     <thead class=" sticky top-0 z-10">
@@ -180,22 +192,20 @@
             </div>
 
             <div class="flex justify-end space-x-2">
-                <button @click="closeProfessorModal"
-                    class="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
+                <Button @click="closeProfessorModal" variant="secondary">
                     Cancelar
-                </button>
-                <button @click="saveProfessorChange"
-                    class="px-3 py-1.5 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
+                </Button>
+                <Button @click="saveProfessorChange" variant="primary">
                     Guardar
-                </button>
+                </Button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { User as UserIcon, X, Save, Trash2 } from 'lucide-vue-next';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2 } from 'lucide-vue-next';
 import Search from '@/components/common/Search.vue';
 import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
@@ -225,6 +235,7 @@ const selectedGroup = ref<Group | null>(null);
 const selectedProfessor = ref<Professor | null>(null);
 const selectedProfessorId = ref('');
 const modalPosition = ref({ x: 0, y: 0 });
+const isFullscreen = ref(false);
 
 // Drag and drop state
 const draggedGroup = ref<Group | null>(null);
@@ -637,6 +648,34 @@ function saveProfessorChange() {
         closeProfessorModal();
     }
 }
+
+function toggleFullscreen() {
+    const element = document.querySelector('.schedule-table-container')
+    if (!element) return
+
+    if (!isFullscreen.value) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen()
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen()
+        }
+    }
+}
+
+function handleFullscreenChange() {
+    isFullscreen.value = !!document.fullscreenElement
+}
+
+// Lifecycle hooks
+onMounted(() => {
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('fullscreenchange', handleFullscreenChange)
+})
 
 // Emitir evento cuando cambie el nivel (opcional, por si el componente padre necesita saberlo)
 defineEmits(['nivelChanged']);

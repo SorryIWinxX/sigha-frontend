@@ -83,6 +83,16 @@ const menuItems = computed(() => {
     if (isAdmin.value) {
         items.push(
             {
+                to: '/schedule-groups',
+                icon: CalendarDays,
+                label: 'Horarios de Grupos',
+            },
+            {
+                to: '/groups',
+                icon: Blocks,
+                label: 'Grupos',
+            },
+            {
                 to: '/areas-subjects',
                 icon: SquareLibrary,
                 label: 'Areas y Materias',
@@ -102,16 +112,7 @@ const menuItems = computed(() => {
                 icon: Settings,
                 label: 'Configuración',
             },
-            {
-                to: '/groups',
-                icon: Blocks,
-                label: 'Grupos',
-            },
-            {
-                to: '/schedule-groups',
-                icon: CalendarDays,
-                label: 'Horarios de Grupos',
-            }
+
 
         );
     }

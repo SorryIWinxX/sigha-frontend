@@ -1,34 +1,16 @@
 <template>
-    <div v-if="isVisible" class="fixed inset-0 flex items-center justify-center p-4 z-50 animate__animated"
+    <div v-if="isVisible" class="fixed inset-0 flex items-center justify-center p-4 z-50 animate__animated bg-black/50"
         :class="isClosing ? 'animate__fadeOut animate__faster' : 'animate__fadeIn animate__faster'"
-        style="background-color: rgba(0, 0, 0, 0.7);" @click="handleOverlayClick">
+        @click="handleOverlayClick">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto animate__animated"
             :class="isClosing ? 'animate__fadeOutDown animate__faster' : 'animate__fadeInUp animate__faster'"
             @click.stop>
 
             <!-- Confirmation Modal Overlay -->
-            <div v-if="showConfirmation" class="absolute inset-0 bg-black/50 flex items-center justify-center z-60">
-                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                    <div class="text-center">
-                        <h3 class="text-lg font-semibold text-[#3b3e45] mb-4">
-                            Confirmar salida
-                        </h3>
-                        <p class="text-sm text-[#666e7d] mb-6">
-                            ¿Estás seguro de que deseas salir? Los datos ingresados se perderán.
-                        </p>
-                        <div class="flex justify-center gap-3">
-                            <button @click="showConfirmation = false"
-                                class="px-4 py-2 border border-[#cfd3d4] text-gray-600 bg-white hover:bg-[#f4f4f4] transition-colors text-sm rounded-lg">
-                                Cancelar
-                            </button>
-                            <button @click="confirmClose"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white transition-colors text-sm rounded-lg">
-                                Salir
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ConfirmationModal :is-visible="showConfirmation" title="Confirmar salida"
+                message="¿Estás seguro de que deseas salir? Los datos ingresados se perderán." confirm-text="Salir"
+                cancel-text="Cancelar" confirm-variant="danger" cancel-variant="secondary" @confirm="confirmClose"
+                @cancel="showConfirmation = false" />
 
             <!-- Modal Header -->
             <div class="border-b border-[#dcdfe3] px-6 py-4">
@@ -135,15 +117,13 @@
             <!-- Modal Footer -->
             <div class="border-t border-[#dcdfe3] px-6 py-4 bg-[#f8f9fa]">
                 <div class="flex justify-end gap-3">
-                    <button type="button" @click="handleCloseModal"
-                        class="px-4 py-2 border border-[#cfd3d4] text-[#666e7d] bg-white hover:bg-[#f4f4f4] transition-colors text-sm rounded-lg">
+                    <Button type="button" @click="handleCloseModal" variant="secondary">
                         Cancelar
-                    </button>
-                    <button type="submit" @click="handleSubmit"
-                        :disabled="isSubmitting || formData.scheduleList.length === 0"
-                        class="px-4 py-2 bg-[#67b83c] text-white rounded-lg hover:bg-[#5ba635] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                    </Button>
+                    <Button type="submit" @click="handleSubmit"
+                        :disabled="isSubmitting || formData.scheduleList.length === 0" variant="primary">
                         {{ isSubmitting ? 'Guardando...' : (mode === 'create' ? 'Crear Grupo' : 'Actualizar Grupo') }}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -159,6 +139,8 @@ import { userService } from '@/services/userServices'
 import Calendar from '@/components/common/Calendar.vue'
 import Select from '@/components/common/Select.vue'
 import Input from '@/components/common/Input.vue'
+import Button from '@/components/common/Button.vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 
 // Props
 const props = defineProps({
