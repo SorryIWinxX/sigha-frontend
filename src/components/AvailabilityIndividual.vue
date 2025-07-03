@@ -34,17 +34,9 @@
                 </div>
             </div>
 
-            <div v-if="loading" class="text-sm text-blue-600 mt-2">
-                Cargando profesores...
-            </div>
 
-            <div v-if="error" class="text-sm text-red-600 mt-2">
-                {{ error }}
-            </div>
 
-            <div v-if="!props.selectedSemester" class="text-sm text-gray-500 mt-2">
-                Selecciona un semestre para ver los profesores
-            </div>
+
         </div>
 
         <!-- Professor Info Section -->
@@ -63,7 +55,7 @@
                     <div class="flex flex-wrap gap-2">
                         <span v-for="areaId in globalAvailability.areas" :key="areaId"
                             class="px-3 py-1.5 bg-info-500 text-white rounded-full text-sm ">
-                            {{ areasStore.getAreaById(areaId)?.description || `Área ${areaId}` }}
+                            {{ areasStore.getAreaById(areaId)?.description }}
                         </span>
                     </div>
                 </div>
@@ -228,7 +220,6 @@ async function updateSlotStatus(slot: GlobalAvailabilitySlot, newStatusId: numbe
 
 function getApproveStatusId(): number {
     const approvedStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('aprobad') ||
         status.description.toLowerCase().includes('approved')
     )
     return approvedStatus?.id || 2
@@ -236,7 +227,6 @@ function getApproveStatusId(): number {
 
 function getRejectStatusId(): number {
     const rejectedStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('rechazad') ||
         status.description.toLowerCase().includes('rejected')
     )
     return rejectedStatus?.id || 3
@@ -244,10 +234,7 @@ function getRejectStatusId(): number {
 
 function getPendingStatusId(): number {
     const pendingStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('pendiente') ||
-        status.description.toLowerCase().includes('pending') ||
-        status.description.toLowerCase().includes('enviado') ||
-        status.description.toLowerCase().includes('sent')
+        status.description.toLowerCase().includes('pending')
     )
     return pendingStatus?.id || 1
 }

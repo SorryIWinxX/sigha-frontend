@@ -57,7 +57,7 @@
                                     <div class="flex items-center justify-center mb-2">
                                         <span :class="getStatusClasses(getIndividualSlot(hour, day)?.statusId)"
                                             class="text-xs">
-                                            {{ getIndividualSlot(hour, day)?.statusDescription }}
+                                            {{ getStatusDescriptionById(getIndividualSlot(hour, day)?.statusId) }}
                                         </span>
                                     </div>
 
@@ -112,11 +112,7 @@
 
                                 <!-- Vista General -->
                                 <div v-else-if="activeTab === 'general'" class="space-y-2">
-                                    <div v-if="getGeneralSlotProfessors(hour, day).length === 0"
-                                        class="text-gray-500 text-sm">
-                                        Sin disponibilidad
-                                    </div>
-                                    <div v-else>
+                                    <div v-if="getGeneralSlotProfessors(hour, day).length > 0">
                                         <!-- Professor Cards -->
                                         <div v-for="professorSlot in getGeneralSlotProfessors(hour, day)"
                                             :key="professorSlot.professor.id"
@@ -157,7 +153,7 @@
                                             <!-- Subject tags -->
                                             <div class="flex flex-wrap gap-1 mb-3">
                                                 <span v-for="subject in professorSlot.professor.subjects" :key="subject"
-                                                    class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-sm text-xs border border-gray-200">
+                                                    class="px-2 py-0.5 bg-info-500 text-white rounded-sm text-xs">
                                                     {{ subject }}
                                                 </span>
                                             </div>
@@ -280,9 +276,9 @@ function getStatusClasses(statusId?: number): string {
 
     switch (statusId) {
         case 1: // ENVIADO/PENDIENTE
-            return `${baseClasses} bg-blue-500 text-white`
+            return `${baseClasses} bg-info-500 text-white`
         case 2: // APROBADO
-            return `${baseClasses} bg-[#67B83C] text-white`
+            return `${baseClasses} bg-primary-500 text-white`
         case 3: // RECHAZADO
             return `${baseClasses} bg-yellow-500 text-white`
         default:
@@ -292,7 +288,6 @@ function getStatusClasses(statusId?: number): string {
 
 function getApproveStatusId(): number {
     const approvedStatus = statusStore.getAllStatus.find((status: any) =>
-        status.description.toLowerCase().includes('aprobad') ||
         status.description.toLowerCase().includes('approved')
     )
     return approvedStatus?.id || 2
@@ -300,7 +295,6 @@ function getApproveStatusId(): number {
 
 function getRejectStatusId(): number {
     const rejectedStatus = statusStore.getAllStatus.find((status: any) =>
-        status.description.toLowerCase().includes('rechazad') ||
         status.description.toLowerCase().includes('rejected')
     )
     return rejectedStatus?.id || 3
@@ -308,19 +302,16 @@ function getRejectStatusId(): number {
 
 function getPendingStatusId(): number {
     const pendingStatus = statusStore.getAllStatus.find((status: any) =>
-        status.description.toLowerCase().includes('pendiente') ||
-        status.description.toLowerCase().includes('pending') ||
-        status.description.toLowerCase().includes('enviado') ||
-        status.description.toLowerCase().includes('sent')
+        status.description.toLowerCase().includes('pending')
     )
     return pendingStatus?.id || 1
 }
 
 function getProfessorCardClasses(status: 'approved' | 'rejected' | 'pending'): string {
     switch (status) {
-        case 'approved': return 'border-[#67B83C]'
+        case 'approved': return 'border-primary-500'
         case 'rejected': return 'border-yellow-500'
-        case 'pending': return 'border-blue-500'
+        case 'pending': return 'border-info-500'
         default: return 'border-gray-300'
     }
 }
@@ -331,6 +322,15 @@ function getStatusLabel(status: string | null): string {
         case 'rejected': return 'Rechazado'
         case 'pending': return 'Pendiente'
         default: return ''
+    }
+}
+
+function getStatusDescriptionById(statusId?: number): string {
+    switch (statusId) {
+        case 1: return 'Pendiente'
+        case 2: return 'Aprobado'
+        case 3: return 'Rechazado'
+        default: return 'Desconocido'
     }
 }
 

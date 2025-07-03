@@ -207,7 +207,6 @@ function handleFullscreenChange() {
 
 function getApproveStatusId(): number {
     const approvedStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('aprobad') ||
         status.description.toLowerCase().includes('approved')
     )
     return approvedStatus?.id || 2
@@ -215,7 +214,6 @@ function getApproveStatusId(): number {
 
 function getRejectStatusId(): number {
     const rejectedStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('rechazad') ||
         status.description.toLowerCase().includes('rejected')
     )
     return rejectedStatus?.id || 3
@@ -223,10 +221,7 @@ function getRejectStatusId(): number {
 
 function getPendingStatusId(): number {
     const pendingStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('pendiente') ||
-        status.description.toLowerCase().includes('pending') ||
-        status.description.toLowerCase().includes('enviado') ||
-        status.description.toLowerCase().includes('sent')
+        status.description.toLowerCase().includes('pending')
     )
     return pendingStatus?.id || 1
 }

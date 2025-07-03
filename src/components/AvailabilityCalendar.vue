@@ -243,20 +243,20 @@ function getStatusColors(statusId) {
     switch (statusId) {
         case 1: // ENVIADO
             return {
-                bg: 'bg-blue-500',
-                hover: 'hover:bg-blue-600',
+                bg: 'bg-info-500',
+                hover: 'hover:bg-info-600',
                 text: 'text-white'
             };
         case 2: // APROBADO
             return {
-                bg: 'bg-green-500',
-                hover: 'hover:bg-green-600',
+                bg: 'bg-primary-500',
+                hover: 'hover:bg-primary-600',
                 text: 'text-white'
             };
         case 3: // RECHAZADO
             return {
-                bg: 'bg-yellow-500',
-                hover: 'hover:bg-yellow-600',
+                bg: 'bg-warning-500',
+                hover: 'hover:bg-warning-600',
                 text: 'text-white'
             };
         default: // Sin estado o nuevo
