@@ -52,7 +52,7 @@
                         </Select>
 
                         <!-- Usuario -->
-                        <Select id="user-select" v-model="formData.idUser" label="Profesor"
+                        <Select id="user-select" v-model="formData.idDocente" label="Profesor"
                             placeholder="Seleccionar profesor" required>
                             <option value="">Seleccionar profesor</option>
                             <option v-for="user in availableUsers" :key="user.id" :value="user.id">
@@ -181,7 +181,7 @@ const formData = ref({
     code: '',
     idSemestre: '',
     idSubject: '',
-    idUser: '',
+    idDocente: '',
     scheduleList: []
 })
 
@@ -204,7 +204,7 @@ const availableSemesters = computed(() => {
 const hasFormData = computed(() => {
     return formData.value.code ||
         formData.value.idSubject ||
-        formData.value.idUser ||
+        formData.value.idDocente ||
         formData.value.scheduleList.length > 0
 })
 
@@ -292,7 +292,7 @@ const resetForm = () => {
         code: '',
         idSemestre: semesterStore.currentSemester?.id || '',
         idSubject: '',
-        idUser: '',
+        idDocente: '',
         scheduleList: []
     }
 }
@@ -304,7 +304,7 @@ const loadFormData = () => {
             code: props.editData.code || '',
             idSemestre: props.editData.idSemestre || '',
             idSubject: props.editData.idSubject || '',
-            idUser: props.editData.idUser || '',
+            idDocente: props.editData.idDocente || '',
             scheduleList: props.editData.scheduleList ? [...props.editData.scheduleList] : []
         }
     } else {
@@ -369,7 +369,7 @@ const handleSubmit = async () => {
             levelName: selectedSubjectLevel,
             idSemestre: parseInt(formData.value.idSemestre),
             idSubject: parseInt(formData.value.idSubject),
-            idUser: parseInt(formData.value.idUser)
+            idDocente: parseInt(formData.value.idDocente)
         }
 
         emit('submit', groupData)

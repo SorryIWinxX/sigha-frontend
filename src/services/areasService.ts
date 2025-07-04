@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/store/authStore'
-import type { Area, Subject } from '@/types/areas'
+import type { Area, Subject, CreateSubjectRequest } from '@/types/areas'
 
 export class AreasService {
   private authStore = useAuthStore()
@@ -79,12 +79,12 @@ export class AreasService {
     }
   }
 
-  async createSubject(areaId: number, subject: Omit<Subject, 'id'>): Promise<Subject> {
+  async createSubject(subjectData: CreateSubjectRequest): Promise<Subject> {
     try {
-      const response = await fetch(`/api/v1/area/${areaId}/subject`, {
+      const response = await fetch('/api/v1/subject', {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify(subject),
+        body: JSON.stringify(subjectData),
       })
 
       if (!response.ok) {

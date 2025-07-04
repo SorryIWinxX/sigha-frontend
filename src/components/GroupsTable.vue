@@ -13,17 +13,24 @@
                     </option>
                 </Select>
             </div>
-            <div>
 
+            <div class="flex items-center gap-2">
+                <!-- Botón refrescar -->
+                <Button variant="secondary" @click="refreshTable" :disabled="isRefreshing">
+                    <template #icon>
+                        <RefreshCw :size="18" :class="{ 'animate-spin': isRefreshing }" />
+                    </template>
+                    Refrescar
+                </Button>
+
+                <!-- Botón crear -->
+                <Button variant="primary" @click="openCreateModal">
+                    <template #icon>
+                        <Plus :size="18" />
+                    </template>
+                    Crear grupo
+                </Button>
             </div>
-
-            <!-- Botón crear -->
-            <Button variant="primary" @click="openCreateModal">
-                <template #icon>
-                    <Plus :size="18" />
-                </template>
-                Crear grupo
-            </Button>
         </div>
 
         <!-- Tabla de grupos -->
@@ -55,6 +62,16 @@
                                         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600">
                                         </div>
                                         <span class="ml-3 text-gray-600">Cargando grupos...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Refreshing state -->
+                            <tr v-else-if="isRefreshing">
+                                <td colspan="4" class="px-6 py-8 text-center">
+                                    <div class="flex items-center justify-center">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600">
+                                        </div>
+                                        <span class="ml-3 text-gray-600">Actualizando tabla...</span>
                                     </div>
                                 </td>
                             </tr>
@@ -201,10 +218,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Plus, Edit2, Trash2, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Plus, Edit2, Trash2, MoreHorizontal, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-vue-next'
 import { useGroupsStore } from '@/store/groupsStore'
 import { useAreasStore } from '@/store/areasStore'
 import { useSemesterStore } from '@/store/semesterStore'
+import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import Search from '@/components/common/Search.vue'
 import Select from '@/components/common/Select.vue'
 import Button from '@/components/common/Button.vue'
@@ -233,6 +251,7 @@ const editingGroup = ref(null)
 const groupToDelete = ref(null)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
+const isRefreshing = ref(false)
 const openDropdown = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
@@ -331,6 +350,22 @@ const handleClickOutside = (event) => {
     }
 }
 
+// Función auxiliar para refrescar la tabla
+const refreshTable = async () => {
+    isRefreshing.value = true
+    try {
+        const currentSemesterId = props.semesterId || semesterStore.currentSemester?.id
+        if (currentSemesterId) {
+            await groupsStore.fetchGroups(currentSemesterId)
+        }
+    } catch (error) {
+        console.error('Error refrescando tabla:', error)
+        showErrorToast('Error al actualizar la tabla')
+    } finally {
+        isRefreshing.value = false
+    }
+}
+
 // Funciones del modal
 const openCreateModal = () => {
     modalMode.value = 'create'
@@ -369,9 +404,15 @@ const confirmDelete = async () => {
     isDeleting.value = true
     try {
         await groupsStore.deleteGroup(groupToDelete.value.id)
+
+        // Refrescar la tabla después de eliminar
+        await refreshTable()
+
+        showSuccessToast(`Grupo ${groupToDelete.value.code} eliminado exitosamente`)
         closeDeleteModal()
     } catch (error) {
         console.error('Error eliminando grupo:', error)
+        showErrorToast('Error al eliminar el grupo. Por favor intenta de nuevo.')
     } finally {
         isDeleting.value = false
     }
@@ -384,13 +425,20 @@ const handleModalSubmit = async (groupData) => {
     try {
         if (modalMode.value === 'create') {
             await groupsStore.createGroup(groupData)
+            showSuccessToast(`Grupo ${groupData.code} creado exitosamente`)
         } else {
             await groupsStore.updateGroup(editingGroup.value.id, groupData)
+            showSuccessToast(`Grupo ${groupData.code} actualizado exitosamente`)
         }
+
+        // Refrescar la tabla después de crear/editar
+        await refreshTable()
 
         closeModal()
     } catch (error) {
         console.error('Error guardando grupo:', error)
+        const action = modalMode.value === 'create' ? 'crear' : 'actualizar'
+        showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`)
     } finally {
         isSubmitting.value = false
     }

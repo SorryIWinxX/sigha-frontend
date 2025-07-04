@@ -364,9 +364,13 @@ onMounted(async () => {
 })
 
 // Watchers
-watch(() => props.selectedSemester, (newSemester) => {
+watch(() => props.selectedSemester, async (newSemester) => {
     if (newSemester) {
-        loadProfessors()
+        await loadProfessors()
+        // Recargar disponibilidad si ya hay un profesor seleccionado
+        if (selectedProfessor.value) {
+            await loadGlobalAvailability()
+        }
     }
 }, { immediate: true })
 

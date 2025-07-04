@@ -195,7 +195,8 @@ const saveNewSemester = async () => {
     const semesterData = {
         description: newSemester.description.trim(),
         startDate: newSemester.startDate,
-        endDate: newSemester.endDate
+        endDate: newSemester.endDate,
+        availability: true
     }
 
     isSaving.value = true
@@ -242,7 +243,8 @@ const saveEdit = async () => {
         id: editingId.value,
         description: editForm.description.trim(),
         startDate: editForm.startDate,
-        endDate: editForm.endDate
+        endDate: editForm.endDate,
+        availability: true
     }
 
     try {

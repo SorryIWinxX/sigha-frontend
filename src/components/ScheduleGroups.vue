@@ -1,21 +1,31 @@
 <template>
     <div class="flex flex-col gap-4 py-4">
+        <!-- Unsaved Changes Indicator -->
+        <div v-if="hasUnsavedChanges" class="bg-yellow-500 rounded-sm p-3 flex items-center justify-between">
+            <div class="flex items-center">
+
+                <span class="text-white font-medium">
+                    {{ changedGroups.size }} cambio{{ changedGroups.size !== 1 ? 's' : '' }} sin guardar
+                </span>
+            </div>
+
+        </div>
+
         <!-- Filters Section -->
         <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div class="w-full sm:w-auto sm:flex-1">
-                <Search />
-            </div>
-            <div class="w-full sm:w-auto sm:flex-1">
-                <Select id="nivel-select" v-model="selectedNivel" placeholder="Selecciona un nivel" width="w-full">
-                    <option value="">Todos</option>
-                    <option value="1-2-3">1-2-3</option>
-                    <option value="3-4-5">3-4-5</option>
-                    <option value="5-6-7">5-6-7</option>
-                    <option value="7-8-9-E">7-8-9-E</option>
-                </Select>
+                <Search v-model="searchQuery" />
             </div>
 
             <div class="w-full sm:w-auto flex gap-2">
+                <Button variant="secondary" @click="toggleFilters">
+                    <Filter class="w-4 h-4" />
+                    Filtros
+                    <span v-if="activeFiltersCount > 0"
+                        class="ml-1 bg-primary-500 text-white text-xs rounded-full px-2 py-0.5">
+                        {{ activeFiltersCount }}
+                    </span>
+                </Button>
                 <Button variant="secondary" @click="toggleFullscreen"
                     :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                     <Maximize2 :size="18" />
@@ -24,23 +34,82 @@
                     Horario anterior
                     <ClipboardCopy :size="18" />
                 </Button>
-                <Button variant="danger">
+                <Button variant="danger" @click="undoChanges" :disabled="!hasUnsavedChanges">
                     Deshacer Cambios
-
                     <Trash2 :size="18" />
                 </Button>
 
-                <Button variant="primary">
-                    Guardar cambios
+                <Button variant="primary" @click="saveChanges" :disabled="!hasUnsavedChanges || isSaving">
+                    <span v-if="isSaving">Guardando...</span>
+                    <span v-else>Guardar cambios</span>
                     <Save :size="18" />
                 </Button>
-
-
             </div>
         </div>
 
+        <!-- Filter Panel -->
+        <div v-if="showFilters" class="p-4 bg-gray-50 border border-gray-200 rounded-sm">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Filter by level -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
+                    <Select id="filter-level" v-model="filters.level" @change="applyFilters">
+                        <option value="">Todos los niveles</option>
+                        <option value="1-2-3">1-2-3</option>
+                        <option value="3-4-5">3-4-5</option>
+                        <option value="5-6-7">5-6-7</option>
+                        <option value="7-8-9-E">7-8-9-E</option>
+                    </Select>
+                </div>
+
+                <!-- Filter by professor -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
+                    <Select id="filter-professor" v-model="filters.professor" @change="applyFilters">
+                        <option value="">Todos los profesores</option>
+                        <option v-for="professor in professors" :key="professor.id" :value="professor.id">
+                            {{ professor.name }}
+                        </option>
+                    </Select>
+                </div>
+
+                <!-- Filter by subject -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
+                    <Select id="filter-subject" v-model="filters.subject" @change="applyFilters">
+                        <option value="">Todas las materias</option>
+                        <option v-for="subject in subjects" :key="subject.id" :value="subject.id.toString()">
+                            {{ subject.name }}
+                        </option>
+                    </Select>
+                </div>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+                <Button variant="primary" @click="clearFilters">
+                    Limpiar filtros
+                </Button>
+                <span class="text-sm text-gray-600 flex items-center">
+                    Mostrando {{ filteredGroups.length }} de {{ allGroups.length }} grupos
+                </span>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="flex justify-center items-center py-8">
+            <div class="text-gray-600">Cargando horarios...</div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4">
+            <div class="text-red-700">{{ error }}</div>
+            <Button @click="loadScheduleData" variant="secondary" class="mt-2">
+                Reintentar
+            </Button>
+        </div>
+
         <!-- Schedule Table -->
-        <div class="rounded-sm border border-gray-300 schedule-table-container" :class="{
+        <div v-else class="rounded-sm border border-gray-300 schedule-table-container" :class="{
             'fixed inset-0 z-50 bg-white': isFullscreen,
             'relative': !isFullscreen
         }">
@@ -70,20 +139,19 @@
                                 {{ formatTimeRange(hour) }}
                             </td>
                             <td v-for="day in dayKeys" :key="`${hour}-${day}`"
-                                class="border border-gray-300 p-2 bg-white min-h-[120px] align-top"
-                                @dragover="handleDragOver" @drop="handleDrop($event, hour, day)"
-                                @dragenter="handleDragEnter($event, hour, day)" @dragleave="handleDragLeave($event)"
-                                :class="{
+                                class="border border-gray-300 p-2 bg-white align-top" @dragover="handleDragOver"
+                                @drop="handleDrop($event, hour, day)" @dragenter="handleDragEnter($event, hour, day)"
+                                @dragleave="handleDragLeave($event)" :class="{
                                     'bg-blue-50 border-blue-300': isDragOverSlot === `${hour}-${day}`,
-                                    'bg-red-50 border-red-300': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
-                                }">
+                                    'bg-warning-500 border-warning-300': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
+                                }" style="height: auto; min-height: 120px; max-height: 400px; overflow-y: auto;">
 
                                 <!-- Groups Container -->
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex flex-col gap-2">
                                     <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id" draggable="true"
                                         @dragstart="handleDragStart($event, group)" @dragend="handleDragEnd"
                                         @click="openProfessorModal(group, $event)"
-                                        class="group flex-1 min-w-[180px] rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer bg-gray-100 border-l-8"
+                                        class="group w-full rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer bg-gray-100 border-l-8"
                                         :class="[
                                             getGroupCardClasses(group),
                                             {
@@ -115,16 +183,17 @@
                                                     <UserIcon :size="16" />
                                                 </div>
                                             </div>
-                                            <span class="text-xs text-gray-700 group-hover:text-white truncate flex-1"
+                                            <div class="text-xs text-gray-700 group-hover:text-white truncate flex-1"
                                                 :title="group.professor.name">
                                                 {{ group.professor.name }}
-                                            </span>
+                                            </div>
+
                                         </div>
 
                                         <!-- Level indicator -->
                                         <div class="mt-2">
                                             <span
-                                                class="px-2 py-0.5 bg-blue-100 text-blue-800 group-hover:text-white rounded text-xs">
+                                                class="px-2 py-0.5 bg-info-500 text-white group-hover:bg-white group-hover:text-gray-500  rounded text-xs">
                                                 {{ group.level }}
                                             </span>
                                         </div>
@@ -133,7 +202,8 @@
 
                                 <!-- Empty state -->
                                 <div v-if="getGroupsForSlot(hour, day).length === 0"
-                                    class="text-gray-400 text-xs text-center py-4" :class="{
+                                    class="text-gray-400 text-xs text-center py-8 h-full flex items-center justify-center"
+                                    :class="{
                                         'text-blue-600': isDragOverSlot === `${hour}-${day}` && canDropInSlot(hour, day),
                                         'text-red-600': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
                                     }">
@@ -174,19 +244,20 @@
                 <div class="text-normal text-gray-600 mb-1">
                     <strong>Materia:</strong> {{ selectedGroup.subject }}
                 </div>
-                <div class="text-normal text-gray-600 mb-1">
-                    <strong>Profesor:</strong> {{ selectedGroup.professor.name }}
-                </div>
+
                 <div class="text-normal text-gray-600 ">
-                    <strong>Nivel:</strong> 1
+                    <span
+                        class="px-2 py-0.5 bg-info-500 text-white group-hover:bg-white group-hover:text-gray-500  rounded text-xs">
+                        {{ selectedGroup.level }}
+                    </span>
                 </div>
             </div>
 
             <div class="mb-4">
-                <Select id="professor-select" label="Seleccionar nuevo profesor:" v-model="selectedProfessorId"
+                <Select id="professor-select" label="Profesor" v-model="selectedProfessorId"
                     placeholder="Elige un profesor" width="w-full">
                     <option v-for="professor in availableProfessors" :key="professor.id" :value="professor.id">
-                        {{ professor.name }} - {{ professor.department }}
+                        {{ professor.name }}
                     </option>
                 </Select>
             </div>
@@ -204,13 +275,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2 } from 'lucide-vue-next';
+import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter } from 'lucide-vue-next';
 import Search from '@/components/common/Search.vue';
 import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
 
-// Interfaces
+// Toast notifications
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
+
+// Services
+import { groupsService } from '@/services/groupsService';
+import { userService } from '@/services/userServices';
+import { AreasService } from '@/services/areasService';
+import { useSemesterStore } from '@/store/semesterStore';
+
+// Props
+interface Props {
+    semesterId?: number | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    semesterId: null
+});
+
+// Types
+import type { Group as ApiGroup, ScheduleItem, BulkScheduleUpdateRequest, ScheduleUpdateItem } from '@/types/groups';
+import type { User } from '@/types/user';
+import type { Area, Subject } from '@/types/areas';
+
+// Component interfaces (for display)
 interface Professor {
     id: string;
     name: string;
@@ -218,7 +312,7 @@ interface Professor {
     photo?: string;
 }
 
-interface Group {
+interface GroupDisplay {
     id: string;
     code: string;
     subject: string;
@@ -229,17 +323,43 @@ interface Group {
 }
 
 // Reactive state
-const selectedNivel = ref('');
 const showProfessorModal = ref(false);
-const selectedGroup = ref<Group | null>(null);
+const selectedGroup = ref<GroupDisplay | null>(null);
 const selectedProfessor = ref<Professor | null>(null);
 const selectedProfessorId = ref('');
 const modalPosition = ref({ x: 0, y: 0 });
 const isFullscreen = ref(false);
+const loading = ref(true);
+const error = ref<string | null>(null);
+
+// Search and filter state
+const searchQuery = ref('');
+const showFilters = ref(false);
+const filters = reactive({
+    level: '',
+    professor: '',
+    subject: ''
+});
 
 // Drag and drop state
-const draggedGroup = ref<Group | null>(null);
+const draggedGroup = ref<GroupDisplay | null>(null);
 const isDragOverSlot = ref<string | null>(null);
+
+// Change tracking state
+const hasUnsavedChanges = ref(false);
+const isSaving = ref(false);
+const originalGroups = ref<GroupDisplay[]>([]);
+const changedGroups = ref<Set<string>>(new Set());
+
+// Data
+const groups = ref<GroupDisplay[]>([]);
+const allGroups = ref<GroupDisplay[]>([]);
+const professors = ref<Professor[]>([]);
+const subjects = ref<Subject[]>([]);
+
+// Store
+const semesterStore = useSemesterStore();
+const areasService = new AreasService();
 
 // Days configuration
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -252,6 +372,16 @@ const dayLabels = {
     saturday: 'SÁBADO'
 };
 
+// Day mapping for API data
+const dayMapping: { [key: string]: string } = {
+    'LUNES': 'monday',
+    'MARTES': 'tuesday',
+    'MIÉRCOLES': 'wednesday',
+    'JUEVES': 'thursday',
+    'VIERNES': 'friday',
+    'SÁBADO': 'saturday'
+};
+
 // Time slots (6 AM to 10 PM)
 const timeSlots = [
     '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
@@ -259,127 +389,150 @@ const timeSlots = [
     '19:00', '20:00', '21:00', '22:00'
 ];
 
-// Mock data for professors
-const mockProfessors: Professor[] = [
-    { id: '1', name: 'Dr. Ana García', department: 'Matemáticas', photo: undefined },
-    { id: '2', name: 'Prof. Carlos Ruiz', department: 'Física', photo: undefined },
-    { id: '3', name: 'Dra. María López', department: 'Química', photo: undefined },
-    { id: '4', name: 'Prof. Luis Martín', department: 'Biología', photo: undefined },
-    { id: '5', name: 'Dr. Elena Rodríguez', department: 'Informática', photo: undefined },
-    { id: '6', name: 'Prof. Juan Pérez', department: 'Literatura', photo: undefined }
-];
+// Load data functions
+async function loadScheduleData() {
+    try {
+        loading.value = true;
+        error.value = null;
 
-// Mock data for groups
-const mockGroups: Group[] = [
-    {
-        id: '1',
-        code: 'MAT-101-A',
-        subject: 'Cálculo Diferencial',
-        professor: mockProfessors[0],
-        level: '1-2-3',
-        day: 'monday',
-        hour: '08:00'
-    },
-    {
-        id: '2',
-        code: 'FIS-201-B',
-        subject: 'Física Mecánica',
-        professor: mockProfessors[1],
-        level: '3-4-5',
-        day: 'monday',
-        hour: '08:00'
-    },
-    {
-        id: '3',
-        code: 'QUI-102-A',
-        subject: 'Química General',
-        professor: mockProfessors[2],
-        level: '1-2-3',
-        day: 'tuesday',
-        hour: '10:00'
-    },
-    {
-        id: '4',
-        code: 'BIO-301-C',
-        subject: 'Biología Molecular',
-        professor: mockProfessors[3],
-        level: '5-6-7',
-        day: 'wednesday',
-        hour: '14:00'
-    },
-    {
-        id: '5',
-        code: 'INF-401-A',
-        subject: 'Programación Avanzada',
-        professor: mockProfessors[4],
-        level: '7-8-9-E',
-        day: 'thursday',
-        hour: '16:00'
-    },
-    {
-        id: '6',
-        code: 'LIT-102-B',
-        subject: 'Literatura Española',
-        professor: mockProfessors[5],
-        level: '1-2-3',
-        day: 'friday',
-        hour: '09:00'
-    },
-    {
-        id: '7',
-        code: 'MAT-201-B',
-        subject: 'Cálculo Integral',
-        professor: mockProfessors[0],
-        level: '3-4-5',
-        day: 'tuesday',
-        hour: '08:00'
-    },
-    {
-        id: '8',
-        code: 'FIS-102-A',
-        subject: 'Física General',
-        professor: mockProfessors[1],
-        level: '1-2-3',
-        day: 'wednesday',
-        hour: '10:00'
-    },
-    {
-        id: '9',
-        code: 'MAT-301-A',
-        subject: 'Cálculo Diferencial',
-        professor: mockProfessors[0],
-        level: '5-6-7',
-        day: 'thursday',
-        hour: '10:00'
-    },
-    {
-        id: '10',
-        code: 'QUI-201-B',
-        subject: 'Química General',
-        professor: mockProfessors[2],
-        level: '3-4-5',
-        day: 'friday',
-        hour: '14:00'
-    },
-    {
-        id: '11',
-        code: 'FIS-301-C',
-        subject: 'Física Mecánica',
-        professor: mockProfessors[1],
-        level: '5-6-7',
-        day: 'saturday',
-        hour: '08:00'
+        // Use semesterId prop or fallback to current semester from store
+        const semesterId = props.semesterId || semesterStore.currentSemester?.id;
+        if (!semesterId) {
+            throw new Error('No hay semestre seleccionado');
+        }
+
+        // Load data in parallel
+        const [apiGroups, users, areas] = await Promise.all([
+            groupsService.getGroups(semesterId),
+            userService.getUsers(),
+            areasService.getAreas()
+        ]);
+
+        // Map users to professors
+        professors.value = users.map((user: User) => ({
+            id: user.id.toString(),
+            name: `${user.firstName} ${user.lastName}`,
+            department: user.rolesDescriptions.join(', ') || 'Sin departamento',
+            photo: user.photo
+        }));
+
+        // Extract subjects from areas
+        subjects.value = areas.flatMap((area: Area) => area.subjectList);
+
+        // Map API groups to display format and filter only groups with schedules
+        const mappedGroups = apiGroups
+            .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
+            .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
+            .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
+
+        groups.value = mappedGroups;
+        allGroups.value = [...mappedGroups];
+
+        // Store original state for change tracking
+        originalGroups.value = JSON.parse(JSON.stringify(mappedGroups));
+        hasUnsavedChanges.value = false;
+        changedGroups.value.clear();
+
+        loading.value = false;
+    } catch (err) {
+        console.error('Error loading schedule data:', err);
+        error.value = err instanceof Error ? err.message : 'Error al cargar los datos';
+        loading.value = false;
     }
-];
+}
+
+function mapGroupToDisplayFormat(apiGroup: ApiGroup): GroupDisplay[] {
+    if (!apiGroup.scheduleList || apiGroup.scheduleList.length === 0) {
+        return [];
+    }
+
+    // Find subject name
+    const subject = subjects.value.find(s => s.id === apiGroup.idSubject);
+    const subjectName = subject?.name || `Materia ${apiGroup.idSubject}`;
+
+    // Find professor
+    const professor = professors.value.find(p => p.id === apiGroup.idDocente?.toString());
+    const professorInfo: Professor = professor || {
+        id: apiGroup.idDocente?.toString() || '0',
+        name: 'Sin asignar',
+        department: 'Sin departamento'
+    };
+
+    // Map each schedule item to a display group
+    return apiGroup.scheduleList.map(schedule => {
+        const dayKey = dayMapping[schedule.day.toUpperCase()];
+        const hourStr = formatHourToTimeSlot(schedule.hour);
+
+        if (!dayKey || !hourStr) {
+            return null;
+        }
+
+        return {
+            id: `${apiGroup.id}-${schedule.hour}-${schedule.day}`,
+            code: apiGroup.code,
+            subject: subjectName,
+            professor: professorInfo,
+            level: apiGroup.levelName || 'Sin nivel',
+            day: dayKey,
+            hour: hourStr
+        };
+    }).filter(group => group !== null) as GroupDisplay[];
+}
+
+function formatHourToTimeSlot(hour: number): string | null {
+    // Convert 24-hour format to our time slots format
+    const hourStr = hour.toString().padStart(2, '0') + ':00';
+    return timeSlots.includes(hourStr) ? hourStr : null;
+}
 
 // Computed
+const activeFiltersCount = computed(() => {
+    let count = 0;
+    if (filters.level) count++;
+    if (filters.professor) count++;
+    if (filters.subject) count++;
+    return count;
+});
+
 const filteredGroups = computed(() => {
-    if (!selectedNivel.value) return mockGroups;
-    return mockGroups.filter(group => group.level === selectedNivel.value);
+    let result = allGroups.value;
+
+    // Apply search filter
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim();
+        result = result.filter(group => {
+            return group.code.toLowerCase().includes(query) ||
+                group.subject.toLowerCase().includes(query) ||
+                group.professor.name.toLowerCase().includes(query);
+        });
+    }
+
+    // Apply level filter
+    if (filters.level && !searchQuery.value.trim()) {
+        result = result.filter(group => group.level === filters.level);
+    }
+
+    // Apply professor filter
+    if (filters.professor && !searchQuery.value.trim()) {
+        result = result.filter(group => group.professor.id === filters.professor);
+    }
+
+    // Apply subject filter
+    if (filters.subject && !searchQuery.value.trim()) {
+        const subjectId = parseInt(filters.subject);
+        const subject = subjects.value.find(s => s.id === subjectId);
+        if (subject) {
+            result = result.filter(group => group.subject === subject.name);
+        }
+    }
+
+    // Update groups ref to trigger re-render
+    groups.value = result;
+    return result;
 });
 
 const availableProfessors = computed(() => {
-    return mockProfessors.filter(prof => prof.id !== selectedGroup.value?.professor.id);
+    return professors.value;
 });
 
 // Methods
@@ -405,8 +558,8 @@ function formatTime(hour: number, minutes: number): string {
     return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-function getGroupsForSlot(hour: string, day: string): Group[] {
-    return filteredGroups.value.filter(group =>
+function getGroupsForSlot(hour: string, day: string): GroupDisplay[] {
+    return groups.value.filter(group =>
         group.hour === hour && group.day === day
     );
 }
@@ -453,7 +606,7 @@ function getSubjectColor(subject: string): string {
 /**
  * Obtiene las clases CSS para una tarjeta de grupo basadas en la materia
  */
-function getGroupCardClasses(group: Group): string {
+function getGroupCardClasses(group: GroupDisplay): string {
     const subjectColor = getSubjectColor(group.subject);
 
     // Mapear colores Tailwind a clases de border y hover
@@ -484,7 +637,7 @@ function getGroupCardClasses(group: Group): string {
 /**
  * Obtiene la clase de border para el modal basada en la materia
  */
-function getModalBorderClass(group: Group): string {
+function getModalBorderClass(group: GroupDisplay): string {
     const subjectColor = getSubjectColor(group.subject);
 
     const colorMap: { [key: string]: string } = {
@@ -511,7 +664,7 @@ function getModalBorderClass(group: Group): string {
 }
 
 // Drag and Drop Methods
-function handleDragStart(event: DragEvent, group: Group) {
+function handleDragStart(event: DragEvent, group: GroupDisplay) {
     draggedGroup.value = group;
     event.dataTransfer!.effectAllowed = 'move';
     event.dataTransfer!.setData('text/plain', group.id);
@@ -549,7 +702,7 @@ function canDropInSlot(hour: string, day: string): boolean {
     if (!draggedGroup.value) return false;
 
     // Check if the professor has a conflict at this time
-    const conflictingGroups = mockGroups.filter(group =>
+    const conflictingGroups = groups.value.filter(group =>
         group.id !== draggedGroup.value!.id &&
         group.hour === hour &&
         group.day === day &&
@@ -562,36 +715,70 @@ function canDropInSlot(hour: string, day: string): boolean {
 function handleDrop(event: DragEvent, hour: string, day: string) {
     event.preventDefault();
 
-    if (!draggedGroup.value || !canDropInSlot(hour, day)) {
+    if (!draggedGroup.value) {
         isDragOverSlot.value = null;
         return;
     }
 
-    // Find the group in the mock data and update its schedule
-    const groupIndex = mockGroups.findIndex(g => g.id === draggedGroup.value!.id);
+    // Check if the drop is valid and show specific error messages
+    if (!canDropInSlot(hour, day)) {
+        // Find conflicting groups to provide a specific error message
+        const conflictingGroups = groups.value.filter(group =>
+            group.id !== draggedGroup.value!.id &&
+            group.hour === hour &&
+            group.day === day &&
+            group.professor.id === draggedGroup.value!.professor.id
+        );
+
+        if (conflictingGroups.length > 0) {
+            const conflictingGroup = conflictingGroups[0];
+            showErrorToast(
+                `No se puede asignar: El profesor ${draggedGroup.value.professor.name} ya tiene el grupo ${conflictingGroup.code} programado en ${getDayLabel(day)} de ${formatTimeRange(hour)}`
+            );
+        } else {
+            showErrorToast(
+                `No se puede asignar el grupo ${draggedGroup.value.code} en ${getDayLabel(day)} de ${formatTimeRange(hour)}`
+            );
+        }
+
+        isDragOverSlot.value = null;
+        return;
+    }
+
+    // Find the group in the data and update its schedule
+    const groupIndex = groups.value.findIndex(g => g.id === draggedGroup.value!.id);
     if (groupIndex !== -1) {
-        const oldHour = mockGroups[groupIndex].hour;
-        const oldDay = mockGroups[groupIndex].day;
+        const oldHour = groups.value[groupIndex].hour;
+        const oldDay = groups.value[groupIndex].day;
 
-        mockGroups[groupIndex].hour = hour;
-        mockGroups[groupIndex].day = day;
+        groups.value[groupIndex].hour = hour;
+        groups.value[groupIndex].day = day;
 
-        console.log(`Grupo ${mockGroups[groupIndex].code} movido de ${getDayLabel(oldDay)} ${oldHour} a ${getDayLabel(day)} ${hour}`);
+        // Mark group as changed
+        changedGroups.value.add(draggedGroup.value!.id);
+        hasUnsavedChanges.value = true;
 
-        // In a real app, this would make an API call to update the schedule
+        // Show success message
+        showSuccessToast(
+            `Grupo ${groups.value[groupIndex].code} movido exitosamente a ${getDayLabel(day)} de ${formatTimeRange(hour)}`
+        );
+
+        console.log(`Grupo ${groups.value[groupIndex].code} movido de ${getDayLabel(oldDay)} ${oldHour} a ${getDayLabel(day)} ${hour}`);
+
+        // TODO: In a real app, this would make an API call to update the schedule
         // await updateGroupSchedule(draggedGroup.value.id, { hour, day });
     }
 
     isDragOverSlot.value = null;
 }
 
-function openProfessorModal(group: Group, event: MouseEvent) {
+function openProfessorModal(group: GroupDisplay, event: MouseEvent) {
     // Don't open modal if we're dragging
     if (draggedGroup.value) return;
 
     selectedGroup.value = group;
     selectedProfessor.value = null;
-    selectedProfessorId.value = '';
+    selectedProfessorId.value = group.professor.id;
 
     // Calculate modal position relative to the clicked element
     const target = event.currentTarget as HTMLElement;
@@ -632,16 +819,25 @@ function closeProfessorModal() {
 function saveProfessorChange() {
     if (selectedGroup.value && selectedProfessorId.value) {
         // Find the selected professor by ID
-        const newProfessor = mockProfessors.find(p => p.id === selectedProfessorId.value);
+        const newProfessor = professors.value.find(p => p.id === selectedProfessorId.value);
 
         if (newProfessor) {
             // Update the group's professor
-            const groupIndex = mockGroups.findIndex(g => g.id === selectedGroup.value!.id);
+            const groupIndex = groups.value.findIndex(g => g.id === selectedGroup.value!.id);
             if (groupIndex !== -1) {
-                mockGroups[groupIndex].professor = newProfessor;
+                groups.value[groupIndex].professor = newProfessor;
+
+                // Mark group as changed
+                changedGroups.value.add(selectedGroup.value!.id);
+                hasUnsavedChanges.value = true;
             }
 
-            // In a real app, this would make an API call
+            // Show success message
+            showSuccessToast(
+                `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name}`
+            );
+
+            // TODO: In a real app, this would make an API call
             console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name}`);
         }
 
@@ -668,16 +864,243 @@ function handleFullscreenChange() {
     isFullscreen.value = !!document.fullscreenElement
 }
 
+// Save and undo functions
+async function saveChanges() {
+    if (!hasUnsavedChanges.value || changedGroups.value.size === 0) {
+        showErrorToast('No hay cambios para guardar');
+        return;
+    }
+
+    try {
+        isSaving.value = true;
+
+        // Group changes by original group ID (from API)
+        const groupChanges = new Map<number, ScheduleUpdateItem>();
+
+        // Process all changed groups
+        for (const changedGroupId of changedGroups.value) {
+            const currentGroup = groups.value.find(g => g.id === changedGroupId);
+            const originalGroup = originalGroups.value.find(g => g.id === changedGroupId);
+
+            if (!currentGroup || !originalGroup) continue;
+
+            // Extract the original API group ID from the display group ID
+            const apiGroupId = parseInt(currentGroup.id.split('-')[0]);
+
+            // Get or create the update item for this group
+            let updateItem = groupChanges.get(apiGroupId);
+            if (!updateItem) {
+                updateItem = {
+                    idGroup: apiGroupId,
+                    scheduleList: []
+                };
+
+                // Check if professor changed
+                if (currentGroup.professor.id !== originalGroup.professor.id) {
+                    updateItem.idDocente = parseInt(currentGroup.professor.id);
+                }
+
+                groupChanges.set(apiGroupId, updateItem);
+            }
+
+            // Convert day and hour back to API format
+            const dayMapping: { [key: string]: string } = {
+                'monday': 'LUNES',
+                'tuesday': 'MARTES',
+                'wednesday': 'MIÉRCOLES',
+                'thursday': 'JUEVES',
+                'friday': 'VIERNES',
+                'saturday': 'SÁBADO'
+            };
+
+            const apiDay = dayMapping[currentGroup.day];
+            const apiHour = parseInt(currentGroup.hour.split(':')[0]);
+
+            // Add schedule item if not already present
+            const existingSchedule = updateItem.scheduleList.find(s =>
+                s.hour === apiHour && s.day === apiDay
+            );
+
+            if (!existingSchedule) {
+                updateItem.scheduleList.push({
+                    hour: apiHour,
+                    day: apiDay
+                });
+            }
+        }
+
+        // Collect all groups that belong to the changed API groups to build complete schedule lists
+        const completeGroupChanges: ScheduleUpdateItem[] = [];
+
+        for (const [apiGroupId, updateItem] of groupChanges) {
+            // Get all display groups that belong to this API group
+            const allGroupSchedules = groups.value.filter(g => {
+                const groupApiId = parseInt(g.id.split('-')[0]);
+                return groupApiId === apiGroupId;
+            });
+
+            // Build complete schedule list
+            const completeScheduleList = allGroupSchedules.map(g => {
+                const dayMapping: { [key: string]: string } = {
+                    'monday': 'LUNES',
+                    'tuesday': 'MARTES',
+                    'wednesday': 'MIÉRCOLES',
+                    'thursday': 'JUEVES',
+                    'friday': 'VIERNES',
+                    'saturday': 'SÁBADO'
+                };
+
+                return {
+                    hour: parseInt(g.hour.split(':')[0]),
+                    day: dayMapping[g.day]
+                };
+            });
+
+            const completeUpdateItem: ScheduleUpdateItem = {
+                idGroup: apiGroupId,
+                scheduleList: completeScheduleList
+            };
+
+            // Add professor change if it exists
+            if (updateItem.idDocente !== undefined) {
+                completeUpdateItem.idDocente = updateItem.idDocente;
+            }
+
+            completeGroupChanges.push(completeUpdateItem);
+        }
+
+        // Send update to API
+        await groupsService.updateSchedules(completeGroupChanges);
+
+        // Update original state and clear changes
+        originalGroups.value = JSON.parse(JSON.stringify(groups.value));
+        hasUnsavedChanges.value = false;
+        changedGroups.value.clear();
+
+        showSuccessToast('Cambios guardados exitosamente');
+
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        showErrorToast('Error al guardar los cambios: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+    } finally {
+        isSaving.value = false;
+    }
+}
+
+function undoChanges() {
+    if (!hasUnsavedChanges.value) {
+        showErrorToast('No hay cambios para deshacer');
+        return;
+    }
+
+    // Restore original state
+    groups.value = JSON.parse(JSON.stringify(originalGroups.value));
+    allGroups.value = JSON.parse(JSON.stringify(originalGroups.value));
+    hasUnsavedChanges.value = false;
+    changedGroups.value.clear();
+
+    showSuccessToast('Cambios deshechados exitosamente');
+}
+
+// Filter functions
+function toggleFilters() {
+    showFilters.value = !showFilters.value;
+}
+
+async function applyFilters() {
+    if (!hasActiveFilters.value) {
+        // If no filters, show all groups
+        groups.value = allGroups.value;
+        return;
+    }
+
+    try {
+        let filteredData: GroupDisplay[] = [];
+
+        // Apply filters using API endpoints
+        if (filters.level) {
+            // Map level filter to API format
+            const levelMapping: { [key: string]: number[] } = {
+                '1-2-3': [1, 2, 3],
+                '3-4-5': [3, 4, 5],
+                '5-6-7': [5, 6, 7],
+                '7-8-9-E': [7, 8, 9, 10]
+            };
+
+            const levelIds = levelMapping[filters.level];
+            if (levelIds) {
+                const apiGroups = await groupsService.getGroupsByLevels(levelIds);
+                filteredData = apiGroups
+                    .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
+                    .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
+                    .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
+            }
+        } else if (filters.professor) {
+            const professorId = parseInt(filters.professor);
+            const apiGroups = await groupsService.getGroupsByDocente(professorId);
+            filteredData = apiGroups
+                .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
+                .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
+                .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
+        } else if (filters.subject) {
+            const subjectId = parseInt(filters.subject);
+            const apiGroups = await groupsService.getGroupsBySubjectId(subjectId);
+            filteredData = apiGroups
+                .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
+                .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
+                .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
+        }
+
+        groups.value = filteredData;
+    } catch (error) {
+        console.error('Error applying filters:', error);
+        showErrorToast('Error al aplicar filtros');
+    }
+}
+
+const hasActiveFilters = computed(() => {
+    return !!(filters.level || filters.professor || filters.subject);
+});
+
+function clearFilters() {
+    filters.level = '';
+    filters.professor = '';
+    filters.subject = '';
+    groups.value = allGroups.value;
+}
+
+// Watch for semester changes
+watch(() => props.semesterId, async (newSemesterId) => {
+    if (newSemesterId !== null) {
+        await loadScheduleData();
+    }
+}, { immediate: false });
+
 // Lifecycle hooks
-onMounted(() => {
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-})
+onMounted(async () => {
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    // Prevent accidental navigation when there are unsaved changes
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    await loadScheduleData();
+});
 
 onUnmounted(() => {
-    document.removeEventListener('fullscreenchange', handleFullscreenChange)
-})
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+});
 
-// Emitir evento cuando cambie el nivel (opcional, por si el componente padre necesita saberlo)
+// Handle before unload to warn about unsaved changes
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (hasUnsavedChanges.value) {
+        event.preventDefault();
+        event.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        return event.returnValue;
+    }
+}
+
+// Component emits
 defineEmits(['nivelChanged']);
 </script>
 
@@ -711,4 +1134,28 @@ defineEmits(['nivelChanged']);
 }
 
 /* Drag and drop styles only */
+
+/* Custom scrollbar for table cells */
+td::-webkit-scrollbar {
+    width: 4px;
+}
+
+td::-webkit-scrollbar-track {
+    background: #f9fafb;
+    border-radius: 2px;
+}
+
+td::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+}
+
+td::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Ensure groups stack nicely */
+.group+.group {
+    margin-top: 0.5rem;
+}
 </style>

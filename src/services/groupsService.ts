@@ -1,219 +1,154 @@
+import { useAuthStore } from '@/store/authStore'
+import { useSemesterStore } from '@/store/semesterStore'
 import type {
   Group,
   CreateGroupRequest,
   UpdateGroupRequest,
   GroupSchedule,
   ScheduleItem,
+  BulkScheduleUpdateRequest,
 } from '@/types/groups'
 
-// Mock data - grupos ficticios
-const mockGroups: Group[] = [
-  {
-    id: 1,
-    code: 'A01',
-    idSemestre: 1,
-    idSubject: 1,
-    schedule: {
-      Lunes: '1 pm',
-      Miércoles: '3 pm',
-      Viernes: '10 am',
-    },
-  },
-  {
-    id: 2,
-    code: 'A02',
-    idSemestre: 1,
-    idSubject: 1,
-    schedule: {
-      Martes: '2 pm',
-      Jueves: '4 pm',
-    },
-  },
-  {
-    id: 3,
-    code: 'B01',
-    idSemestre: 1,
-    idSubject: 2,
-    schedule: {
-      Lunes: '9 am',
-      Miércoles: '11 am',
-      Viernes: '2 pm',
-    },
-  },
-  {
-    id: 4,
-    code: 'B02',
-    idSemestre: 1,
-    idSubject: 2,
-    schedule: {
-      Martes: '8 am',
-      Jueves: '10 am',
-    },
-  },
-  {
-    id: 5,
-    code: 'C01',
-    idSemestre: 1,
-    idSubject: 3,
-    schedule: {
-      Lunes: '4 pm',
-      Miércoles: '4 pm',
-    },
-  },
-  {
-    id: 6,
-    code: 'D01',
-    idSemestre: 1,
-    idSubject: 1,
-    idUser: 1,
-    levelName: 'NIVEL 6', // Se asigna automáticamente desde la materia
-    scheduleList: [
-      {
-        id: 1,
-        hour: 10,
-        day: 'LUNES',
-      },
-      {
-        id: 2,
-        hour: 10,
-        day: 'MIÉRCOLES',
-      },
-      {
-        id: 3,
-        hour: 14,
-        day: 'VIERNES',
-      },
-    ],
-  },
-]
-
 export class GroupsService {
-  private groups: Group[] = [...mockGroups]
-  private nextId = 7
+  private getHeaders() {
+    const authStore = useAuthStore()
+    const semesterStore = useSemesterStore()
+    const token = authStore.getToken()
+    const userId = authStore.userId
+    const semesterId = semesterStore.currentSemester?.id
 
-  // Simular delay de red
-  private async delay(ms: number = 500): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
+    if (!token) {
+      throw new Error('No authentication token available')
+    }
+
+    if (!userId) {
+      throw new Error('No user ID available')
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      userId: userId.toString(),
+      semesterId: semesterId?.toString() || '',
+    }
+
+    return headers
   }
 
   async getGroups(semesterId?: number): Promise<Group[]> {
-    await this.delay()
+    try {
+      const semesterStore = useSemesterStore()
+      const targetSemesterId = semesterId || semesterStore.currentSemester?.id
 
-    if (semesterId) {
-      return this.groups.filter((group) => group.idSemestre === semesterId)
+      if (!targetSemesterId) {
+        throw new Error('No semester ID available')
+      }
+
+      const response = await fetch(`/api/v1/group/by-semesters`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching groups:', error)
+      throw error
     }
-    return [...this.groups]
   }
 
   async getGroupById(id: number): Promise<Group | null> {
-    await this.delay()
+    try {
+      const response = await fetch(`/api/v1/group/${id}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
 
-    const group = this.groups.find((g) => g.id === id)
-    return group ? { ...group } : null
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null
+        }
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching group by ID:', error)
+      throw error
+    }
   }
 
   async createGroup(groupData: CreateGroupRequest): Promise<Group> {
-    await this.delay()
+    try {
+      // El semesterId ya se envía en el header a través de getHeaders()
+      // El formato del body debe incluir: code, idSubject, scheduleList
+      // idDocente es opcional y se envía solo si está presente en groupData
+      const response = await fetch('/api/v1/group', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(groupData),
+      })
 
-    // Validar que el código no exista en el mismo semestre
-    const existingGroup = this.groups.find(
-      (g) => g.code === groupData.code && g.idSemestre === groupData.idSemestre,
-    )
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`)
+      }
 
-    if (existingGroup) {
-      throw new Error(`Ya existe un grupo con el código ${groupData.code} en este semestre`)
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating group:', error)
+      throw error
     }
-
-    // Manejar ambos formatos de horario
-    let processedData = { ...groupData }
-
-    if (groupData.scheduleList && groupData.scheduleList.length > 0) {
-      // Validar nuevo formato
-      this.validateScheduleList(groupData.scheduleList)
-      // Convertir a formato anterior para compatibilidad
-      processedData.schedule = this.scheduleListToSchedule(groupData.scheduleList)
-    } else if (groupData.schedule) {
-      // Validar formato anterior
-      this.validateSchedule(groupData.schedule)
-      // Convertir a nuevo formato
-      processedData.scheduleList = this.scheduleToScheduleList(groupData.schedule)
-    }
-
-    const newGroup: Group = {
-      id: this.nextId++,
-      ...processedData,
-    }
-
-    this.groups.push(newGroup)
-    return { ...newGroup }
   }
 
   async updateGroup(id: number, groupData: UpdateGroupRequest): Promise<Group> {
-    await this.delay()
+    try {
+      // idDocente es opcional y solo se envía si está presente en groupData
+      const response = await fetch(`/api/v1/group/${id}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(groupData),
+      })
 
-    const index = this.groups.findIndex((g) => g.id === id)
-    if (index === -1) {
-      throw new Error(`Grupo con ID ${id} no encontrado`)
-    }
-
-    const currentGroup = this.groups[index]
-
-    // Si se está actualizando el código, validar que no exista
-    if (groupData.code && groupData.code !== currentGroup.code) {
-      const existingGroup = this.groups.find(
-        (g) => g.code === groupData.code && g.idSemestre === currentGroup.idSemestre && g.id !== id,
-      )
-
-      if (existingGroup) {
-        throw new Error(`Ya existe un grupo con el código ${groupData.code} en este semestre`)
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`)
       }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error updating group:', error)
+      throw error
     }
-
-    // Manejar ambos formatos de horario
-    let processedData = { ...groupData }
-
-    if (groupData.scheduleList && groupData.scheduleList.length > 0) {
-      // Validar nuevo formato
-      this.validateScheduleList(groupData.scheduleList)
-      // Convertir a formato anterior para compatibilidad
-      processedData.schedule = this.scheduleListToSchedule(groupData.scheduleList)
-    } else if (groupData.schedule) {
-      // Validar formato anterior
-      this.validateSchedule(groupData.schedule)
-      // Convertir a nuevo formato
-      processedData.scheduleList = this.scheduleToScheduleList(groupData.schedule)
-    }
-
-    const updatedGroup: Group = {
-      ...currentGroup,
-      ...processedData,
-    }
-
-    this.groups[index] = updatedGroup
-    return { ...updatedGroup }
   }
 
   async deleteGroup(id: number): Promise<void> {
-    await this.delay()
+    try {
+      const response = await fetch(`/api/v1/group/${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      })
 
-    const index = this.groups.findIndex((g) => g.id === id)
-    if (index === -1) {
-      throw new Error(`Grupo con ID ${id} no encontrado`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error)
+      throw error
     }
-
-    this.groups.splice(index, 1)
   }
 
   async getGroupsBySubject(subjectId: number, semesterId?: number): Promise<Group[]> {
-    await this.delay()
-
-    let filtered = this.groups.filter((g) => g.idSubject === subjectId)
-
-    if (semesterId) {
-      filtered = filtered.filter((g) => g.idSemestre === semesterId)
+    try {
+      const groups = await this.getGroups(semesterId)
+      return groups.filter((group) => group.idSubject === subjectId)
+    } catch (error) {
+      console.error('Error fetching groups by subject:', error)
+      throw error
     }
-
-    return filtered
   }
 
   // Método auxiliar para formatear horarios
@@ -286,7 +221,6 @@ export class GroupsService {
     const scheduleList: ScheduleItem[] = []
 
     Object.entries(schedule).forEach(([day, time]) => {
-      // Parse time string like "1 pm", "10 am"
       const match = time.match(/^(\d{1,2})\s?(am|pm)$/i)
       if (match) {
         let hour = parseInt(match[1])
@@ -296,7 +230,7 @@ export class GroupsService {
         if (ampm === 'am' && hour === 12) hour = 0
 
         scheduleList.push({
-          id: null,
+          id: 0,
           hour: hour,
           day: day.toUpperCase(),
         })
@@ -320,6 +254,92 @@ export class GroupsService {
     }
 
     return true
+  }
+
+  // Actualizar horarios de múltiples grupos
+  async updateSchedules(scheduleUpdates: BulkScheduleUpdateRequest): Promise<void> {
+    try {
+      const response = await fetch('/api/v1/schedule', {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(scheduleUpdates),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`)
+      }
+    } catch (error) {
+      console.error('Error updating schedules:', error)
+      throw error
+    }
+  }
+
+  // Filtros para grupos
+  async getGroupsByLevels(levelIds: number[]): Promise<Group[]> {
+    try {
+      const params = new URLSearchParams({
+        idLevels: levelIds.join(','),
+      })
+
+      const response = await fetch(`/api/v1/group/by-levels?${params}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching groups by levels:', error)
+      throw error
+    }
+  }
+
+  async getGroupsByDocente(docenteId: number): Promise<Group[]> {
+    try {
+      const params = new URLSearchParams({
+        docenteId: docenteId.toString(),
+      })
+
+      const response = await fetch(`/api/v1/group/by-docente?${params}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching groups by docente:', error)
+      throw error
+    }
+  }
+
+  async getGroupsBySubjectId(subjectId: number): Promise<Group[]> {
+    try {
+      const params = new URLSearchParams({
+        subjectId: subjectId.toString(),
+      })
+
+      const response = await fetch(`/api/v1/group/by-subject?${params}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching groups by subject:', error)
+      throw error
+    }
   }
 }
 

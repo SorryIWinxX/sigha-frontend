@@ -24,7 +24,7 @@
                     <!-- Filter by subject count -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad de materias</label>
-                        <Select v-model="filters.subjectCount" @change="applyFilters">
+                        <Select id="filter-subject-count" v-model="filters.subjectCount" @change="applyFilters">
                             <option value="">Todas</option>
                             <option value="0">Sin materias</option>
                             <option value="1-5">1-5 materias</option>
@@ -36,20 +36,25 @@
                     <!-- Filter by subject level -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nivel de materias</label>
-                        <Select v-model="filters.subjectLevel" @change="applyFilters">
+                        <Select id="filter-subject-level" v-model="filters.subjectLevel" @change="applyFilters">
                             <option value="">Todos los niveles</option>
-                            <option value="1">Nivel 1</option>
-                            <option value="2">Nivel 2</option>
-                            <option value="3">Nivel 3</option>
-                            <option value="4">Nivel 4</option>
-                            <option value="5">Nivel 5</option>
+                            <option value="1">NIVEL 1</option>
+                            <option value="2">NIVEL 2</option>
+                            <option value="3">NIVEL 3</option>
+                            <option value="4">NIVEL 4</option>
+                            <option value="5">NIVEL 5</option>
+                            <option value="6">NIVEL 6</option>
+                            <option value="7">NIVEL 7</option>
+                            <option value="8">NIVEL 8</option>
+                            <option value="9">NIVEL 9</option>
+                            <option value="10">NIVEL 10</option>
                         </Select>
                     </div>
 
                     <!-- Filter by area type -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de área</label>
-                        <Select v-model="filters.areaType" @change="applyFilters">
+                        <Select id="filter-area-type" v-model="filters.areaType" @change="applyFilters">
                             <option value="">Todos los tipos</option>
                             <option value="matematicas">Matemáticas</option>
                             <option value="arquitectura">Arquitectura/Hardware</option>
@@ -204,19 +209,24 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
                                         <input v-model="newSubject.name" type="text"
                                             placeholder="Ej: Cálculo Diferencial"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none uppercase focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
                                             @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                                        <Select v-model="newSubject.level">
+                                        <Select id="new-subject-level" v-model="newSubject.level">
                                             <option value="">Seleccionar nivel</option>
-                                            <option value="1">Nivel 1</option>
-                                            <option value="2">Nivel 2</option>
-                                            <option value="3">Nivel 3</option>
-                                            <option value="4">Nivel 4</option>
-                                            <option value="5">Nivel 5</option>
-                                        </select>
+                                            <option value="1">NIVEL 1</option>
+                                            <option value="2">NIVEL 2</option>
+                                            <option value="3">NIVEL 3</option>
+                                            <option value="4">NIVEL 4</option>
+                                            <option value="5">NIVEL 5</option>
+                                            <option value="6">NIVEL 6</option>
+                                            <option value="7">NIVEL 7</option>
+                                            <option value="8">NIVEL 8</option>
+                                            <option value="9">NIVEL 9</option>
+                                            <option value="10">NIVEL 10</option>
+                                        </Select>
                                     </div>
                                 </div>
                                 <div class="flex gap-2 justify-end">
@@ -253,7 +263,7 @@
                                             </div>
                                             <div class="min-w-0 pr-6">
                                                 <span class="text-sm text-gray-500">Nivel</span>
-                                                <p class="font-medium text-gray-900">Nivel {{ subject.level }}</p>
+                                                <p class="font-medium text-gray-900">{{ subject.level }}</p>
                                             </div>
                                         </div>
                                         <div class="flex gap-2">
@@ -282,7 +292,7 @@
                                             <div>
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                                                <Select v-model="editSubjectForm.level">
+                                                <Select id="edit-subject-level" v-model="editSubjectForm.level">
                                                     <option value="">Seleccionar nivel</option>
                                                     <option value="1">Nivel 1</option>
                                                     <option value="2">Nivel 2</option>
@@ -360,7 +370,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { MoreHorizontal, Edit, Trash2, Filter, Plus } from 'lucide-vue-next'
 import { AreasService } from '@/services/areasService'
-import type { Area, Subject } from '@/types/areas'
+import type { Area, Subject, CreateSubjectRequest } from '@/types/areas'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import Search from '@/components/common/Search.vue'
 import Button from '@/components/common/Button.vue'
@@ -710,15 +720,16 @@ const createSubject = (areaId: number) => {
 const saveNewSubject = async () => {
     if (!canSaveNewSubject.value || isSavingSubject.value || !creatingSubjectForArea.value) return
 
-    const subjectData = {
+    const subjectData: CreateSubjectRequest = {
         code: newSubject.code.trim(),
         name: newSubject.name.trim(),
-        level: newSubject.level.trim()
+        idArea: creatingSubjectForArea.value,
+        idLevel: parseInt(newSubject.level.trim())
     }
 
     isSavingSubject.value = true
     try {
-        await areasService.createSubject(creatingSubjectForArea.value, subjectData)
+        await areasService.createSubject(subjectData)
         await loadAreas()
         showSuccessToast('Asignatura creada exitosamente')
         cancelCreateSubject()
@@ -753,7 +764,7 @@ const startEditSubject = (subject: Subject, areaId: number) => {
     currentEditingAreaId.value = areaId
     editSubjectForm.code = subject.code
     editSubjectForm.name = subject.name
-    editSubjectForm.level = subject.level
+    editSubjectForm.level = subject.level || ''
 }
 
 const saveEditSubject = async () => {
@@ -762,7 +773,9 @@ const saveEditSubject = async () => {
     const updateData = {
         code: editSubjectForm.code.trim(),
         name: editSubjectForm.name.trim(),
-        level: editSubjectForm.level.trim()
+        level: editSubjectForm.level.trim(),
+        idLevel: parseInt(editSubjectForm.level.trim()),
+        idArea: currentEditingAreaId.value
     }
 
     try {
@@ -784,20 +797,7 @@ const cancelEditSubject = () => {
     editSubjectForm.level = ''
 }
 
-const deleteSubjectConfirm = async (subject: Subject, areaId: number) => {
-    if (!subject.id) return
 
-    if (confirm(`¿Estás seguro de que deseas eliminar la asignatura "${subject.name}"?`)) {
-        try {
-            await areasService.deleteSubject(areaId, subject.id)
-            await loadAreas()
-            showSuccessToast('Asignatura eliminada exitosamente')
-        } catch (error) {
-            console.error('Error deleting subject:', error)
-            showErrorToast('Error al eliminar la asignatura')
-        }
-    }
-}
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {

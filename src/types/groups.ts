@@ -3,17 +3,17 @@ export interface GroupSchedule {
 }
 
 export interface ScheduleItem {
-  id?: number | null
+  id: number
   hour: number
   day: string
 }
 
 export interface Group {
-  id?: number
+  id: number
   code: string
   idSemestre: number
   idSubject: number
-  idUser?: number
+  idDocente?: number
   levelName?: string
   schedule?: GroupSchedule // Formato anterior (para compatibilidad)
   scheduleList?: ScheduleItem[] // Nuevo formato
@@ -21,19 +21,26 @@ export interface Group {
 
 export interface CreateGroupRequest {
   code: string
-  idSemestre: number
   idSubject: number
-  idUser?: number
-  levelName?: string // Se asigna automáticamente desde la materia
-  schedule?: GroupSchedule // Formato anterior
-  scheduleList?: ScheduleItem[] // Nuevo formato
+  idDocente?: number
+  scheduleList: ScheduleItem[] // Requerido en la API
 }
 
 export interface UpdateGroupRequest {
   code?: string
   idSubject?: number
-  idUser?: number
-  levelName?: string
-  schedule?: GroupSchedule // Formato anterior
-  scheduleList?: ScheduleItem[] // Nuevo formato
+  idDocente?: number
+  scheduleList?: ScheduleItem[]
 }
+
+// Interface for bulk schedule updates
+export interface ScheduleUpdateItem {
+  idGroup: number
+  idDocente?: number // Solo se incluye si cambió el profesor
+  scheduleList: Array<{
+    hour: number
+    day: string
+  }>
+}
+
+export type BulkScheduleUpdateRequest = ScheduleUpdateItem[]
