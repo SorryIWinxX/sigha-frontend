@@ -122,14 +122,10 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="border-t border-[#dcdfe3] px-4 py-3 bg-[#f8f9fa]">
+            <div class="border-t border-gray-200 px-4 py-3">
                 <div class="flex justify-end gap-2">
-                    <Button @click="cancelForm"
-                        custom-class="px-4 py-2 border border-[#cfd3d4] text-[#666e7d] bg-white hover:bg-[#f4f4f4] transition-colors text-sm">
-                        Cancelar
-                    </Button>
-                    <Button @click="updateUser"
-                        custom-class="px-4 py-2 bg-[#67b83c] hover:bg-[#5ba332] text-white transition-colors text-sm"
+                    <Button @click="cancelForm" variant="secondary">Cancelar</Button>
+                    <Button @click="updateUser" variant="primary"
                         :disabled="!isFormValid || loading || submitting || loadingAreas || loadingTiposDocumento">
                         {{ submitting ? 'Guardando...' : 'Guardar Cambios' }}
                     </Button>

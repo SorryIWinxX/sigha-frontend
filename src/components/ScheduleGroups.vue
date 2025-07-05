@@ -260,13 +260,24 @@
                         {{ professor.name }}
                     </option>
                 </Select>
+
+                <!-- Información adicional cuando no hay profesores disponibles -->
+                <div v-if="availableProfessors.length === 0" class="mt-2 text-sm text-white bg-danger-500 p-2 rounded">
+                    No hay profesores asignados al área que contiene esta materia.
+                </div>
+                <div v-else-if="availableProfessors.length < professors.length"
+                    class="mt-2 text-sm text-white bg-primary-500 p-2 rounded">
+                    Mostrando {{ availableProfessors.length }} de {{ professors.length }} profesores (solo los
+                    asignados a esta área).
+                </div>
             </div>
 
             <div class="flex justify-end space-x-2">
                 <Button @click="closeProfessorModal" variant="secondary">
                     Cancelar
                 </Button>
-                <Button @click="saveProfessorChange" variant="primary">
+                <Button @click="saveProfessorChange" variant="primary"
+                    :disabled="!selectedProfessorId || availableProfessors.length === 0">
                     Guardar
                 </Button>
             </div>
@@ -356,6 +367,8 @@ const groups = ref<GroupDisplay[]>([]);
 const allGroups = ref<GroupDisplay[]>([]);
 const professors = ref<Professor[]>([]);
 const subjects = ref<Subject[]>([]);
+const areasData = ref<Area[]>([]);
+const usersData = ref<User[]>([]);
 
 // Store
 const semesterStore = useSemesterStore();
@@ -407,6 +420,10 @@ async function loadScheduleData() {
             userService.getUsers(),
             areasService.getAreas()
         ]);
+
+        // Store raw data for filtering
+        usersData.value = users;
+        areasData.value = areas;
 
         // Map users to professors
         professors.value = users.map((user: User) => ({
@@ -531,8 +548,39 @@ const filteredGroups = computed(() => {
     return result;
 });
 
+/**
+ * Filtra los profesores que pueden enseñar la materia del grupo seleccionado
+ * basándose en las áreas asignadas a cada profesor
+ */
+function getProfessorsForSubject(subjectName: string): Professor[] {
+    // Encuentra la materia por nombre
+    const subject = subjects.value.find(s => s.name === subjectName);
+    if (!subject) {
+        return professors.value;
+    }
+
+    // Encuentra el área que contiene esta materia
+    const area = areasData.value.find((area: Area) =>
+        area.subjectList.some((areaSubject: Subject) => areaSubject.id === subject.id)
+    );
+
+    if (!area) {
+        return professors.value;
+    }
+
+    // Filtra los profesores que tienen esta área asignada
+    return professors.value.filter(professor => {
+        const professorUser = usersData.value.find((user: User) => user.id.toString() === professor.id);
+        return professorUser?.idAreas?.includes(area.id) || false;
+    });
+}
+
 const availableProfessors = computed(() => {
-    return professors.value;
+    if (!selectedGroup.value) {
+        return professors.value;
+    }
+
+    return getProfessorsForSubject(selectedGroup.value.subject);
 });
 
 // Methods

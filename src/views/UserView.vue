@@ -61,7 +61,7 @@
                         <!-- Estado de cambios -->
                         <div v-if="hasChanges" class="text-right">
                             <div
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-warning-500 text-white">
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-500 text-white">
                                 Cambios pendientes
                             </div>
                         </div>
