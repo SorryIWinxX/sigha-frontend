@@ -13,23 +13,24 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <Button variant="primary" @click="approveAll">
-                        <template #icon>
-                            <CheckCircle2 :size="16" />
-                        </template>
-                        Aprobar todo
-                    </Button>
+
                     <Button variant="danger" @click="rejectAll">
-                        <template #icon>
-                            <XCircle :size="16" />
-                        </template>
+
+                        <XCircle :size="16" />
+
                         Rechazar todo
                     </Button>
                     <Button variant="info" @click="pendingAll">
-                        <template #icon>
-                            <Clock :size="16" />
-                        </template>
+
+                        <Clock :size="16" />
+
                         Pendiente todo
+                    </Button>
+                    <Button variant="primary" @click="approveAll">
+
+                        <CheckCircle2 :size="16" />
+
+                        Aprobar todo
                     </Button>
                 </div>
             </div>
@@ -100,15 +101,15 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { CheckCircle2, XCircle, Clock, ChevronDown } from 'lucide-vue-next'
 import Select from '@/components/common/Select.vue'
 import Button from '@/components/common/Button.vue'
-import { userService, type User } from '@/services/userServices'
-import availabilityService, {
-    type GlobalAvailabilityResponse,
-    type GlobalAvailabilitySlot
-} from '@/services/availabilityService'
+import { userService } from '@/services/userServices'
+import type { User } from '@/types/user'
+import availabilityService from '@/services/availabilityService'
+import type { GlobalAvailabilityResponse, GlobalAvailabilitySlot } from '@/types/availability'
 import { useStatusStore } from '@/store/statusStore'
 import { useAreasStore } from '@/store/areasStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast.js'
 import TableAvailability from './common/TableAvailability.vue'
+import type { StatusAvailability } from '@/types/status'
 
 // Props
 const props = defineProps<{
@@ -219,21 +220,21 @@ async function updateSlotStatus(slot: GlobalAvailabilitySlot, newStatusId: numbe
 }
 
 function getApproveStatusId(): number {
-    const approvedStatus = statusStore.getAllStatus.find(status =>
+    const approvedStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('approved')
     )
     return approvedStatus?.id || 2
 }
 
 function getRejectStatusId(): number {
-    const rejectedStatus = statusStore.getAllStatus.find(status =>
+    const rejectedStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('rejected')
     )
     return rejectedStatus?.id || 3
 }
 
 function getPendingStatusId(): number {
-    const pendingStatus = statusStore.getAllStatus.find(status =>
+    const pendingStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('pending')
     )
     return pendingStatus?.id || 1

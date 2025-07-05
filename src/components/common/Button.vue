@@ -1,19 +1,14 @@
-<script setup>
-defineProps({
-    customClass: {
-        type: String,
-        default: ''
-    },
-    disabled: {
-        type: Boolean,
-        default: false
-    },
-    variant: {
-        type: String,
-        default: 'primary',
-        validator: (value) => ['primary', 'secondary', 'warning', 'danger', 'info', 'success'].includes(value)
-    }
-});
+<script setup lang="ts">
+defineProps<{
+    customClass?: string
+    disabled?: boolean
+    variant?: 'primary' | 'secondary' | 'warning' | 'danger' | 'info' | 'success'
+}>()
+
+defineSlots<{
+    icon?: () => any
+    default?: () => any
+}>()
 </script>
 
 <template>

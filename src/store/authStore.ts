@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { userService, type User } from '@/services/userServices'
+import { userService } from '@/services/userServices'
+import type { User } from '@/types/user'
 
 interface TokenPayload {
   roles: string[]

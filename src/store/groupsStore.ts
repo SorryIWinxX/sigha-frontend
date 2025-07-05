@@ -137,9 +137,6 @@ export const useGroupsStore = defineStore('groups', {
 
       try {
         // Validar horario antes de enviar
-        if (groupData.schedule) {
-          groupsService.validateSchedule(groupData.schedule)
-        }
         if (groupData.scheduleList) {
           groupsService.validateScheduleList(groupData.scheduleList)
         }
@@ -166,9 +163,6 @@ export const useGroupsStore = defineStore('groups', {
 
       try {
         // Validar horario si se está actualizando
-        if (groupData.schedule) {
-          groupsService.validateSchedule(groupData.schedule)
-        }
         if (groupData.scheduleList) {
           groupsService.validateScheduleList(groupData.scheduleList)
         }

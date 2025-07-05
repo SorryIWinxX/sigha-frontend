@@ -35,27 +35,27 @@
                     </Button>
                     <Button variant="secondary" @click="toggleFullscreen"
                         :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-                        <template #icon>
-                            <Maximize2 :size="20" class="text-gray-600" />
-                        </template>
+
+                        <Maximize2 :size="20" class="text-gray-600" />
+
                     </Button>
 
                     <Button variant="danger" @click="rejectAll">
-                        <template #icon>
-                            <XCircle :size="16" />
-                        </template>
+
+                        <XCircle :size="16" />
+
                         Rechazar todo
                     </Button>
                     <Button variant="info" @click="pendingAll">
-                        <template #icon>
-                            <Clock :size="16" />
-                        </template>
+
+                        <Clock :size="16" />
+
                         Pendiente todo
                     </Button>
                     <Button variant="primary" @click="approveAll">
-                        <template #icon>
-                            <CheckCircle2 :size="16" />
-                        </template>
+
+                        <CheckCircle2 :size="16" />
+
                         Aprobar todo
                     </Button>
                 </div>
@@ -83,6 +83,7 @@ import { useStatusStore } from '@/store/statusStore'
 import { useAreasStore } from '@/store/areasStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast.js'
 import TableAvailability from './common/TableAvailability.vue'
+import type { StatusAvailability } from '@/types/status'
 
 // Props
 const props = defineProps<{
@@ -206,21 +207,21 @@ function handleFullscreenChange() {
 }
 
 function getApproveStatusId(): number {
-    const approvedStatus = statusStore.getAllStatus.find(status =>
+    const approvedStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('approved')
     )
     return approvedStatus?.id || 2
 }
 
 function getRejectStatusId(): number {
-    const rejectedStatus = statusStore.getAllStatus.find(status =>
+    const rejectedStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('rejected')
     )
     return rejectedStatus?.id || 3
 }
 
 function getPendingStatusId(): number {
-    const pendingStatus = statusStore.getAllStatus.find(status =>
+    const pendingStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('pending')
     )
     return pendingStatus?.id || 1
