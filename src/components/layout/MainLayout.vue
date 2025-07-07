@@ -15,7 +15,7 @@
                 </div>
 
                 <div class="w-1/3 items-center justify-center">
-                    <Search placeholder="Buscar" />
+                    <GlobalSearch placeholder="Buscar en el sistema..." />
                 </div>
                 <div class="flex items-center justify-end px-2 gap-5">
                     <RoleToggle />
@@ -24,14 +24,9 @@
                         <UserConfig />
                     </div>
                     <div>
-                        <router-link to="/">
-                            <Button @click="logout"
-                                customClass="flex items-center cursor-pointer hover:bg-gray-200 rounded-md p-2">
-                                <template #icon>
-                                    <LogOut class="text-gray-700" :size="20" />
-                                </template>
-                            </Button>
-                        </router-link>
+                        <Button variant="secondary" @click="logout">
+                            <LogOut :size="20" />
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -57,7 +52,7 @@ import UserConfig from '@/components/UserConfig.vue';
 import RoleToggle from '@/components/RoleToggle.vue';
 import { Bell, Settings, Calendar, LogOut } from 'lucide-vue-next';
 import Sidebar from '@/components/Sidebar.vue';
-import Search from '@/components/common/Search.vue';
+import GlobalSearch from '@/components/common/GlobalSearch.vue';
 import Button from '@/components/common/Button.vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';

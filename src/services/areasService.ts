@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/store/authStore'
-import type { Area, Subject } from '@/types/areas'
+import type { Area, Subject, CreateSubjectRequest } from '@/types/areas'
 
 export class AreasService {
   private authStore = useAuthStore()
@@ -25,7 +25,7 @@ export class AreasService {
 
   async getAreas(): Promise<Area[]> {
     try {
-      const response = await fetch('/api/api/v1/area', {
+      const response = await fetch('/api/v1/area', {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -36,14 +36,14 @@ export class AreasService {
 
       return await response.json()
     } catch (error) {
-      console.error('Error fetching areas:', error)
+      console.error('/Error fetching areas:', error)
       throw error
     }
   }
 
   async createArea(area: Omit<Area, 'id'>): Promise<Area> {
     try {
-      const response = await fetch('/api/api/v1/area', {
+      const response = await fetch('/api/v1/area', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(area),
@@ -62,7 +62,7 @@ export class AreasService {
 
   async updateArea(id: number, area: Omit<Area, 'id'>): Promise<Area> {
     try {
-      const response = await fetch(`/api/api/v1/area/${id}`, {
+      const response = await fetch(`/api/v1/area/${id}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(area),
@@ -79,12 +79,12 @@ export class AreasService {
     }
   }
 
-  async createSubject(areaId: number, subject: Omit<Subject, 'id'>): Promise<Subject> {
+  async createSubject(subjectData: CreateSubjectRequest): Promise<Subject> {
     try {
-      const response = await fetch(`/api/api/v1/area/${areaId}/subject`, {
+      const response = await fetch('/api/v1/subject', {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify(subject),
+        body: JSON.stringify(subjectData),
       })
 
       if (!response.ok) {
@@ -98,9 +98,13 @@ export class AreasService {
     }
   }
 
-  async updateSubject(areaId: number, subjectId: number, subject: Omit<Subject, 'id'>): Promise<Subject> {
+  async updateSubject(
+    areaId: number,
+    subjectId: number,
+    subject: Omit<Subject, 'id'>,
+  ): Promise<Subject> {
     try {
-      const response = await fetch(`/api/api/v1/area/${areaId}/subject/${subjectId}`, {
+      const response = await fetch(`/api/v1/area/${areaId}/subject/${subjectId}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(subject),
@@ -119,7 +123,7 @@ export class AreasService {
 
   async deleteSubject(areaId: number, subjectId: number): Promise<void> {
     try {
-      const response = await fetch(`/api/api/v1/area/${areaId}/subject/${subjectId}`, {
+      const response = await fetch(`/api/v1/area/${areaId}/subject/${subjectId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       })

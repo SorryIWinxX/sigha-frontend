@@ -24,7 +24,7 @@ class StatusService {
 
   async getStatusAvailability(): Promise<StatusAvailability[]> {
     try {
-      const response = await fetch(`/api/api/v1/status-availability`, {
+      const response = await fetch(`/api/v1/status-availability`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -42,7 +42,7 @@ class StatusService {
 
   async getStatus() {
     try {
-      const response = await fetch(`/api/api/v1/status`, {
+      const response = await fetch(`/api/v1/status`, {
         method: 'GET',
         headers: this.getHeaders(),
       })

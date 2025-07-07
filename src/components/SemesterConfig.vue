@@ -2,10 +2,9 @@
     <div class="semester-config p-4 rounded-sm">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-medium text-gray-900">Semestres</h2>
-            <Button @click="addNewSemesterRow" custom-class="px-4 py-2 bg-[#67B83C] text-white hover:bg-green-700"
-                :disabled="isCreating || isLoading">
+            <Button variant="primary" @click="addNewSemesterRow" :disabled="isCreating || isLoading">
                 <template #icon>
-                    <Plus :size="16" />
+                    <Plus :size="18" />
                 </template>
                 Crear Semestre
             </Button>
@@ -196,7 +195,8 @@ const saveNewSemester = async () => {
     const semesterData = {
         description: newSemester.description.trim(),
         startDate: newSemester.startDate,
-        endDate: newSemester.endDate
+        endDate: newSemester.endDate,
+        availability: true
     }
 
     isSaving.value = true
@@ -243,7 +243,8 @@ const saveEdit = async () => {
         id: editingId.value,
         description: editForm.description.trim(),
         startDate: editForm.startDate,
-        endDate: editForm.endDate
+        endDate: editForm.endDate,
+        availability: true
     }
 
     try {

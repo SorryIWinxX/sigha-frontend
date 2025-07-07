@@ -43,7 +43,7 @@ const handleAvailabilityChange = async (newValue: boolean) => {
         showSuccessToast(
             newValue
                 ? 'Disponibilidad habilitada correctamente'
-                : 'Disponibilidad deshabilitada correctamente'
+                : 'correctamente'
         )
     } catch (error) {
         console.error('Error updating availability:', error)

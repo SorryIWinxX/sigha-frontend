@@ -1,0 +1,431 @@
+<template>
+    <div v-if="isVisible" class="fixed inset-0 flex items-center justify-center p-4 z-50 animate__animated bg-black/50"
+        :class="isClosing ? 'animate__fadeOut animate__faster' : 'animate__fadeIn animate__faster'"
+        @click="handleOverlayClick">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto animate__animated"
+            :class="isClosing ? 'animate__fadeOutDown animate__faster' : 'animate__fadeInUp animate__faster'"
+            @click.stop>
+
+            <!-- Confirmation Modal Overlay -->
+            <ConfirmationModal :is-visible="showConfirmation" title="Confirmar salida"
+                message="¿Estás seguro de que deseas salir? Los datos ingresados se perderán." confirm-text="Salir"
+                cancel-text="Cancelar" confirm-variant="danger" cancel-variant="secondary" @confirm="confirmClose"
+                @cancel="showConfirmation = false" />
+
+            <!-- Modal Header -->
+            <div class="border-b border-[#dcdfe3] px-6 py-4">
+                <div class="flex justify-center items-center">
+                    <h3 class="text-xl font-semibold text-[#3b3e45]">
+                        {{ mode === 'create' ? 'Crear Grupo' : 'Editar Grupo' }}
+                    </h3>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <!-- Form -->
+                <form @submit.prevent="handleSubmit" class="space-y-6">
+                    <!-- Basic Info Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Código -->
+                        <div>
+                            <Input id="code-input" v-model="formData.code" label="Código *" type="text"
+                                placeholder="Ej: A01, B02" required />
+                        </div>
+
+                        <!-- Nivel (automático basado en la materia) -->
+                        <div>
+                            <Input id="level-input" :value="getSelectedSubjectLevel()" label="Nivel" type="text"
+                                readonly placeholder="Se asigna automáticamente según la materia" />
+                        </div>
+                    </div>
+
+                    <!-- Selectors Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Materia -->
+                        <Select id="subject-select" v-model="formData.idSubject" label="Materia *"
+                            placeholder="Seleccionar materia" required>
+                            <option value="">Seleccionar materia</option>
+                            <option v-for="subject in availableSubjects" :key="subject.id" :value="subject.id">
+                                {{ subject.name }}
+                            </option>
+                        </Select>
+
+                        <!-- Usuario -->
+                        <Select id="user-select" v-model="formData.idDocente" label="Profesor"
+                            placeholder="Seleccionar profesor" required>
+                            <option value="">Seleccionar profesor</option>
+                            <option v-for="user in availableUsers" :key="user.id" :value="user.id">
+                                {{ user.firstName }} {{ user.lastName }}
+                            </option>
+                        </Select>
+                    </div>
+
+                    <!-- Schedule Section -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-medium text-gray-700">Horarios de Clase</h4>
+                            <div class="text-sm text-gray-500">
+                                Haz clic en el calendario para agregar/quitar horarios
+                            </div>
+                        </div>
+
+                        <!-- Calendar Container -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <Calendar cell-height="h-12">
+                                <template #day-cell="{ day, hour }">
+                                    <div :class="[
+                                        'border-b border-l border-gray-200 relative h-12 flex items-center justify-center transition-all cursor-pointer group',
+                                        isScheduleSelected(day.value, hour.value)
+                                            ? 'bg-[#67b83c] text-white'
+                                            : 'hover:bg-gray-100'
+                                    ]" @click="toggleSchedule(day.value, hour.value)">
+                                        <div v-if="isScheduleSelected(day.value, hour.value)"
+                                            class="flex items-center justify-center">
+                                            <Check :size="16" />
+                                        </div>
+                                        <div v-else class="flex flex-col items-center justify-center w-full h-full">
+                                            <span
+                                                class="text-xs transition-opacity opacity-0 group-hover:opacity-100 text-gray-400">
+                                                {{ formatHourShort(hour.value) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </Calendar>
+                        </div>
+
+                        <!-- Selected Schedules Display -->
+                        <div v-if="formData.scheduleList.length > 0" class="mt-4">
+                            <h5 class="text-sm font-medium text-gray-700 mb-2">Horarios seleccionados:</h5>
+                            <div class="flex flex-wrap gap-2">
+                                <span v-for="schedule in formData.scheduleList"
+                                    :key="`${schedule.day}-${schedule.hour}`"
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#67b83c] text-white">
+                                    {{ schedule.day }} {{ formatHour(schedule.hour) }}
+                                    <button type="button" @click="removeSchedule(schedule.day, schedule.hour)"
+                                        class="ml-2 hover:text-red-200">
+                                        <X :size="14" />
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="border-t border-[#dcdfe3] px-6 py-4 bg-[#f8f9fa]">
+                <div class="flex justify-end gap-3">
+                    <Button type="button" @click="handleCloseModal" variant="secondary">
+                        Cancelar
+                    </Button>
+                    <Button type="submit" @click="handleSubmit"
+                        :disabled="isSubmitting || formData.scheduleList.length === 0" variant="primary">
+                        {{ isSubmitting ? 'Guardando...' : (mode === 'create' ? 'Crear Grupo' : 'Actualizar Grupo') }}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { X, Check } from 'lucide-vue-next'
+import { useAreasStore } from '@/store/areasStore'
+import { useSemesterStore } from '@/store/semesterStore'
+import { userService } from '@/services/userServices'
+import Calendar from '@/components/common/Calendar.vue'
+import Select from '@/components/common/Select.vue'
+import Input from '@/components/common/Input.vue'
+import Button from '@/components/common/Button.vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+
+// Props
+const props = defineProps({
+    isVisible: {
+        type: Boolean,
+        default: false
+    },
+    mode: {
+        type: String,
+        default: 'create', // 'create' | 'edit'
+        validator: (value) => ['create', 'edit'].includes(value)
+    },
+    editData: {
+        type: Object,
+        default: null
+    }
+})
+
+// Emits
+const emit = defineEmits(['close', 'submit'])
+
+// Stores
+const areasStore = useAreasStore()
+const semesterStore = useSemesterStore()
+
+// Animation and modal state
+const isClosing = ref(false)
+const showConfirmation = ref(false)
+
+// State
+const isSubmitting = ref(false)
+const availableUsers = ref([])
+const loadingUsers = ref(false)
+
+// Form data
+const formData = ref({
+    id: null,
+    code: '',
+    idSemestre: '',
+    idSubject: '',
+    idDocente: '',
+    scheduleList: []
+})
+
+// Computed
+const availableSubjects = computed(() => {
+    const subjects = []
+    areasStore.getAllAreas.forEach(area => {
+        area.subjectList.forEach(subject => {
+            subjects.push(subject)
+        })
+    })
+    return subjects
+})
+
+const availableSemesters = computed(() => {
+    return semesterStore.availableSemesters || []
+})
+
+// Check if form has any data
+const hasFormData = computed(() => {
+    return formData.value.code ||
+        formData.value.idSubject ||
+        formData.value.idDocente ||
+        formData.value.scheduleList.length > 0
+})
+
+// Obtener el nivel de la materia seleccionada
+const getSelectedSubjectLevel = () => {
+    if (!formData.value.idSubject) return ''
+
+    const selectedSubject = availableSubjects.value.find(subject =>
+        subject.id === parseInt(formData.value.idSubject)
+    )
+
+    return selectedSubject?.level || ''
+}
+
+// Schedule methods
+const isScheduleSelected = (day, hour) => {
+    return formData.value.scheduleList.some(schedule =>
+        schedule.day === getDayName(day).toUpperCase() && schedule.hour === hour
+    )
+}
+
+const toggleSchedule = (day, hour) => {
+    const dayName = getDayName(day).toUpperCase()
+    const existingIndex = formData.value.scheduleList.findIndex(schedule =>
+        schedule.day === dayName && schedule.hour === hour
+    )
+
+    if (existingIndex > -1) {
+        // Remove existing schedule
+        formData.value.scheduleList.splice(existingIndex, 1)
+    } else {
+        // Add new schedule
+        formData.value.scheduleList.push({
+            id: null, // Will be assigned by backend
+            day: dayName,
+            hour: hour
+        })
+    }
+}
+
+const removeSchedule = (day, hour) => {
+    const index = formData.value.scheduleList.findIndex(schedule =>
+        schedule.day === day && schedule.hour === hour
+    )
+    if (index > -1) {
+        formData.value.scheduleList.splice(index, 1)
+    }
+}
+
+// Helper methods
+const getDayName = (dayValue) => {
+    if (typeof dayValue === 'string') {
+        return dayValue.toUpperCase()
+    }
+    const days = {
+        1: 'LUNES',
+        2: 'MARTES',
+        3: 'MIÉRCOLES',
+        4: 'JUEVES',
+        5: 'VIERNES',
+        6: 'SÁBADO',
+        7: 'DOMINGO'
+    }
+    return days[dayValue] || ''
+}
+
+const formatHour = (hour) => {
+    const startHour = hour % 12 || 12
+    const endHour = (hour + 1) % 12 || 12
+    const startAmpm = hour < 12 ? 'AM' : 'PM'
+    const endAmpm = (hour + 1) < 12 ? 'AM' : 'PM'
+    return `${startHour}:00 ${startAmpm} - ${endHour}:00 ${endAmpm}`
+}
+
+const formatHourShort = (hour) => {
+    const hourFormat = hour % 12 || 12
+    const ampm = hour < 12 ? 'a' : 'p'
+    return `${hourFormat}${ampm}`
+}
+
+// Form methods
+const resetForm = () => {
+    formData.value = {
+        id: null,
+        code: '',
+        idSemestre: semesterStore.currentSemester?.id || '',
+        idSubject: '',
+        idDocente: '',
+        scheduleList: []
+    }
+}
+
+const loadFormData = () => {
+    if (props.mode === 'edit' && props.editData) {
+        formData.value = {
+            id: props.editData.id,
+            code: props.editData.code || '',
+            idSemestre: props.editData.idSemestre || '',
+            idSubject: props.editData.idSubject || '',
+            idDocente: props.editData.idDocente || '',
+            scheduleList: props.editData.scheduleList ? [...props.editData.scheduleList] : []
+        }
+    } else {
+        resetForm()
+    }
+}
+
+// Modal close methods
+const handleCloseModal = () => {
+    if (hasFormData.value) {
+        showConfirmation.value = true
+        return
+    }
+    closeModal()
+}
+
+const confirmClose = () => {
+    showConfirmation.value = false
+    closeModal()
+}
+
+const closeModal = () => {
+    // Start closing animation
+    isClosing.value = true
+
+    // Wait for animation to complete before closing
+    setTimeout(() => {
+        // Reset form
+        resetForm()
+
+        // Reset animation state
+        isClosing.value = false
+        showConfirmation.value = false
+
+        // Emit close event
+        emit('close')
+    }, 500) // Wait for animation duration
+}
+
+const handleOverlayClick = () => {
+    if (hasFormData.value) {
+        showConfirmation.value = true
+        return
+    }
+    closeModal()
+}
+
+const handleSubmit = async () => {
+    if (formData.value.scheduleList.length === 0) {
+        alert('Por favor selecciona al menos un horario')
+        return
+    }
+
+    isSubmitting.value = true
+    try {
+        // Obtener el nivel automáticamente de la materia seleccionada
+        const selectedSubjectLevel = getSelectedSubjectLevel()
+
+        const groupData = {
+            ...formData.value,
+            code: formData.value.code.trim().toUpperCase(),
+            levelName: selectedSubjectLevel,
+            idSemestre: parseInt(formData.value.idSemestre),
+            idSubject: parseInt(formData.value.idSubject),
+            idDocente: parseInt(formData.value.idDocente)
+        }
+
+        emit('submit', groupData)
+
+        // Close modal after successful submission
+        closeModal()
+    } catch (error) {
+        console.error('Error submitting form:', error)
+    } finally {
+        isSubmitting.value = false
+    }
+}
+
+// Load users
+const loadUsers = async () => {
+    loadingUsers.value = true
+    try {
+        const users = await userService.getUsers()
+        availableUsers.value = users.filter(user => user.isActive)
+    } catch (error) {
+        console.error('Error loading users:', error)
+        availableUsers.value = []
+    } finally {
+        loadingUsers.value = false
+    }
+}
+
+// Watchers
+watch(() => props.isVisible, (newValue) => {
+    if (newValue) {
+        loadFormData()
+        // Reset animation state when modal opens
+        isClosing.value = false
+        showConfirmation.value = false
+    }
+})
+
+watch(() => props.editData, () => {
+    if (props.isVisible) {
+        loadFormData()
+    }
+})
+
+// Lifecycle
+onMounted(async () => {
+    // Load initial data
+    try {
+        if (!areasStore.isLoaded) {
+            await areasStore.fetchAreas()
+        }
+        if (semesterStore.availableSemesters.length === 0) {
+            await semesterStore.loadSemesters()
+        }
+        await loadUsers()
+    } catch (error) {
+        console.error('Error loading initial data:', error)
+    }
+})
+</script>

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import StatusService, { type StatusAvailability } from '@/services/statusService'
+import StatusService from '@/services/statusService'
+import type { StatusAvailability } from '@/types/status'
 
 export const useStatusStore = defineStore('status', {
   state: () => ({
@@ -12,7 +13,7 @@ export const useStatusStore = defineStore('status', {
     // Obtener status por ID
     getStatusById: (state) => {
       return (id: number): StatusAvailability | undefined => {
-        return state.statusAvailability.find((status) => status.id === id)
+        return state.statusAvailability.find((status: StatusAvailability) => status.id === id)
       }
     },
 

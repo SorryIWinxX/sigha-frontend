@@ -30,41 +30,33 @@
 
                 <!-- Clear Filters Button -->
                 <div class="flex items-end gap-2">
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-sm transition-colors"
-                        @click="clearFilters">
+                    <Button variant="secondary" @click="clearFilters">
                         Limpiar filtros
                     </Button>
-                    <Button customClass="ml-2 p-2 hover:bg-gray-100 rounded-sm transition-colors"
-                        @click="toggleFullscreen"
+                    <Button variant="secondary" @click="toggleFullscreen"
                         :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-                        <template #icon>
-                            <Maximize2 :size="20" class="text-gray-600" />
-                        </template>
+
+                        <Maximize2 :size="20" class="text-gray-600" />
+
                     </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#63B83C] hover:bg-[#4A8C2C] rounded-sm transition-colors"
-                        @click="approveAll">
-                        <template #icon>
-                            <CheckCircle2 :size="16" />
-                        </template>
-                        Aprobar todo
-                    </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#B83C3C] hover:bg-[#8C2C2C] rounded-sm transition-colors"
-                        @click="rejectAll">
-                        <template #icon>
-                            <XCircle :size="16" />
-                        </template>
+
+                    <Button variant="danger" @click="rejectAll">
+
+                        <XCircle :size="16" />
+
                         Rechazar todo
                     </Button>
-                    <Button
-                        customClass="px-4 py-2 text-sm font-medium text-white bg-[#3C70B8] hover:bg-[#2C5A8C] rounded-sm transition-colors"
-                        @click="pendingAll">
-                        <template #icon>
-                            <Clock :size="16" />
-                        </template>
+                    <Button variant="info" @click="pendingAll">
+
+                        <Clock :size="16" />
+
                         Pendiente todo
+                    </Button>
+                    <Button variant="primary" @click="approveAll">
+
+                        <CheckCircle2 :size="16" />
+
+                        Aprobar todo
                     </Button>
                 </div>
             </div>
@@ -91,6 +83,7 @@ import { useStatusStore } from '@/store/statusStore'
 import { useAreasStore } from '@/store/areasStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast.js'
 import TableAvailability from './common/TableAvailability.vue'
+import type { StatusAvailability } from '@/types/status'
 
 // Props
 const props = defineProps<{
@@ -214,27 +207,22 @@ function handleFullscreenChange() {
 }
 
 function getApproveStatusId(): number {
-    const approvedStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('aprobad') ||
+    const approvedStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('approved')
     )
     return approvedStatus?.id || 2
 }
 
 function getRejectStatusId(): number {
-    const rejectedStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('rechazad') ||
+    const rejectedStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
         status.description.toLowerCase().includes('rejected')
     )
     return rejectedStatus?.id || 3
 }
 
 function getPendingStatusId(): number {
-    const pendingStatus = statusStore.getAllStatus.find(status =>
-        status.description.toLowerCase().includes('pendiente') ||
-        status.description.toLowerCase().includes('pending') ||
-        status.description.toLowerCase().includes('enviado') ||
-        status.description.toLowerCase().includes('sent')
+    const pendingStatus = statusStore.getAllStatus.find((status: StatusAvailability) =>
+        status.description.toLowerCase().includes('pending')
     )
     return pendingStatus?.id || 1
 }

@@ -1,7 +1,8 @@
 <template>
     <div class="flex flex-row h-screen">
         <div class="flex-1 flex justify-center items-center">
-            <div class="flex w-full flex-col justify-center items-center bg-white shadow-md rounded-lg p-8 h-full">
+            <div
+                class="flex w-full flex-col justify-center items-center bg-white border border-gray-300 shadow-sm rounded-lg p-8 h-full">
                 <div class="w-full max-w-md">
                     <div class="mb-12 flex items-center justify-center">
                         <LogoSIGHA :width="60" :height="60" />
@@ -17,14 +18,10 @@
                             <div class="flex flex-row">
                                 <input id="documento" v-model="documento" placeholder="1234567890"
                                     class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
-                                <div>
-                                    <div
-                                        class="w-full h-full rounded-r-md rounded-l-none flex bg-[#67b83c] hover:bg-[#5aa534] text-white transition-colors">
-                                        <div class="w-10 flex items-center justify-center">
-                                            <EmailOutline />
-                                        </div>
-                                    </div>
-                                </div>
+                                <button type="button"
+                                    class="px-3  bg-primary-500 rounded-sm  rounded-l-none hover:bg-primary-600 focus:outline-none focus:border-[#67b83c] transition-colors">
+                                    <EmailOutline class="w-5 h-5 text-white" />
+                                </button>
                             </div>
                         </div>
 
@@ -33,16 +30,15 @@
                                 Contraseña
                             </label>
                             <div class="flex flex-row">
-                                <input id="password" v-model="password" type="password" placeholder="••••••••"
-                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
-                                <div>
-                                    <div
-                                        class="w-full h-full rounded-r-md rounded-l-none flex bg-[#67b83c] hover:bg-[#5aa534] text-white transition-colors">
-                                        <div class="w-10 flex items-center justify-center">
-                                            <LockOutline />
-                                        </div>
-                                    </div>
-                                </div>
+                                <input id="password" v-model="password" :type="showPassword ? 'text' : 'password'"
+                                    placeholder="••••••••"
+                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-sm rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
+                                <button type="button" @click="showPassword = !showPassword"
+                                    class="px-3  bg-primary-500 rounded-sm  rounded-l-none hover:bg-primary-600 focus:outline-none focus:border-[#67b83c] transition-colors">
+                                    <EyeOutline v-if="!showPassword" class="w-5 h-5 text-white" />
+                                    <EyeOffOutline v-else class="w-5 h-5 text-white" />
+                                </button>
+
                             </div>
                             <div class="flex justify-end">
                                 <a href="#" @click.prevent="isForgotPasswordMode = true"
@@ -53,7 +49,8 @@
                         </div>
 
                         <button type="submit" @click.prevent="authUser"
-                            class="w-full bg-[#67b83c] cursor-pointer hover:bg-[#5aa534] text-white py-3 rounded-md shadow-md font-medium transition-colors mt-4"
+                            class="w-full bg-[#67b83c] hover:bg-[#5aa534] text-white py-3 rounded-md shadow-md font-medium transition-colors mt-4 cursor-pointer"
+                            :class="{ 'opacity-50 !cursor-not-allowed hover:bg-[#67b83c]': !documento || !password }"
                             :disabled="!documento || !password">
                             Iniciar sesión
                         </button>
@@ -84,6 +81,7 @@
                         </div>
 
                         <div class="flex justify-end space-x-3 mt-6">
+                            <h1 class="text-red-500"> FUNCION NO DISPONIBLE</h1>
                             <button type="button" @click="isForgotPasswordMode = false; forgotPasswordDocumento = ''"
                                 class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                                 Volver
@@ -102,8 +100,8 @@
                             <h2 class="text-xl font-semibold text-gray-800">Cambiar contraseña</h2>
                         </div>
 
-                        <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-                            <p class="text-blue-800 text-sm">
+                        <div class="bg-info-500 rounded-md p-4 mb-6">
+                            <p class="text-white text-sm">
                                 <strong>Atención:</strong> Debe cambiar su contraseña antes de continuar. Su contraseña
                                 actual ha expirado o debe ser actualizada por motivos de seguridad.
                             </p>
@@ -114,16 +112,15 @@
                                 Nueva contraseña
                             </label>
                             <div class="flex flex-row">
-                                <input id="new-password" v-model="newPassword" type="password" placeholder="••••••••"
-                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
-                                <div>
-                                    <div
-                                        class="w-full h-full rounded-r-md rounded-l-none flex bg-[#67b83c] hover:bg-[#5aa534] text-white transition-colors">
-                                        <div class="w-10 flex items-center justify-center">
-                                            <LockOutline />
-                                        </div>
-                                    </div>
-                                </div>
+                                <input id="new-password" v-model="newPassword"
+                                    :type="showNewPassword ? 'text' : 'password'" placeholder="••••••••"
+                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-sm rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
+                                <button type="button" @click="showPassword = !showPassword"
+                                    class="px-3  bg-primary-500 rounded-sm  rounded-l-none hover:bg-primary-600 focus:outline-none focus:border-[#67b83c] transition-colors">
+                                    <EyeOutline v-if="!showPassword" class="w-5 h-5 text-white" />
+                                    <EyeOffOutline v-else class="w-5 h-5 text-white" />
+                                </button>
+
                             </div>
                             <p class="text-xs text-gray-500">La contraseña debe tener al menos 8 caracteres.</p>
                         </div>
@@ -133,22 +130,20 @@
                                 Confirmar contraseña
                             </label>
                             <div class="flex flex-row">
-                                <input id="confirm-password" v-model="confirmPassword" type="password"
-                                    placeholder="••••••••"
-                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-md rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
-                                <div>
-                                    <div
-                                        class="w-full h-full rounded-r-md rounded-l-none flex bg-[#67b83c] hover:bg-[#5aa534] text-white transition-colors">
-                                        <div class="w-10 flex items-center justify-center">
-                                            <LockOutline />
-                                        </div>
-                                    </div>
-                                </div>
+                                <input id="confirm-password" v-model="confirmPassword"
+                                    :type="showConfirmPassword ? 'text' : 'password'" placeholder="••••••••"
+                                    class="px-4 py-2 w-full border border-[#dcdfe3] rounded-sm rounded-r-none focus:outline-none focus:border-[#67b83c] focus:ring-1 focus:ring-[#67b83c] focus:ring-opacity-30 transition-colors" />
+                                <button type="button" @click="showPassword = !showPassword"
+                                    class="px-3  bg-primary-500 rounded-sm  rounded-l-none hover:bg-primary-600 focus:outline-none focus:border-[#67b83c] transition-colors">
+                                    <EyeOutline v-if="!showPassword" class="w-5 h-5 text-white" />
+                                    <EyeOffOutline v-else class="w-5 h-5 text-white" />
+                                </button>
                             </div>
-                            <p v-if="confirmPassword && newPassword !== confirmPassword" class="text-xs text-red-500">
+                            <p v-if="confirmPassword && newPassword !== confirmPassword"
+                                class="text-xs text-danger-500">
                                 Las contraseñas no coinciden.
                             </p>
-                            <p v-if="newPassword && newPassword.length < 8" class="text-xs text-red-500">
+                            <p v-if="newPassword && newPassword.length < 8" class="text-xs text-danger-500">
                                 La contraseña debe tener al menos 8 caracteres.
                             </p>
                         </div>
@@ -174,6 +169,8 @@ import { ref, computed } from 'vue'
 import LogoSIGHA from '../components/logos/LogoSIGHA.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import EmailOutline from 'vue-material-design-icons/EmailOutline.vue'
+import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
+import EyeOffOutline from 'vue-material-design-icons/EyeOffOutline.vue'
 import { AuthService } from '@/services/authService'
 import { showSuccessToast, showErrorToast, showInfoToast } from '@/utils/toast'
 import { useAuthStore } from '@/store/authStore'
@@ -193,6 +190,11 @@ const isChangePasswordMode = ref(false)
 const newPassword = ref('')
 const confirmPassword = ref('')
 
+// Password visibility state
+const showPassword = ref(false)
+const showNewPassword = ref(false)
+const showConfirmPassword = ref(false)
+
 // Create auth service instance
 const authService = new AuthService()
 
@@ -202,6 +204,7 @@ const isPasswordValid = computed(() => {
 })
 
 const authUser = async () => {
+
     const success = await authService.login(documento.value, password.value)
 
     if (success) {

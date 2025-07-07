@@ -2,10 +2,9 @@
     <div class="document-config p-4 rounded-sm">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-medium text-gray-900">Tipos de Documento</h2>
-            <Button @click="addNewDocumentRow" custom-class="px-4 py-2 bg-[#67B83C] text-white hover:bg-green-700"
-                :disabled="isCreating || isLoading">
+            <Button variant="primary" @click="addNewDocumentRow" :disabled="isCreating || isLoading">
                 <template #icon>
-                    <Plus :size="16" />
+                    <Plus :size="18" />
                 </template>
                 Crear Tipo de Documento
             </Button>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blend, HelpCircle, SquareLibrary, LogOut } from 'lucide-vue-next';
+import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays } from 'lucide-vue-next';
 import { usePermissions } from '@/composables/usePermissions';
 import { useSidebarStore } from '@/store/sidebarStore';
 
@@ -34,7 +34,7 @@ const iconAnimationClasses = computed(() => {
 const textAnimationClasses = computed(() => {
     if (!hasBeenToggled.value || !isSidebarOpen.value) return '';
 
-    return 'animate__animated animate__fadeInLeft';
+    return 'animate__animated animate__fadeIn';
 });
 
 // Computed para las clases de animación del título
@@ -83,6 +83,16 @@ const menuItems = computed(() => {
     if (isAdmin.value) {
         items.push(
             {
+                to: '/schedule-groups',
+                icon: CalendarDays,
+                label: 'Horarios de Grupos',
+            },
+            {
+                to: '/groups',
+                icon: Blocks,
+                label: 'Grupos',
+            },
+            {
                 to: '/areas-subjects',
                 icon: SquareLibrary,
                 label: 'Areas y Materias',
@@ -102,6 +112,7 @@ const menuItems = computed(() => {
                 icon: Settings,
                 label: 'Configuración',
             },
+
 
         );
     }

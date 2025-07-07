@@ -4,9 +4,9 @@
             <Search placeholder="Buscar usuarios" @search="handleSearch" />
         </div>
 
-        <Button customClass="bg-[#67b83c] text-white py-2 px-4" @click="openNewUserModal">
+        <Button variant="primary" @click="openNewUserModal">
             <template #icon>
-                <Plus :size="20" />
+                <Plus :size="18" />
             </template>
             Nuevo usuario
         </Button>
