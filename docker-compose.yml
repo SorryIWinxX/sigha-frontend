@@ -3,30 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: sigha-frontend-dev
+    container_name: sigha-frontend-preprod
     ports:
-      - '5173:5173'
-    volumes:
-      # Montamos el código fuente para hot-reload
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./index.html:/app/index.html
-      - ./vite.config.ts:/app/vite.config.ts
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./tsconfig.app.json:/app/tsconfig.app.json
-      - ./tsconfig.node.json:/app/tsconfig.node.json
-      - ./env.d.ts:/app/env.d.ts
-      # Montamos el archivo .env si existe
-      - ./.env:/app/.env
-      # Evitamos montar node_modules para mejor rendimiento
-      - /app/node_modules
+      - '80:80'
     env_file:
       - .env
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=http://host.docker.internal:8080
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    stdin_open: true
-    tty: true
+          environment:
+        - NODE_ENV=production
+        - VITE_API_URL=${VITE_API_URL:-http://sigha-back:8080}
+    networks:
+      - sigha-network
     restart: unless-stopped
+
+networks:
+  sigha-network:
+    external: true

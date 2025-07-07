@@ -1,6 +1,7 @@
-# Dockerfile para desarrollo - Vue.js + Vite
+# Dockerfile para pre-prod - Vue.js + Vite + Nginx
 
-FROM node:20-alpine
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -9,13 +10,26 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --only=production
 
 # Copy source code
 COPY . .
 
-# Expose Vite dev server port
-EXPOSE 5173
+# Build the application for production
+RUN npm run build
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 
+# Stage 2: Serve with nginx
+FROM nginx:alpine AS production
+
+# Copy the built application from the builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom nginx configuration if needed
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"] 
+
