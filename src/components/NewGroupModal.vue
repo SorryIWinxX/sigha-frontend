@@ -30,7 +30,7 @@
                         <!-- Código -->
                         <div>
                             <Input id="code-input" v-model="formData.code" label="Código *" type="text"
-                                placeholder="Ej: A01, B02" required />
+                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" required uppercase />
                         </div>
 
                         <!-- Nivel (automático basado en la materia) -->
@@ -52,13 +52,19 @@
                         </Select>
 
                         <!-- Usuario -->
-                        <Select id="user-select" v-model="formData.idDocente" label="Profesor"
-                            placeholder="Seleccionar profesor" required>
-                            <option value="">Seleccionar profesor</option>
-                            <option v-for="user in availableUsers" :key="user.id" :value="user.id">
-                                {{ user.firstName }} {{ user.lastName }}
-                            </option>
-                        </Select>
+                        <div>
+                            <Select id="user-select" v-model="formData.idDocente" label="Profesor">
+                                <option value="null">SIN ASIGNAR</option>
+                                <option v-for="user in filteredAvailableUsers" :key="user.id" :value="user.id">
+                                    {{ user.firstName }} {{ user.lastName }}
+                                </option>
+                            </Select>
+                            <div v-if="formData.idSubject && filteredAvailableUsers.length === 0"
+                                class="mt-1 text-sm text-amber-600 flex items-center gap-1">
+                                <AlertTriangle :size="16" />
+                                <span>No hay profesores disponibles para esta materia</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Schedule Section -->
@@ -132,7 +138,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { X, Check } from 'lucide-vue-next'
+import { X, Check, AlertTriangle } from 'lucide-vue-next'
 import { useAreasStore } from '@/store/areasStore'
 import { useSemesterStore } from '@/store/semesterStore'
 import { userService } from '@/services/userServices'
@@ -200,6 +206,36 @@ const availableSemesters = computed(() => {
     return semesterStore.availableSemesters || []
 })
 
+// Filtrar profesores que pueden dictar la materia seleccionada
+const filteredAvailableUsers = computed(() => {
+    if (!formData.value.idSubject) {
+        return availableUsers.value
+    }
+
+    // Encontrar el área de la materia seleccionada
+    const selectedSubject = availableSubjects.value.find(subject =>
+        subject.id === parseInt(formData.value.idSubject)
+    )
+
+    if (!selectedSubject) {
+        return availableUsers.value
+    }
+
+    // Encontrar el área que contiene esta materia
+    const subjectArea = areasStore.getAllAreas.find(area =>
+        area.subjectList.some(subject => subject.id === selectedSubject.id)
+    )
+
+    if (!subjectArea) {
+        return availableUsers.value
+    }
+
+    // Filtrar usuarios que tienen asignada esta área
+    return availableUsers.value.filter(user =>
+        user.idAreas && user.idAreas.includes(subjectArea.id)
+    )
+})
+
 // Check if form has any data
 const hasFormData = computed(() => {
     return formData.value.code ||
@@ -262,10 +298,10 @@ const getDayName = (dayValue) => {
     const days = {
         1: 'LUNES',
         2: 'MARTES',
-        3: 'MIÉRCOLES',
+        3: 'MIERCOLES', // Sin tilde para compatibilidad con backend
         4: 'JUEVES',
         5: 'VIERNES',
-        6: 'SÁBADO',
+        6: 'SABADO', // Sin tilde para compatibilidad con backend
         7: 'DOMINGO'
     }
     return days[dayValue] || ''
@@ -292,7 +328,7 @@ const resetForm = () => {
         code: '',
         idSemestre: semesterStore.currentSemester?.id || '',
         idSubject: '',
-        idDocente: '',
+        idDocente: 'null',
         scheduleList: []
     }
 }
@@ -304,7 +340,7 @@ const loadFormData = () => {
             code: props.editData.code || '',
             idSemestre: props.editData.idSemestre || '',
             idSubject: props.editData.idSubject || '',
-            idDocente: props.editData.idDocente || '',
+            idDocente: props.editData.idDocente !== null ? props.editData.idDocente : 'null',
             scheduleList: props.editData.scheduleList ? [...props.editData.scheduleList] : []
         }
     } else {
@@ -365,11 +401,11 @@ const handleSubmit = async () => {
 
         const groupData = {
             ...formData.value,
-            code: formData.value.code.trim().toUpperCase(),
+            code: formData.value.code.trim(),
             levelName: selectedSubjectLevel,
             idSemestre: parseInt(formData.value.idSemestre),
             idSubject: parseInt(formData.value.idSubject),
-            idDocente: parseInt(formData.value.idDocente)
+            idDocente: formData.value.idDocente === 'null' ? null : parseInt(formData.value.idDocente)
         }
 
         emit('submit', groupData)
@@ -410,6 +446,26 @@ watch(() => props.isVisible, (newValue) => {
 watch(() => props.editData, () => {
     if (props.isVisible) {
         loadFormData()
+    }
+})
+
+// Limpiar selección de profesor cuando cambie la materia
+watch(() => formData.value.idSubject, (newSubjectId, oldSubjectId) => {
+    if (newSubjectId !== oldSubjectId && formData.value.idDocente) {
+        // Verificar si el profesor actual puede dictar la nueva materia
+        const currentProfessor = availableUsers.value.find(user =>
+            user.id === parseInt(formData.value.idDocente)
+        )
+
+        if (currentProfessor) {
+            const isStillAvailable = filteredAvailableUsers.value.some(user =>
+                user.id === currentProfessor.id
+            )
+
+            if (!isStillAvailable) {
+                formData.value.idDocente = 'null'
+            }
+        }
     }
 })
 

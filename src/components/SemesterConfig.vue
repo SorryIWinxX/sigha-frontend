@@ -31,32 +31,6 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
-                        <!-- Fila para crear nuevo semestre -->
-                        <tr v-if="isCreating" class="bg-blue-50 border-l-4 border-l-blue-500">
-                            <td class="px-6 py-4">
-                                <input v-model="newSemester.description" type="text" placeholder="Ej: 2025-1"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    @keyup.enter="saveNewSemester" @keyup.escape="cancelCreate">
-                            </td>
-                            <td class="px-6 py-4">
-                                <input v-model="newSemester.startDate" type="date"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    @keyup.enter="saveNewSemester" @keyup.escape="cancelCreate">
-                            </td>
-                            <td class="px-6 py-4">
-                                <input v-model="newSemester.endDate" type="date"
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    @keyup.enter="saveNewSemester" @keyup.escape="cancelCreate">
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center justify-center gap-2">
-                                    <ButtonIcon :icon="Check" title="Guardar cambios" @click="saveNewSemester" />
-                                    <ButtonIcon :icon="X" title="Cancelar edición" @click="cancelCreate"
-                                        variant="danger" />
-                                </div>
-                            </td>
-                        </tr>
-
                         <!-- Filas de semestres existentes -->
                         <tr v-for="(semester, index) in semesters" :key="semester.id" :class="[
                             'hover:bg-gray-50 transition-colors duration-150',
@@ -105,6 +79,32 @@
                                     </div>
                                 </td>
                             </template>
+                        </tr>
+
+                        <!-- Fila para crear nuevo semestre -->
+                        <tr v-if="isCreating" class="bg-blue-50 border-l-4 border-l-blue-500">
+                            <td class="px-6 py-4">
+                                <input v-model="newSemester.description" type="text" placeholder="Ej: 2025-1"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                    @keyup.enter="saveNewSemester" @keyup.escape="cancelCreate">
+                            </td>
+                            <td class="px-6 py-4">
+                                <input v-model="newSemester.startDate" type="date"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                    @keyup.enter="saveNewSemester" @keyup.escape="cancelCreate">
+                            </td>
+                            <td class="px-6 py-4">
+                                <input v-model="newSemester.endDate" type="date"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                    @keyup.enter="saveNewSemester" @keyup.escape="cancelCreate">
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center justify-center gap-2">
+                                    <ButtonIcon :icon="Check" title="Guardar cambios" @click="saveNewSemester" />
+                                    <ButtonIcon :icon="X" title="Cancelar edición" @click="cancelCreate"
+                                        variant="danger" />
+                                </div>
+                            </td>
                         </tr>
 
                         <!-- Estado de carga -->
@@ -171,7 +171,13 @@ const canSaveNew = computed(() => {
 const loadSemesters = async () => {
     isLoading.value = true
     try {
-        semesters.value = await semesterService.getSemesters()
+        const semesterData = await semesterService.getSemesters()
+        // Ordenar semestres de forma descendente por fecha de inicio (más recientes primero)
+        semesters.value = semesterData.sort((a, b) => {
+            const dateA = new Date(a.startDate)
+            const dateB = new Date(b.startDate)
+            return dateB.getTime() - dateA.getTime()
+        })
     } catch (error) {
         console.error('Error loading semesters:', error)
         showErrorToast('Error al cargar los semestres')

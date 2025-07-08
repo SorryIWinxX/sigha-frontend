@@ -28,7 +28,7 @@ export class GroupsService {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
-      userId: userId.toString(),
+      UserId: userId.toString(),
       semesterId: semesterId?.toString() || '',
     }
 
@@ -198,9 +198,11 @@ export class GroupsService {
       LUNES: 'Lunes',
       MARTES: 'Martes',
       MIÉRCOLES: 'Miércoles',
+      MIERCOLES: 'Miércoles', // Normalizar miércoles sin acento
       JUEVES: 'Jueves',
       VIERNES: 'Viernes',
       SÁBADO: 'Sábado',
+      SABADO: 'Sábado', // Normalizar sábado sin acento
       DOMINGO: 'Domingo',
     }
 
@@ -242,7 +244,17 @@ export class GroupsService {
 
   // Validar scheduleList (nuevo formato)
   validateScheduleList(scheduleList: ScheduleItem[]): boolean {
-    const validDays = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO']
+    const validDays = [
+      'LUNES',
+      'MARTES',
+      'MIÉRCOLES',
+      'MIERCOLES', // Incluir ambas versiones de miércoles
+      'JUEVES',
+      'VIERNES',
+      'SÁBADO',
+      'SABADO', // Incluir ambas versiones de sábado
+      'DOMINGO',
+    ]
 
     for (const item of scheduleList) {
       if (!validDays.includes(item.day.toUpperCase())) {
