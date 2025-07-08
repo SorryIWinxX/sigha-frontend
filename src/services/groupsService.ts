@@ -271,16 +271,23 @@ export class GroupsService {
   // Actualizar horarios de múltiples grupos
   async updateSchedules(scheduleUpdates: BulkScheduleUpdateRequest): Promise<void> {
     try {
+      console.log('Datos enviados a la API:', JSON.stringify(scheduleUpdates, null, 2))
+
       const response = await fetch('/api/v1/schedule', {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(scheduleUpdates),
       })
 
+      console.log('Respuesta de la API:', response.status, response.statusText)
+
       if (!response.ok) {
         const errorData = await response.text()
+        console.error('Error data from API:', errorData)
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`)
       }
+
+      console.log('Schedules updated successfully')
     } catch (error) {
       console.error('Error updating schedules:', error)
       throw error
