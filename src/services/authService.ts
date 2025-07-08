@@ -83,7 +83,7 @@ export class AuthService {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          userId: userId,
+          UserId: userId,
         },
         body: JSON.stringify({
           documento: this.documento.value,

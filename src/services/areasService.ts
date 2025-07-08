@@ -19,7 +19,7 @@ export class AreasService {
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
-      userId: userId.toString(),
+      UserId: userId.toString(),
     }
   }
 

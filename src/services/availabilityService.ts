@@ -28,7 +28,7 @@ export class AvailabilityService {
     const headers: any = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
-      userId: userId.toString(),
+      UserId: userId.toString(),
       semesterId: semesterId.toString(),
     }
 

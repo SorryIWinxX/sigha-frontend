@@ -13,7 +13,7 @@ export interface Group {
   code: string
   idSemestre: number
   idSubject: number
-  idDocente?: number
+  idDocente?: number | null
   levelName?: string
   schedule?: GroupSchedule // Formato anterior (para compatibilidad)
   scheduleList?: ScheduleItem[] // Nuevo formato
@@ -22,21 +22,21 @@ export interface Group {
 export interface CreateGroupRequest {
   code: string
   idSubject: number
-  idDocente?: number
+  idDocente?: number | null
   scheduleList: ScheduleItem[] // Requerido en la API
 }
 
 export interface UpdateGroupRequest {
   code?: string
   idSubject?: number
-  idDocente?: number
+  idDocente?: number | null
   scheduleList?: ScheduleItem[]
 }
 
 // Interface for bulk schedule updates
 export interface ScheduleUpdateItem {
   idGroup: number
-  idDocente?: number // Solo se incluye si cambió el profesor
+  idDocente?: number | null // Solo se incluye si cambió el profesor
   scheduleList: Array<{
     hour: number
     day: string

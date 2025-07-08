@@ -1,14 +1,35 @@
 <template>
     <div class="flex flex-col gap-4 py-4">
         <!-- Unsaved Changes Indicator -->
-        <div v-if="hasUnsavedChanges" class="bg-yellow-500 rounded-sm p-3 flex items-center justify-between">
-            <div class="flex items-center">
-
-                <span class="text-white font-medium">
-                    {{ changedGroups.size }} cambio{{ changedGroups.size !== 1 ? 's' : '' }} sin guardar
-                </span>
+        <div v-if="hasUnsavedChanges" class="bg-yellow-500 rounded-sm p-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-white font-medium">
+                        {{ changedGroups.size }} cambio{{ changedGroups.size !== 1 ? 's' : '' }} sin guardar
+                    </span>
+                </div>
+                <Button variant="secondary" @click="toggleChangesDetails"
+                    class="bg-white hover:bg-gray-200 text-black  px-2 py-1 text-xs">
+                    {{ showChangesDetails ? 'Ocultar' : 'Ver' }} detalles
+                    <ChevronDown :class="{ 'rotate-180': showChangesDetails }" class="w-4 h-4 transition-transform" />
+                </Button>
             </div>
 
+            <!-- Changes Details -->
+            <div v-if="showChangesDetails" class="mt-3  rounded p-3">
+                <div class="space-y-2">
+                    <div v-for="change in detailedChanges" :key="change.groupId"
+                        class="bg-white rounded p-2 text-black text-sm">
+                        <div class="font-medium">{{ change.groupCode }} - {{ change.subject }}</div>
+                        <div class="text-xs mt-1 space-y-1">
+                            <div v-for="detail in change.changes" :key="detail.type" class="flex items-center gap-2">
+                                <span class="inline-block w-2 h-2 bg-white rounded-full"></span>
+                                <span>{{ detail.description }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Filters Section -->
@@ -90,7 +111,7 @@
                     Limpiar filtros
                 </Button>
                 <span class="text-sm text-gray-600 flex items-center">
-                    Mostrando {{ filteredGroups.length }} de {{ allGroups.length }} grupos
+                    Mostrando {{ groups.length }} de {{ allGroups.length }} grupos
                 </span>
             </div>
         </div>
@@ -142,8 +163,8 @@
                                 class="border border-gray-300 p-2 bg-white align-top" @dragover="handleDragOver"
                                 @drop="handleDrop($event, hour, day)" @dragenter="handleDragEnter($event, hour, day)"
                                 @dragleave="handleDragLeave($event)" :class="{
-                                    'bg-blue-50 border-blue-300': isDragOverSlot === `${hour}-${day}`,
-                                    'bg-warning-500 border-warning-300': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
+                                    'bg-blue-50 border-blue-300': isDragOverSlot === `${hour}-${day}` && canDropInSlot(hour, day),
+                                    'bg-red-100 border-red-300': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
                                 }" style="height: auto; min-height: 120px; max-height: 400px; overflow-y: auto;">
 
                                 <!-- Groups Container -->
@@ -151,9 +172,15 @@
                                     <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id" draggable="true"
                                         @dragstart="handleDragStart($event, group)" @dragend="handleDragEnd"
                                         @click="openProfessorModal(group, $event)"
-                                        class="group w-full rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer bg-gray-100 border-l-8"
+                                        class="group w-full rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer relative"
                                         :class="[
+                                            // Default styles
+                                            'bg-gray-100 border-l-8',
+                                            // Level-based border color and hover
                                             getGroupCardClasses(group),
+                                            // Modified state indicator
+                                            isGroupModified(group.id) ? 'ring-2 ring-amber-400' : '',
+                                            // Drag states
                                             {
                                                 'opacity-50 scale-95': draggedGroup?.id === group.id,
                                                 'cursor-grab': !draggedGroup,
@@ -161,9 +188,18 @@
                                             }
                                         ]">
 
+                                        <!-- Modified indicator -->
+                                        <div v-if="isGroupModified(group.id)"
+                                            class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-white z-1 animate-pulse">
+                                        </div>
+
                                         <!-- Group Code -->
                                         <div class="font-bold text-sm group-hover:text-white text-gray-800 mb-1">
                                             {{ group.code }}
+                                            <span v-if="isGroupModified(group.id)"
+                                                class="text-amber-700 text-xs ml-1 font-medium">
+                                                (modificado)
+                                            </span>
                                         </div>
 
                                         <!-- Subject -->
@@ -204,8 +240,8 @@
                                 <div v-if="getGroupsForSlot(hour, day).length === 0"
                                     class="text-gray-400 text-xs text-center py-8 h-full flex items-center justify-center"
                                     :class="{
-                                        'text-blue-600': isDragOverSlot === `${hour}-${day}` && canDropInSlot(hour, day),
-                                        'text-red-600': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
+                                        'text-blue-700 font-medium': isDragOverSlot === `${hour}-${day}` && canDropInSlot(hour, day),
+                                        'text-red-700 font-medium': isDragOverSlot === `${hour}-${day}` && !canDropInSlot(hour, day)
                                     }">
                                     <span v-if="isDragOverSlot === `${hour}-${day}` && canDropInSlot(hour, day)">
                                         ↓ Soltar aquí
@@ -256,6 +292,7 @@
             <div class="mb-4">
                 <Select id="professor-select" label="Profesor" v-model="selectedProfessorId"
                     placeholder="Elige un profesor" width="w-full">
+                    <option value="null">SIN ASIGNAR</option>
                     <option v-for="professor in availableProfessors" :key="professor.id" :value="professor.id">
                         {{ professor.name }}
                     </option>
@@ -287,7 +324,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
-import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter } from 'lucide-vue-next';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown } from 'lucide-vue-next';
 import Search from '@/components/common/Search.vue';
 import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
@@ -470,8 +507,8 @@ function mapGroupToDisplayFormat(apiGroup: ApiGroup): GroupDisplay[] {
     // Find professor
     const professor = professors.value.find(p => p.id === apiGroup.idDocente?.toString());
     const professorInfo: Professor = professor || {
-        id: apiGroup.idDocente?.toString() || '0',
-        name: 'Sin asignar',
+        id: apiGroup.idDocente?.toString() || 'null',
+        name: 'SIN ASIGNAR',
         department: 'Sin departamento'
     };
 
@@ -613,56 +650,59 @@ function getGroupsForSlot(hour: string, day: string): GroupDisplay[] {
 }
 
 /**
- * Genera un color determinístico basado en el nombre de la materia
- * Utiliza colores Tailwind del orden 500 para mantener consistencia
+ * Asigna un color específico basado en el nivel del grupo
+ * Cada nivel tiene un color único asignado
  */
-function getSubjectColor(subject: string): string {
-    // Colores Tailwind 500 disponibles
-    const colors = [
-        'red-500',
-        'orange-500',
-        'amber-500',
-        'yellow-500',
-        'lime-500',
-        'green-500',
-        'emerald-500',
-        'teal-500',
-        'cyan-500',
-        'sky-500',
-        'blue-500',
-        'indigo-500',
-        'violet-500',
-        'purple-500',
-        'fuchsia-500',
-        'pink-500',
-        'rose-500'
-    ];
+function getLevelColor(level: string): string {
+    // Mapeo directo de niveles a colores
+    const levelColorMap: { [key: string]: string } = {
+        '1': 'red-500',
+        '2': 'orange-500',
+        '3': 'amber-500',
+        '4': 'amber-500',
+        '5': 'lime-500',
+        '6': 'green-500',
+        '7': 'emerald-500',
+        '8': 'teal-500',
+        '9': 'cyan-500',
+        '10': 'sky-500',
+        'E': 'blue-500',
+        // Rangos de niveles
+        '1-2-3': 'red-500',
+        '3-4-5': 'amber-500',
+        '5-6-7': 'green-500',
+        '7-8-9-E': 'teal-500'
+    };
 
-    // Generar un hash simple basado en el nombre de la materia
-    let hash = 0;
-    for (let i = 0; i < subject.length; i++) {
-        const char = subject.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convertir a 32bit integer
+    // Buscar coincidencia exacta primero
+    if (levelColorMap[level]) {
+        return levelColorMap[level];
     }
 
-    // Usar el hash para seleccionar un color de forma determinística
-    const colorIndex = Math.abs(hash) % colors.length;
-    return colors[colorIndex];
+    // Si no hay coincidencia exacta, extraer el primer número del nivel
+    const match = level.match(/(\d+)/);
+    if (match) {
+        const firstNumber = match[1];
+        if (levelColorMap[firstNumber]) {
+            return levelColorMap[firstNumber];
+        }
+    }
+
+    // Color por defecto
+    return 'gray-500';
 }
 
 /**
- * Obtiene las clases CSS para una tarjeta de grupo basadas en la materia
+ * Obtiene las clases CSS para una tarjeta de grupo basadas en el nivel
  */
 function getGroupCardClasses(group: GroupDisplay): string {
-    const subjectColor = getSubjectColor(group.subject);
+    const levelColor = getLevelColor(group.level);
 
     // Mapear colores Tailwind a clases de border y hover
     const colorMap: { [key: string]: { border: string; hover: string } } = {
         'red-500': { border: 'border-red-500', hover: 'hover:bg-red-500' },
         'orange-500': { border: 'border-orange-500', hover: 'hover:bg-orange-500' },
         'amber-500': { border: 'border-amber-500', hover: 'hover:bg-amber-500' },
-        'yellow-500': { border: 'border-yellow-500', hover: 'hover:bg-yellow-500' },
         'lime-500': { border: 'border-lime-500', hover: 'hover:bg-lime-500' },
         'green-500': { border: 'border-green-500', hover: 'hover:bg-green-500' },
         'emerald-500': { border: 'border-emerald-500', hover: 'hover:bg-emerald-500' },
@@ -678,21 +718,20 @@ function getGroupCardClasses(group: GroupDisplay): string {
         'rose-500': { border: 'border-rose-500', hover: 'hover:bg-rose-500' }
     };
 
-    const colors = colorMap[subjectColor] || { border: 'border-gray-500', hover: 'hover:bg-gray-500' };
+    const colors = colorMap[levelColor] || { border: 'border-gray-500', hover: 'hover:bg-gray-500' };
     return `${colors.border} ${colors.hover}`;
 }
 
 /**
- * Obtiene la clase de border para el modal basada en la materia
+ * Obtiene la clase de border para el modal basada en el nivel
  */
 function getModalBorderClass(group: GroupDisplay): string {
-    const subjectColor = getSubjectColor(group.subject);
+    const levelColor = getLevelColor(group.level);
 
     const colorMap: { [key: string]: string } = {
         'red-500': 'border-red-500',
         'orange-500': 'border-orange-500',
         'amber-500': 'border-amber-500',
-        'yellow-500': 'border-yellow-500',
         'lime-500': 'border-lime-500',
         'green-500': 'border-green-500',
         'emerald-500': 'border-emerald-500',
@@ -708,7 +747,7 @@ function getModalBorderClass(group: GroupDisplay): string {
         'rose-500': 'border-rose-500'
     };
 
-    return colorMap[subjectColor] || 'border-gray-500';
+    return colorMap[levelColor] || 'border-gray-500';
 }
 
 // Drag and Drop Methods
@@ -748,6 +787,9 @@ function handleDragLeave(event: DragEvent) {
 
 function canDropInSlot(hour: string, day: string): boolean {
     if (!draggedGroup.value) return false;
+
+    // Si el profesor está sin asignar, permitir el drop sin verificar conflictos
+    if (draggedGroup.value.professor.id === 'null') return true;
 
     // Check if the professor has a conflict at this time
     const conflictingGroups = groups.value.filter(group =>
@@ -805,6 +847,11 @@ function handleDrop(event: DragEvent, hour: string, day: string) {
         // Mark group as changed
         changedGroups.value.add(draggedGroup.value!.id);
         hasUnsavedChanges.value = true;
+
+        // Update change details if they are currently shown
+        if (showChangesDetails.value) {
+            generateDetailedChanges();
+        }
 
         // Show success message
         showSuccessToast(
@@ -866,28 +913,47 @@ function closeProfessorModal() {
 
 function saveProfessorChange() {
     if (selectedGroup.value && selectedProfessorId.value) {
-        // Find the selected professor by ID
-        const newProfessor = professors.value.find(p => p.id === selectedProfessorId.value);
+        let newProfessor: Professor;
 
-        if (newProfessor) {
-            // Update the group's professor
-            const groupIndex = groups.value.findIndex(g => g.id === selectedGroup.value!.id);
-            if (groupIndex !== -1) {
-                groups.value[groupIndex].professor = newProfessor;
-
-                // Mark group as changed
-                changedGroups.value.add(selectedGroup.value!.id);
-                hasUnsavedChanges.value = true;
+        if (selectedProfessorId.value === 'null') {
+            // Handle "SIN ASIGNAR" case
+            newProfessor = {
+                id: 'null',
+                name: 'Sin asignar',
+                department: 'Sin departamento'
+            };
+        } else {
+            // Find the selected professor by ID
+            const foundProfessor = professors.value.find(p => p.id === selectedProfessorId.value);
+            if (!foundProfessor) {
+                showErrorToast('Profesor no encontrado');
+                return;
             }
-
-            // Show success message
-            showSuccessToast(
-                `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name}`
-            );
-
-            // TODO: In a real app, this would make an API call
-            console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name}`);
+            newProfessor = foundProfessor;
         }
+
+        // Update the group's professor
+        const groupIndex = groups.value.findIndex(g => g.id === selectedGroup.value!.id);
+        if (groupIndex !== -1) {
+            groups.value[groupIndex].professor = newProfessor;
+
+            // Mark group as changed
+            changedGroups.value.add(selectedGroup.value!.id);
+            hasUnsavedChanges.value = true;
+        }
+
+        // Update change details if they are currently shown
+        if (showChangesDetails.value) {
+            generateDetailedChanges();
+        }
+
+        // Show success message
+        showSuccessToast(
+            `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name}`
+        );
+
+        // TODO: In a real app, this would make an API call
+        console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name}`);
 
         closeProfessorModal();
     }
@@ -945,7 +1011,11 @@ async function saveChanges() {
 
                 // Check if professor changed
                 if (currentGroup.professor.id !== originalGroup.professor.id) {
-                    updateItem.idDocente = parseInt(currentGroup.professor.id);
+                    if (currentGroup.professor.id === 'null') {
+                        updateItem.idDocente = null;
+                    } else {
+                        updateItem.idDocente = parseInt(currentGroup.professor.id);
+                    }
                 }
 
                 groupChanges.set(apiGroupId, updateItem);
@@ -1150,6 +1220,85 @@ function handleBeforeUnload(event: BeforeUnloadEvent) {
 
 // Component emits
 defineEmits(['nivelChanged']);
+
+// New state for detailed changes
+const showChangesDetails = ref(false);
+const detailedChanges = ref<{ groupId: string; groupCode: string; subject: string; changes: { type: string; description: string }[] }[]>([]);
+
+function isGroupModified(groupId: string): boolean {
+    const currentGroup = groups.value.find(g => g.id === groupId);
+    const originalGroup = originalGroups.value.find(g => g.id === groupId);
+
+    if (!currentGroup || !originalGroup) return false;
+
+    return JSON.stringify(currentGroup) !== JSON.stringify(originalGroup);
+}
+
+function generateDetailedChanges() {
+    const changes: { groupId: string; groupCode: string; subject: string; changes: { type: string; description: string }[] }[] = [];
+
+    for (const groupId of changedGroups.value) {
+        const currentGroup = groups.value.find(g => g.id === groupId);
+        const originalGroup = originalGroups.value.find(g => g.id === groupId);
+
+        if (!currentGroup || !originalGroup) continue;
+
+        const groupChanges: { type: string; description: string }[] = [];
+
+        // Check if schedule changed (day or hour)
+        if (currentGroup.day !== originalGroup.day || currentGroup.hour !== originalGroup.hour) {
+            const originalDay = getDayLabel(originalGroup.day);
+            const originalTime = formatTimeRange(originalGroup.hour);
+            const newDay = getDayLabel(currentGroup.day);
+            const newTime = formatTimeRange(currentGroup.hour);
+
+            if (currentGroup.day !== originalGroup.day && currentGroup.hour !== originalGroup.hour) {
+                groupChanges.push({
+                    type: 'schedule',
+                    description: `Horario: ${originalDay} ${originalTime} → ${newDay} ${newTime}`
+                });
+            } else if (currentGroup.day !== originalGroup.day) {
+                groupChanges.push({
+                    type: 'day',
+                    description: `Día: ${originalDay} → ${newDay}`
+                });
+            } else {
+                groupChanges.push({
+                    type: 'hour',
+                    description: `Hora: ${originalTime} → ${newTime}`
+                });
+            }
+        }
+
+        // Check if professor changed
+        if (currentGroup.professor.id !== originalGroup.professor.id) {
+            groupChanges.push({
+                type: 'professor',
+                description: `Profesor: ${originalGroup.professor.name} → ${currentGroup.professor.name}`
+            });
+        }
+
+        if (groupChanges.length > 0) {
+            changes.push({
+                groupId: groupId,
+                groupCode: currentGroup.code,
+                subject: currentGroup.subject,
+                changes: groupChanges
+            });
+        }
+    }
+
+    detailedChanges.value = changes;
+}
+
+function toggleChangesDetails() {
+    showChangesDetails.value = !showChangesDetails.value;
+    if (showChangesDetails.value) {
+        generateDetailedChanges();
+    } else {
+        detailedChanges.value = [];
+    }
+}
 </script>
 
 <style scoped>
