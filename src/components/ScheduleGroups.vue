@@ -298,8 +298,31 @@
                     </option>
                 </Select>
 
+                <!-- Error de conflicto de horario -->
+                <div v-if="professorConflictValidation.hasConflict"
+                    class="mt-2 text-sm text-white bg-danger-500 p-2 rounded">
+                    <div class="flex items-start space-x-2">
+
+                        <div>
+                            <div class="font-medium">Conflicto de horario</div>
+                            <div class="text-sm">{{ professorConflictValidation.conflictMessage }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje cuando es el mismo profesor (pero no cuando es null/sin asignar) -->
+                <div v-else-if="selectedGroup && selectedProfessorId === selectedGroup.professor.id && selectedProfessorId !== 'null'"
+                    class="mt-2 text-sm text-white bg-gray-500 p-2 rounded">
+                    <div class="flex items-center space-x-2">
+
+
+                        <div>Este profesor ya está asignado a este grupo</div>
+                    </div>
+                </div>
+
                 <!-- Información adicional cuando no hay profesores disponibles -->
-                <div v-if="availableProfessors.length === 0" class="mt-2 text-sm text-white bg-danger-500 p-2 rounded">
+                <div v-else-if="availableProfessors.length === 0"
+                    class="mt-2 text-sm text-white bg-danger-500 p-2 rounded">
                     No hay profesores asignados al área que contiene esta materia.
                 </div>
                 <div v-else-if="availableProfessors.length < professors.length"
@@ -313,8 +336,7 @@
                 <Button @click="closeProfessorModal" variant="secondary">
                     Cancelar
                 </Button>
-                <Button @click="saveProfessorChange" variant="primary"
-                    :disabled="!selectedProfessorId || availableProfessors.length === 0">
+                <Button @click="saveProfessorChange" variant="primary" :disabled="!canSaveProfessorChange">
                     Guardar
                 </Button>
             </div>
@@ -324,7 +346,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
-import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown } from 'lucide-vue-next';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle } from 'lucide-vue-next';
 import Search from '@/components/common/Search.vue';
 import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
@@ -620,6 +642,52 @@ const availableProfessors = computed(() => {
     return getProfessorsForSubject(selectedGroup.value.subject);
 });
 
+// Validation for professor assignment
+const professorConflictValidation = computed(() => {
+    if (!selectedGroup.value || !selectedProfessorId.value || selectedProfessorId.value === 'null') {
+        return { hasConflict: false, conflictMessage: '', conflictingGroups: [] };
+    }
+
+    const conflictingGroups = groups.value.filter(group =>
+        group.id !== selectedGroup.value!.id && // Not the same group
+        group.professor.id === selectedProfessorId.value && // Same professor
+        group.hour === selectedGroup.value!.hour && // Same hour
+        group.day === selectedGroup.value!.day // Same day
+    );
+
+    if (conflictingGroups.length > 0) {
+        const conflictingGroup = conflictingGroups[0];
+        const dayName = getDayLabel(selectedGroup.value.day);
+        const timeRange = formatTimeRange(selectedGroup.value.hour);
+
+        return {
+            hasConflict: true,
+            conflictMessage: `El profesor ya tiene asignado el grupo ${conflictingGroup.code} en ${dayName} de ${timeRange}`,
+            conflictingGroups: conflictingGroups
+        };
+    }
+
+    return { hasConflict: false, conflictMessage: '', conflictingGroups: [] };
+});
+
+const canSaveProfessorChange = computed(() => {
+    if (!selectedProfessorId.value || availableProfessors.value.length === 0) {
+        return false;
+    }
+
+    // Check for conflicts
+    if (professorConflictValidation.value.hasConflict) {
+        return false;
+    }
+
+    // Check if it's the same professor (no change needed), but allow null/sin asignar
+    if (selectedGroup.value && selectedProfessorId.value === selectedGroup.value.professor.id && selectedProfessorId.value !== 'null') {
+        return false;
+    }
+
+    return true;
+});
+
 // Methods
 function getDayLabel(day: string): string {
     return dayLabels[day as keyof typeof dayLabels] || day.toUpperCase();
@@ -912,51 +980,60 @@ function closeProfessorModal() {
 }
 
 function saveProfessorChange() {
-    if (selectedGroup.value && selectedProfessorId.value) {
-        let newProfessor: Professor;
-
-        if (selectedProfessorId.value === 'null') {
-            // Handle "SIN ASIGNAR" case
-            newProfessor = {
-                id: 'null',
-                name: 'Sin asignar',
-                department: 'Sin departamento'
-            };
-        } else {
-            // Find the selected professor by ID
-            const foundProfessor = professors.value.find(p => p.id === selectedProfessorId.value);
-            if (!foundProfessor) {
-                showErrorToast('Profesor no encontrado');
-                return;
-            }
-            newProfessor = foundProfessor;
-        }
-
-        // Update the group's professor
-        const groupIndex = groups.value.findIndex(g => g.id === selectedGroup.value!.id);
-        if (groupIndex !== -1) {
-            groups.value[groupIndex].professor = newProfessor;
-
-            // Mark group as changed
-            changedGroups.value.add(selectedGroup.value!.id);
-            hasUnsavedChanges.value = true;
-        }
-
-        // Update change details if they are currently shown
-        if (showChangesDetails.value) {
-            generateDetailedChanges();
-        }
-
-        // Show success message
-        showSuccessToast(
-            `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name}`
-        );
-
-        // TODO: In a real app, this would make an API call
-        console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name}`);
-
-        closeProfessorModal();
+    if (!selectedGroup.value || !selectedProfessorId.value) {
+        showErrorToast('Por favor selecciona un profesor');
+        return;
     }
+
+    // Validate for conflicts
+    if (professorConflictValidation.value.hasConflict) {
+        showErrorToast(professorConflictValidation.value.conflictMessage);
+        return;
+    }
+
+    let newProfessor: Professor;
+
+    if (selectedProfessorId.value === 'null') {
+        // Handle "SIN ASIGNAR" case
+        newProfessor = {
+            id: 'null',
+            name: 'Sin asignar',
+            department: 'Sin departamento'
+        };
+    } else {
+        // Find the selected professor by ID
+        const foundProfessor = professors.value.find(p => p.id === selectedProfessorId.value);
+        if (!foundProfessor) {
+            showErrorToast('Profesor no encontrado');
+            return;
+        }
+        newProfessor = foundProfessor;
+    }
+
+    // Update the group's professor
+    const groupIndex = groups.value.findIndex(g => g.id === selectedGroup.value!.id);
+    if (groupIndex !== -1) {
+        groups.value[groupIndex].professor = newProfessor;
+
+        // Mark group as changed
+        changedGroups.value.add(selectedGroup.value!.id);
+        hasUnsavedChanges.value = true;
+    }
+
+    // Update change details if they are currently shown
+    if (showChangesDetails.value) {
+        generateDetailedChanges();
+    }
+
+    // Show success message
+    showSuccessToast(
+        `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name}`
+    );
+
+    // TODO: In a real app, this would make an API call
+    console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name}`);
+
+    closeProfessorModal();
 }
 
 function toggleFullscreen() {
@@ -988,6 +1065,9 @@ async function saveChanges() {
     try {
         isSaving.value = true;
 
+        console.log('Changed groups:', Array.from(changedGroups.value));
+        console.log('Groups with changes:', changedGroups.value.size);
+
         // Group changes by original group ID (from API)
         const groupChanges = new Map<number, ScheduleUpdateItem>();
 
@@ -1008,17 +1088,21 @@ async function saveChanges() {
                     idGroup: apiGroupId,
                     scheduleList: []
                 };
-
-                // Check if professor changed
-                if (currentGroup.professor.id !== originalGroup.professor.id) {
-                    if (currentGroup.professor.id === 'null') {
-                        updateItem.idDocente = null;
-                    } else {
-                        updateItem.idDocente = parseInt(currentGroup.professor.id);
-                    }
-                }
-
                 groupChanges.set(apiGroupId, updateItem);
+            }
+
+            // Check if professor changed (always check, not just when creating new item)
+            if (currentGroup.professor.id !== originalGroup.professor.id) {
+                console.log(`Professor change detected for group ${currentGroup.code}:`,
+                    `${originalGroup.professor.name} (${originalGroup.professor.id}) -> ${currentGroup.professor.name} (${currentGroup.professor.id})`);
+
+                if (currentGroup.professor.id === 'null') {
+                    updateItem.idDocente = null;
+                    console.log(`Setting idDocente to null for group ${apiGroupId}`);
+                } else {
+                    updateItem.idDocente = parseInt(currentGroup.professor.id);
+                    console.log(`Setting idDocente to ${updateItem.idDocente} for group ${apiGroupId}`);
+                }
             }
 
             // Convert day and hour back to API format
@@ -1047,32 +1131,38 @@ async function saveChanges() {
             }
         }
 
-        // Collect all groups that belong to the changed API groups to build complete schedule lists
+        // Prepare final payload for API
         const completeGroupChanges: ScheduleUpdateItem[] = [];
 
         for (const [apiGroupId, updateItem] of groupChanges) {
-            // Get all display groups that belong to this API group
+            // Get all display groups that belong to this API group (current state)
             const allGroupSchedules = groups.value.filter(g => {
                 const groupApiId = parseInt(g.id.split('-')[0]);
                 return groupApiId === apiGroupId;
             });
 
-            // Build complete schedule list
-            const completeScheduleList = allGroupSchedules.map(g => {
-                const dayMapping: { [key: string]: string } = {
-                    'monday': 'LUNES',
-                    'tuesday': 'MARTES',
-                    'wednesday': 'MIÉRCOLES',
-                    'thursday': 'JUEVES',
-                    'friday': 'VIERNES',
-                    'saturday': 'SÁBADO'
-                };
+            console.log(`Found ${allGroupSchedules.length} schedules for API group ${apiGroupId}:`,
+                allGroupSchedules.map(g => ({ id: g.id, code: g.code, day: g.day, hour: g.hour })));
 
-                return {
-                    hour: parseInt(g.hour.split(':')[0]),
-                    day: dayMapping[g.day]
-                };
-            });
+            if (allGroupSchedules.length === 0) {
+                console.warn(`No schedules found for API group ${apiGroupId}, skipping...`);
+                continue;
+            }
+
+            // Build complete schedule list with current state
+            const dayMapping: { [key: string]: string } = {
+                'monday': 'LUNES',
+                'tuesday': 'MARTES',
+                'wednesday': 'MIÉRCOLES',
+                'thursday': 'JUEVES',
+                'friday': 'VIERNES',
+                'saturday': 'SÁBADO'
+            };
+
+            const completeScheduleList = allGroupSchedules.map(g => ({
+                hour: parseInt(g.hour.split(':')[0]),
+                day: dayMapping[g.day]
+            }));
 
             const completeUpdateItem: ScheduleUpdateItem = {
                 idGroup: apiGroupId,
@@ -1082,10 +1172,13 @@ async function saveChanges() {
             // Add professor change if it exists
             if (updateItem.idDocente !== undefined) {
                 completeUpdateItem.idDocente = updateItem.idDocente;
+                console.log(`Setting idDocente for group ${apiGroupId} to:`, updateItem.idDocente);
             }
 
             completeGroupChanges.push(completeUpdateItem);
         }
+
+        console.log('Complete group changes to send:', JSON.stringify(completeGroupChanges, null, 2));
 
         // Send update to API
         await groupsService.updateSchedules(completeGroupChanges);
