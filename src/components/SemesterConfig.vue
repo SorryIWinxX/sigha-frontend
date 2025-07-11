@@ -134,13 +134,15 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { Edit, Plus, Check, X } from 'lucide-vue-next'
 import { SemesterService } from '@/services/semesterService'
+import { useSemesterStore } from '@/store/semesterStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import type { Semester } from '@/types/semester'
 import Button from '@/components/common/Button.vue'
 import ButtonIcon from '@/components/common/ButtonIcon.vue'
 
-// Instanciar el servicio
+// Instanciar el servicio y store
 const semesterService = new SemesterService()
+const semesterStore = useSemesterStore()
 
 // Estado reactivo
 const semesters = ref<Semester[]>([])
@@ -210,6 +212,8 @@ const saveNewSemester = async () => {
         await semesterService.createSemester(semesterData)
         // Limpiar y recargar la lista para asegurar consistencia
         await loadSemesters()
+        // Actualizar el store después de crear
+        await semesterStore.loadSemesters()
         showSuccessToast('Semestre creado exitosamente')
         cancelCreate()
     } catch (error) {
@@ -257,6 +261,8 @@ const saveEdit = async () => {
         await semesterService.updateSemester(updateData)
         // Recargar la lista para asegurar consistencia con el servidor
         await loadSemesters()
+        // Actualizar el store después de editar
+        await semesterStore.loadSemesters()
         showSuccessToast('Semestre actualizado exitosamente')
         cancelEdit()
     } catch (error) {
@@ -288,8 +294,6 @@ const formatDate = (dateString: string | undefined) => {
         return ''
     }
 }
-
-
 
 onMounted(() => {
     loadSemesters()

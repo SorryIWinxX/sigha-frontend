@@ -4,10 +4,6 @@
             <table class="w-full">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
-                        <th class="w-12 px-6 py-3 text-left">
-                            <CheckBox :modelValue="allSelected" @update:modelValue="toggleAllUsers"
-                                class="text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 focus:ring-2 transition-all duration-200" />
-                        </th>
                         <th class="px-6 py-3 text-left">
                             <button @click="handleSort('name')"
                                 class="flex items-center gap-2 text-gray-900 font-semibold cursor-pointer hover:text-green-600">
@@ -67,7 +63,7 @@
                 <tbody class="bg-white divide-y divide-gray-100">
                     <!-- Loading state -->
                     <tr v-if="loading">
-                        <td colspan="7" class="px-6 py-8 text-center">
+                        <td colspan="6" class="px-6 py-8 text-center">
                             <div class="flex items-center justify-center">
                                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                                 <span class="ml-3 text-gray-600">Cargando usuarios...</span>
@@ -76,7 +72,7 @@
                     </tr>
                     <!-- Error state -->
                     <tr v-else-if="error && users.length === 0">
-                        <td colspan="7" class="px-6 py-8 text-center">
+                        <td colspan="6" class="px-6 py-8 text-center">
                             <div class="text-red-600">
                                 <p class="font-semibold">Error al cargar usuarios</p>
                                 <p class="text-sm mt-1">{{ error }}</p>
@@ -89,7 +85,7 @@
                     </tr>
                     <!-- Empty state -->
                     <tr v-else-if="!loading && filteredUsers.length === 0">
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                             {{ props.searchQuery.trim() ? 'No se encontraron usuarios que coincidan con la búsqueda' :
                                 'No se encontraron usuarios' }}
                         </td>
@@ -100,10 +96,6 @@
                         { 'bg-gray-50/30': index % 2 === 0 },
                         { 'border-b-0': index === paginatedUsers.length - 1 }
                     ]">
-                        <td class="px-6 py-3">
-                            <CheckBox :modelValue="user.selected" @update:modelValue="toggleUserSelection(user.id)"
-                                class="text-green-600 bg-white border-gray-300 rounded-sm focus:ring-green-500 focus:ring-2" />
-                        </td>
                         <td class="px-6 py-3">
                             <span class="text-gray-900 font-medium">{{ user.name }}</span>
                         </td>
@@ -234,7 +226,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
-import CheckBox from './common/CheckBox.vue'
 import Select from './common/Select.vue'
 import UserDetailsModal from './UserDetailsModal.vue'
 import EditUser from './EditUser.vue'
@@ -298,10 +289,6 @@ const paginatedUsers = computed(() => {
     return sortedUsers.slice(startIndex.value, endIndex.value)
 })
 
-const allSelected = computed(() => {
-    return paginatedUsers.value.length > 0 && paginatedUsers.value.every(user => user.selected)
-})
-
 const visiblePages = computed(() => {
     const pages = []
     const maxVisible = 5
@@ -348,23 +335,6 @@ const handleSort = (key) => {
         direction = 'desc'
     }
     sortConfig.value = { key, direction }
-}
-
-const toggleUserSelection = (userId) => {
-    const userIndex = users.value.findIndex(user => user.id === userId)
-    if (userIndex !== -1) {
-        users.value[userIndex].selected = !users.value[userIndex].selected
-    }
-}
-
-const toggleAllUsers = () => {
-    const allCurrentlySelected = paginatedUsers.value.every(user => user.selected)
-    paginatedUsers.value.forEach(user => {
-        const userIndex = users.value.findIndex(u => u.id === user.id)
-        if (userIndex !== -1) {
-            users.value[userIndex].selected = !allCurrentlySelected
-        }
-    })
 }
 
 const toggleDropdown = (userId) => {
