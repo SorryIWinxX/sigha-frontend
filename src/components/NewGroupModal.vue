@@ -30,7 +30,7 @@
                         <!-- Código -->
                         <div>
                             <Input id="code-input" v-model="formData.code" label="Código *" type="text"
-                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" required uppercase />
+                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" required :uppercase="true" />
                         </div>
 
                         <!-- Nivel (automático basado en la materia) -->
@@ -47,7 +47,7 @@
                             placeholder="Seleccionar materia" required>
                             <option value="">Seleccionar materia</option>
                             <option v-for="subject in availableSubjects" :key="subject.id" :value="subject.id">
-                                {{ subject.name }}
+                                {{ subject.code }} - {{ subject.name }}
                             </option>
                         </Select>
 
@@ -396,16 +396,17 @@ const handleSubmit = async () => {
 
     isSubmitting.value = true
     try {
-        // Obtener el nivel automáticamente de la materia seleccionada
-        const selectedSubjectLevel = getSelectedSubjectLevel()
-
+        // Preparar datos según la interfaz CreateGroupRequest/UpdateGroupRequest
         const groupData = {
-            ...formData.value,
             code: formData.value.code.trim(),
-            levelName: selectedSubjectLevel,
-            idSemestre: parseInt(formData.value.idSemestre),
             idSubject: parseInt(formData.value.idSubject),
-            idDocente: formData.value.idDocente === 'null' ? null : parseInt(formData.value.idDocente)
+            idDocente: formData.value.idDocente === 'null' ? null : parseInt(formData.value.idDocente),
+            scheduleList: formData.value.scheduleList
+        }
+
+        // Para modo de edición, incluir el ID
+        if (props.mode === 'edit' && formData.value.id) {
+            groupData.id = formData.value.id
         }
 
         emit('submit', groupData)

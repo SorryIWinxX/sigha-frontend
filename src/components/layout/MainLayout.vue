@@ -4,7 +4,7 @@
         <header class="bg-white border-b border-[#DCDFE3]">
             <div class="flex justify-between items-center">
                 <!-- Logo y branding -->
-                <div class="flex items-center px-6">
+                <div class="flex items-center px-6 cursor-pointer" @click="router.push('/dashboard')">
                     <div class="flex items-center p-2">
                         <LogoSIGHA :width="50" :height="50" />
                     </div>

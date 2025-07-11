@@ -1,6 +1,6 @@
 <template>
     <MainLayout>
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center pb-4">
             <h1 class="text-2xl font-bold">Horarios de Grupos</h1>
             <SemesterSelector @semester-changed="onSemesterChanged" />
         </div>

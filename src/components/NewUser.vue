@@ -20,10 +20,10 @@
                     <div class="xl:col-span-2">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <Input id="nombre" v-model="formData.nombre" label="Nombre" placeholder="Ingrese el nombre"
-                                required />
+                                required :uppercase="true" />
 
                             <Input id="apellido" v-model="formData.apellido" label="Apellido"
-                                placeholder="Ingrese el apellido" required />
+                                placeholder="Ingrese el apellido" required :uppercase="true" />
 
                             <Select id="tipoDocumento" v-model="formData.tipoDocumento" label="Tipo de documento">
                                 <option value="" disabled>Seleccione un tipo de documento</option>
@@ -33,7 +33,7 @@
                             </Select>
 
                             <Input id="numeroDocumento" v-model="formData.numeroDocumento" label="Número de documento"
-                                placeholder="Ingrese el número" required />
+                                placeholder="Ingrese el número" required :uppercase="true" />
                         </div>
 
                         <!-- Email Section -->
@@ -312,43 +312,73 @@ const isFormValid = computed(() => {
 
 // Watch for changes in nombre and apellido to transform to uppercase
 watch(() => formData.nombre, (newValue) => {
-    formData.nombre = newValue.toUpperCase()
+    if (newValue && newValue !== newValue.toUpperCase()) {
+        formData.nombre = newValue.toUpperCase()
+    }
 })
 
 watch(() => formData.apellido, (newValue) => {
-    formData.apellido = newValue.toUpperCase()
+    if (newValue && newValue !== newValue.toUpperCase()) {
+        formData.apellido = newValue.toUpperCase()
+    }
 })
 
 // Email validation function
 const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    // Clear previous error state
+    emailError.value = ''
+    isEmailValid.value = false
 
-    if (!email) {
-        emailError.value = ''
-        isEmailValid.value = false
+    // If email is empty, just return without error
+    if (!email || email.trim() === '') {
         return
     }
 
-    if (!emailRegex.test(email)) {
+    // Trim whitespace
+    const trimmedEmail = email.trim()
+
+    // Basic email format validation - more comprehensive regex
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+    if (!emailRegex.test(trimmedEmail)) {
         emailError.value = 'Por favor ingrese un correo electrónico válido'
-        isEmailValid.value = false
         return
     }
 
-    // Additional validation for common domains
-    const domain = email.split('@')[1]?.toLowerCase()
-    const commonDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'live.com', 'msn.com']
-
-    if (domain && !commonDomains.includes(domain)) {
-        // Check if it's a valid domain format
-        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/
-        if (!domainRegex.test(domain)) {
-            emailError.value = 'El dominio del correo electrónico no es válido'
-            isEmailValid.value = false
-            return
-        }
+    // Additional basic checks
+    const parts = trimmedEmail.split('@')
+    if (parts.length !== 2) {
+        emailError.value = 'Por favor ingrese un correo electrónico válido'
+        return
     }
 
+    const [localPart, domain] = parts
+
+    // Check local part length
+    if (localPart.length === 0 || localPart.length > 64) {
+        emailError.value = 'La parte local del email no es válida'
+        return
+    }
+
+    // Check domain length
+    if (domain.length === 0 || domain.length > 253) {
+        emailError.value = 'El dominio del correo electrónico no es válido'
+        return
+    }
+
+    // Check for consecutive dots
+    if (trimmedEmail.includes('..')) {
+        emailError.value = 'El correo electrónico no puede contener puntos consecutivos'
+        return
+    }
+
+    // Check that domain has at least one dot
+    if (!domain.includes('.')) {
+        emailError.value = 'El dominio debe contener al menos un punto'
+        return
+    }
+
+    // If all validations pass, email is valid
     emailError.value = ''
     isEmailValid.value = true
 }

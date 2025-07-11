@@ -105,9 +105,11 @@
             <!-- Fila para crear nueva área -->
             <div v-if="isCreating" class="bg-white rounded-sm border border-gray-200 mb-4 p-6">
                 <div class="flex items-center gap-4">
-                    <input v-model="newArea.description" type="text" placeholder="Ej: MATEMÁTICAS COMPUTACIONALES"
-                        class="flex-1 px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
-                        @keyup.enter="saveNewArea" @keyup.escape="cancelCreate">
+                    <div class="flex-1">
+                        <Input id="new-area-description" v-model="newArea.description" type="text"
+                            placeholder="Ej: MATEMÁTICAS COMPUTACIONALES" uppercase @keyup.enter="saveNewArea"
+                            @keyup.escape="cancelCreate" />
+                    </div>
                     <div class="flex gap-2">
                         <Button variant="primary" @click="saveNewArea" :disabled="!canSaveNew || isSaving">
                             <div v-if="isSaving" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white">
@@ -178,9 +180,10 @@
 
                         <!-- Modo edición -->
                         <div v-if="editingId === area.id" class="flex items-center gap-4">
-                            <input v-model="editForm.description" type="text"
-                                class="flex-1 px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
-                                @keyup.enter="saveEdit" @keyup.escape="cancelEdit">
+                            <div class="flex-1">
+                                <Input id="edit-area-description" v-model="editForm.description" type="text" uppercase
+                                    @keyup.enter="saveEdit" @keyup.escape="cancelEdit" />
+                            </div>
                             <div class="flex gap-2">
                                 <Button variant="primary" @click="saveEdit">
                                     Guardar
@@ -200,17 +203,14 @@
                                 class="bg-white rounded-sm border border-gray-200 mb-4 p-4">
                                 <div class="grid grid-cols-3 gap-4 mb-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Código</label>
-                                        <input v-model="newSubject.code" type="text" placeholder="Ej: MAT001"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
-                                            @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject">
+                                        <Input id="new-subject-code" v-model="newSubject.code" type="text"
+                                            label="Código" placeholder="Ej: MAT001" uppercase
+                                            @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
-                                        <input v-model="newSubject.name" type="text"
-                                            placeholder="Ej: Cálculo Diferencial"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none uppercase focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
-                                            @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject">
+                                        <Input id="new-subject-name" v-model="newSubject.name" type="text"
+                                            label="Asignatura" placeholder="Ej: Cálculo Diferencial" uppercase
+                                            @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject" />
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
@@ -276,18 +276,14 @@
                                     <div v-if="editingSubjectId === subject.id" class="p-4">
                                         <div class="grid grid-cols-3 gap-4 mb-4">
                                             <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 mb-2">Código</label>
-                                                <input v-model="editSubjectForm.code" type="text"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
-                                                    @keyup.enter="saveEditSubject" @keyup.escape="cancelEditSubject">
+                                                <Input id="edit-subject-code" v-model="editSubjectForm.code" type="text"
+                                                    label="Código" uppercase @keyup.enter="saveEditSubject"
+                                                    @keyup.escape="cancelEditSubject" />
                                             </div>
                                             <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
-                                                <input v-model="editSubjectForm.name" type="text"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] focus:border-transparent"
-                                                    @keyup.enter="saveEditSubject" @keyup.escape="cancelEditSubject">
+                                                <Input id="edit-subject-name" v-model="editSubjectForm.name" type="text"
+                                                    label="Asignatura" uppercase @keyup.enter="saveEditSubject"
+                                                    @keyup.escape="cancelEditSubject" />
                                             </div>
                                             <div>
                                                 <label
@@ -377,6 +373,7 @@ import Button from '@/components/common/Button.vue'
 import { ChevronRight } from 'lucide-vue-next'
 import ButtonIcon from '@/components/common/ButtonIcon.vue'
 import Select from '@/components/common/Select.vue'
+import Input from '@/components/common/Input.vue'
 
 // Instanciar el servicio
 const areasService = new AreasService()

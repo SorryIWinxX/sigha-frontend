@@ -10,6 +10,7 @@ import AvailableTeacherView from '@/views/AvailableTeacherView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import GroupsView from '@/views/GroupsView.vue'
 import ScheduleGroupsView from '@/views/ScheduleGroupsView.vue'
+import DashboardView from '@/views/DashboardView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),
@@ -104,6 +105,15 @@ const router = createRouter({
       path: '/schedule-groups',
       name: 'schedule-groups',
       component: ScheduleGroupsView,
+      meta: {
+        requiresAuth: true,
+        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
+      },
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
       meta: {
         requiresAuth: true,
         roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
