@@ -52,13 +52,13 @@ const props = defineProps({
 const emit = defineEmits(['day-header-clicked']);
 
 const days = [
-    { value: 1, label: 'Lunes' },
-    { value: 2, label: 'Martes' },
-    { value: 3, label: 'Miércoles' },
-    { value: 4, label: 'Jueves' },
-    { value: 5, label: 'Viernes' },
-    { value: 6, label: 'Sábado' },
-    { value: 7, label: 'Domingo' }
+    { value: 1, label: 'LUNES' },
+    { value: 2, label: 'MARTES' },
+    { value: 3, label: 'MIÉRCOLES' },
+    { value: 4, label: 'JUEVES' },
+    { value: 5, label: 'VIERNES' },
+    { value: 6, label: 'SÁBADO' },
+    { value: 7, label: 'DOMINGO' }
 ];
 
 const hours = generateHours();

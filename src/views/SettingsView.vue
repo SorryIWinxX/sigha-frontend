@@ -1,7 +1,7 @@
 <template>
     <MainLayout>
 
-        <div class="flex w-full">
+        <div class="flex w-full pb-4">
             <h1 class="text-2xl font-bold text-gray-800">Configuraciónes del sistema</h1>
         </div>
 

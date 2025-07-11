@@ -23,7 +23,7 @@
                     <Select v-model="selectedSubjectFilter" placeholder="Todas las materias">
                         <option value="">Todas las materias</option>
                         <option v-for="subject in filteredSubjects" :key="subject.id" :value="subject.id">
-                            {{ subject.name }}
+                            {{ subject.code }} - {{ subject.name }}
                         </option>
                     </Select>
                 </div>

@@ -33,12 +33,14 @@
         </div>
 
         <!-- Filters Section -->
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div class="w-full sm:w-auto sm:flex-1">
-                <Search v-model="searchQuery" />
-            </div>
+        <div class="flex flex-col sm:flex-row gap-4 justify-end items-center">
+
 
             <div class="w-full sm:w-auto flex gap-2">
+                <Button variant="secondary">
+                    <FileText :size="18" />
+                    Exportar a pdf
+                </Button>
                 <Button variant="secondary" @click="toggleFilters">
                     <Filter class="w-4 h-4" />
                     Filtros
@@ -100,7 +102,7 @@
                     <Select id="filter-subject" v-model="filters.subject" @change="applyFilters">
                         <option value="">Todas las materias</option>
                         <option v-for="subject in subjects" :key="subject.id" :value="subject.id.toString()">
-                            {{ subject.name }}
+                            {{ subject.code }} - {{ subject.name }}
                         </option>
                     </Select>
                 </div>
@@ -346,8 +348,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
-import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle } from 'lucide-vue-next';
-import Search from '@/components/common/Search.vue';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
 import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
 
@@ -1287,6 +1288,13 @@ watch(() => props.semesterId, async (newSemesterId) => {
     }
 }, { immediate: false });
 
+// Watch for semester store changes when no semesterId prop is provided
+watch(() => semesterStore.currentSemester, async (newSemester) => {
+    if (newSemester && !props.semesterId) {
+        await loadScheduleData();
+    }
+}, { immediate: false });
+
 // Lifecycle hooks
 onMounted(async () => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -1294,7 +1302,12 @@ onMounted(async () => {
     // Prevent accidental navigation when there are unsaved changes
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    await loadScheduleData();
+    const semesterId = props.semesterId || semesterStore.currentSemester?.id;
+    if (semesterId) {
+        await loadScheduleData();
+    } else {
+        loading.value = false;
+    }
 });
 
 onUnmounted(() => {
@@ -1414,10 +1427,6 @@ function toggleChangesDetails() {
     background: #a8a8a8;
 }
 
-/* Drag and drop styles */
-.cursor-grab {
-    cursor: grab;
-}
 
 .cursor-grabbing {
     cursor: grabbing;

@@ -3,13 +3,13 @@
         <!-- Barra de acciones superior -->
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-center h-15 gap-4">
-                <Search />
+                <Search v-model="searchTerm" placeholder="Buscar grupos..." />
 
                 <!-- Filtro por materia -->
                 <Select id="subject-filter" v-model="selectedSubjectFilter" placeholder="Todas las materias">
                     <option value="">Todas las materias</option>
                     <option v-for="subject in availableSubjects" :key="subject.id" :value="subject.id">
-                        {{ subject.name }}
+                        {{ subject.code }} - {{ subject.name }}
                     </option>
                 </Select>
             </div>
@@ -285,9 +285,11 @@ const filteredGroups = computed(() => {
     // Filtrar por término de búsqueda
     if (searchTerm.value.trim()) {
         const term = searchTerm.value.toLowerCase()
-        groups = groups.filter(group =>
-            group.code.toLowerCase().includes(term)
-        )
+        groups = groups.filter(group => {
+            const subjectName = getSubjectName(group.idSubject).toLowerCase()
+            return group.code.toLowerCase().includes(term) ||
+                subjectName.includes(term)
+        })
     }
 
     // Filtrar por materia
