@@ -234,14 +234,14 @@
 import MainLayout from '@/components/layout/MainLayout.vue';
 import { ref, computed, onMounted } from 'vue';
 import { User, PlusCircle } from 'lucide-vue-next';
-import Input from '@/components/common/Input.vue';
-import Select from '@/components/common/Select.vue';
+import Input from '@/components/ui/Input.vue';
+import Select from '@/components/ui/Select.vue';
 import { userService } from '@/services/userServices';
 import { TipoDocumentoService } from '@/services/tipoDocumentoService';
 import { useAreasStore } from '@/store/areasStore';
 import { showSuccessToast } from '@/utils/toast.js';
-import Button from '@/components/common/Button.vue';
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue';
+import Button from '@/components/ui/Button.vue';
+import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 
 // Estados de la aplicación
 const loading = ref(true);

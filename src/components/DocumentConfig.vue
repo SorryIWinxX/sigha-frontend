@@ -3,9 +3,7 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-medium text-gray-900">Tipos de Documento</h2>
             <Button variant="primary" @click="addNewDocumentRow" :disabled="isCreating || isLoading">
-                <template #icon>
-                    <Plus :size="18" />
-                </template>
+                <Plus :size="18" />
                 Crear Tipo de Documento
             </Button>
         </div>
@@ -120,8 +118,8 @@ import { Edit, Plus, Check, X } from 'lucide-vue-next'
 import { TipoDocumentoService } from '@/services/tipoDocumentoService'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import type { TipoDocumento } from '@/types/tipoDocumento'
-import Button from '@/components/common/Button.vue'
-import ButtonIcon from '@/components/common/ButtonIcon.vue'
+import Button from '@/components/ui/Button.vue'
+import ButtonIcon from '@/components/ui/ButtonIcon.vue'
 
 // Instanciar el servicio
 const tipoDocumentoService = new TipoDocumentoService()

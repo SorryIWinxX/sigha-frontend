@@ -349,8 +349,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
-import Select from '@/components/common/Select.vue';
-import Button from '@/components/common/Button.vue';
+import Select from '@/components/ui/Select.vue';
+import Button from '@/components/ui/Button.vue';
 
 // Toast notifications
 import { showErrorToast, showSuccessToast } from '@/utils/toast';

@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { User as UserIcon, Users } from 'lucide-vue-next'
-import NavegationTabs from '@/components/common/NavegationTabs.vue'
+import NavegationTabs from '@/components/ui/NavegationTabs.vue'
 import AvailabilityIndividual from '@/components/AvailabilityIndividual.vue'
 import AvailabilityGeneral from '@/components/AvailabilityGeneral.vue'
 

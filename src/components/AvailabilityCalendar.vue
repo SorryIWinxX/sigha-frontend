@@ -160,8 +160,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { Trash2, Undo2, Redo2, X, Send, ClipboardCopy, Info } from 'lucide-vue-next';
-import Button from '@/components/common/Button.vue';
-import Calendar from '@/components/common/Calendar.vue';
+import Button from '@/components/ui/Button.vue';
+import Calendar from '@/components/ui/Calendar.vue';
 import availabilityService from '@/services/availabilityService';
 import { showSuccessToast, showErrorToast } from '@/utils/toast';
 import { useStatusStore } from '@/store/statusStore';

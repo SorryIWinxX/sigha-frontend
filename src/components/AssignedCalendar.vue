@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import Calendar from '@/components/common/Calendar.vue';
+import Calendar from '@/components/ui/Calendar.vue';
 import { computed } from 'vue';
 
 const dummyAssignments = [

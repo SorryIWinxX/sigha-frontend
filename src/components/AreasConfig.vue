@@ -368,12 +368,12 @@ import { MoreHorizontal, Edit, Trash2, Filter, Plus } from 'lucide-vue-next'
 import { AreasService } from '@/services/areasService'
 import type { Area, Subject, CreateSubjectRequest } from '@/types/areas'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
-import Search from '@/components/common/Search.vue'
-import Button from '@/components/common/Button.vue'
+import Search from '@/components/ui/Search.vue'
+import Button from '@/components/ui/Button.vue'
 import { ChevronRight } from 'lucide-vue-next'
-import ButtonIcon from '@/components/common/ButtonIcon.vue'
-import Select from '@/components/common/Select.vue'
-import Input from '@/components/common/Input.vue'
+import ButtonIcon from '@/components/ui/ButtonIcon.vue'
+import Select from '@/components/ui/Select.vue'
+import Input from '@/components/ui/Input.vue'
 
 // Instanciar el servicio
 const areasService = new AreasService()

@@ -226,7 +226,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
-import Select from './common/Select.vue'
+import Select from '@/components/ui/Select.vue'
 import UserDetailsModal from './UserDetailsModal.vue'
 import EditUser from './EditUser.vue'
 import { userService } from '@/services/userServices'
@@ -260,11 +260,18 @@ const filteredUsers = computed(() => {
     }
 
     const query = props.searchQuery.toLowerCase().trim()
-    return users.value.filter(user =>
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.permission.toLowerCase().includes(query)
-    )
+    return users.value.filter(user => {
+        // Buscar en nombre
+        const nameMatch = user.name?.toLowerCase().includes(query) || false
+
+        // Buscar en email
+        const emailMatch = user.email?.toLowerCase().includes(query) || false
+
+        // Buscar en permisos/rol
+        const permissionMatch = user.permission?.toLowerCase().includes(query) || false
+
+        return nameMatch || emailMatch || permissionMatch
+    })
 })
 
 const totalUsers = computed(() => filteredUsers.value.length)

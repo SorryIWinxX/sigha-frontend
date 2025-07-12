@@ -223,9 +223,9 @@ import { useGroupsStore } from '@/store/groupsStore'
 import { useAreasStore } from '@/store/areasStore'
 import { useSemesterStore } from '@/store/semesterStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
-import Search from '@/components/common/Search.vue'
-import Select from '@/components/common/Select.vue'
-import Button from '@/components/common/Button.vue'
+import Search from '@/components/ui/Search.vue'
+import Select from '@/components/ui/Select.vue'
+import Button from '@/components/ui/Button.vue'
 import NewGroupModal from '@/components/NewGroupModal.vue'
 
 // Props

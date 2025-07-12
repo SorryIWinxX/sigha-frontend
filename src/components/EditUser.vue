@@ -137,10 +137,10 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import Input from './common/Input.vue'
-import Button from './common/Button.vue'
-import CheckBox from './common/CheckBox.vue'
-import Select from './common/Select.vue'
+import Input from '@/components/ui/Input.vue'
+import Button from '@/components/ui/Button.vue'
+import CheckBox from '@/components/ui/CheckBox.vue'
+import Select from '@/components/ui/Select.vue'
 import { showSuccessToast, showWarningToast, showErrorToast } from '@/utils/toast.js'
 import { userService } from '@/services/userServices'
 import { TipoDocumentoService } from '@/services/tipoDocumentoService'

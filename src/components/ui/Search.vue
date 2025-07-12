@@ -10,26 +10,44 @@ const props = defineProps({
     modelValue: {
         type: String,
         default: ''
+    },
+    debounceMs: {
+        type: Number,
+        default: 300
     }
 })
 
 const emit = defineEmits(['update:modelValue', 'search'])
 
 const query = ref(props.modelValue)
+let debounceTimer = null
 
 // Watch for prop changes (parent updates)
 watch(() => props.modelValue, (newValue) => {
     query.value = newValue
 })
 
-// Watch for local changes and emit to parent
+// Watch for local changes and emit to parent with debounce
 watch(query, (newQuery) => {
     emit('update:modelValue', newQuery)
-    emit('search', newQuery)
+
+    // Clear previous timer
+    if (debounceTimer) {
+        clearTimeout(debounceTimer)
+    }
+
+    // Set new timer for debounced search
+    debounceTimer = setTimeout(() => {
+        emit('search', newQuery)
+    }, props.debounceMs)
 })
 
 const handleSearch = (e) => {
     e.preventDefault()
+    // Clear debounce timer and emit immediately on form submit
+    if (debounceTimer) {
+        clearTimeout(debounceTimer)
+    }
     emit('search', query.value)
 }
 </script>

@@ -21,9 +21,9 @@
 
 <script setup>
 import { ref } from 'vue';
-import Button from '@/components/common/Button.vue';
+import Button from '@/components/ui/Button.vue';
 import { Plus } from 'lucide-vue-next';
-import Search from '@/components/common/Search.vue';
+import Search from '@/components/ui/Search.vue';
 import TableUsers from '@/components/TableUsers.vue';
 import NewUser from '@/components/NewUser.vue';
 

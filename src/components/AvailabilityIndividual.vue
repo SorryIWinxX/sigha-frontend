@@ -99,8 +99,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { CheckCircle2, XCircle, Clock, ChevronDown } from 'lucide-vue-next'
-import Select from '@/components/common/Select.vue'
-import Button from '@/components/common/Button.vue'
+import Select from '@/components/ui/Select.vue'
+import Button from '@/components/ui/Button.vue'
 import { userService } from '@/services/userServices'
 import type { User } from '@/types/user'
 import availabilityService from '@/services/availabilityService'
@@ -108,7 +108,7 @@ import type { GlobalAvailabilityResponse, GlobalAvailabilitySlot } from '@/types
 import { useStatusStore } from '@/store/statusStore'
 import { useAreasStore } from '@/store/areasStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast.js'
-import TableAvailability from './common/TableAvailability.vue'
+import TableAvailability from '@/components/ui/TableAvailability.vue'
 import type { StatusAvailability } from '@/types/status'
 
 // Props

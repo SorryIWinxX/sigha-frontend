@@ -3,9 +3,7 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-medium text-gray-900">Semestres</h2>
             <Button variant="primary" @click="addNewSemesterRow" :disabled="isCreating || isLoading">
-                <template #icon>
-                    <Plus :size="18" />
-                </template>
+                <Plus :size="18" />
                 Crear Semestre
             </Button>
         </div>
@@ -137,8 +135,8 @@ import { SemesterService } from '@/services/semesterService'
 import { useSemesterStore } from '@/store/semesterStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import type { Semester } from '@/types/semester'
-import Button from '@/components/common/Button.vue'
-import ButtonIcon from '@/components/common/ButtonIcon.vue'
+import Button from '@/components/ui/Button.vue'
+import ButtonIcon from '@/components/ui/ButtonIcon.vue'
 
 // Instanciar el servicio y store
 const semesterService = new SemesterService()

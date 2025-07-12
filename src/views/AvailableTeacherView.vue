@@ -20,7 +20,7 @@ import { onMounted, ref, watch } from 'vue'
 import MainLayout from '@/components/layout/MainLayout.vue';
 import SemesterSelector from '@/components/SemesterSelector.vue';
 import AvailabilityManCalendar from '@/components/AvailabilityManCalendar.vue';
-import ToggleText from '@/components/common/ToggleText.vue';
+import ToggleText from '@/components/ui/ToggleText.vue';
 import { useSemesterStore } from '@/store/semesterStore'
 import { SemesterService } from '@/services/semesterService'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'

@@ -142,11 +142,11 @@ import { X, Check, AlertTriangle } from 'lucide-vue-next'
 import { useAreasStore } from '@/store/areasStore'
 import { useSemesterStore } from '@/store/semesterStore'
 import { userService } from '@/services/userServices'
-import Calendar from '@/components/common/Calendar.vue'
-import Select from '@/components/common/Select.vue'
-import Input from '@/components/common/Input.vue'
-import Button from '@/components/common/Button.vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+import Calendar from '@/components/ui/Calendar.vue'
+import Select from '@/components/ui/Select.vue'
+import Input from '@/components/ui/Input.vue'
+import Button from '@/components/ui/Button.vue'
+import ConfirmationModal from '@/components/ui/ConfirmationModal.vue'
 
 // Props
 const props = defineProps({

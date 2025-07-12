@@ -199,7 +199,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { User } from 'lucide-vue-next'
-import Button from '@/components/common/Button.vue'
+import Button from '@/components/ui/Button.vue'
 import { userService } from '@/services/userServices'
 import { AreasService } from '@/services/areasService'
 import { showErrorToast } from '@/utils/toast'
