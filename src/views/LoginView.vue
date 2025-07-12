@@ -246,7 +246,7 @@ const redirectUser = () => {
     const userRoles = authStore.userRoles
 
     if (userRoles.includes('DIRECTOR DE ESCUELA') || userRoles.includes('COORDINADOR ACADEMICO')) {
-        router.push('/available-teacher')
+        router.push('/dashboard')
     } else if (userRoles.includes('PROFESOR')) {
         // Redirigir a vista de profesor
         router.push('/available')

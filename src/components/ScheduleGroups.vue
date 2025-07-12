@@ -174,7 +174,7 @@
                                     <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id" draggable="true"
                                         @dragstart="handleDragStart($event, group)" @dragend="handleDragEnd"
                                         @click="openProfessorModal(group, $event)"
-                                        class="group w-full rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer relative"
+                                        class="group w-52 rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer relative"
                                         :class="[
                                             // Default styles
                                             'bg-gray-100 border-l-8',

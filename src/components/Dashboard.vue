@@ -149,7 +149,9 @@
                         <div class="flex justify-between items-center ">
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ group.code }}</h3>
-                                <p class="text-sm text-gray-600">{{ getSubjectName(group.idSubject) }}</p>
+                                <p class="text-sm text-gray-600 truncate max-w-[150px]">{{
+                                    getSubjectName(group.idSubject)
+                                    }}</p>
                                 <p class="text-xs text-gray-500">{{ getAreaName(group.idSubject) }}</p>
                             </div>
                             <span
@@ -166,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { GroupsService } from '@/services/groupsService'
 import { AreasService } from '@/services/areasService'
 import { SemesterService } from '@/services/semesterService'
@@ -412,38 +414,44 @@ const loadData = async () => {
     try {
         loading.value = true
 
-        // Cargar datos en paralelo
-        const [areasData, semestersData] = await Promise.all([
-            areasService.getAreas(),
-            semesterService.getSemesters()
-        ])
-
-        areas.value = areasData
-        semesters.value = semestersData
+        // Cargar datos básicos solo si no están cargados
+        if (areas.value.length === 0 || semesters.value.length === 0) {
+            const [areasData, semestersData] = await Promise.all([
+                areasService.getAreas(),
+                semesterService.getSemesters()
+            ])
+            areas.value = areasData
+            semesters.value = semestersData
+        }
 
         // Cargar grupos del semestre actual
         if (currentSemesterId.value) {
             groups.value = await groupsService.getGroups(currentSemesterId.value)
+
+            // Actualizar el mapa de grupos por semestre para el semestre actual
+            semesterGroups.value.set(currentSemesterId.value, groups.value)
         }
 
-        // Cargar grupos históricos para todos los semestres
-        const semesterGroupsPromises = semesters.value.map(async (semester) => {
-            try {
-                const semesterGroupsData = await groupsService.getGroups(semester.id)
-                return { semesterId: semester.id, groups: semesterGroupsData }
-            } catch (error) {
-                console.warn(`Error loading groups for semester ${semester.id}:`, error)
-                return { semesterId: semester.id, groups: [] }
-            }
-        })
+        // Cargar grupos históricos para todos los semestres solo en la primera carga
+        if (semesterGroups.value.size === 0) {
+            const semesterGroupsPromises = semesters.value.map(async (semester) => {
+                try {
+                    const semesterGroupsData = await groupsService.getGroups(semester.id)
+                    return { semesterId: semester.id, groups: semesterGroupsData }
+                } catch (error) {
+                    console.warn(`Error loading groups for semester ${semester.id}:`, error)
+                    return { semesterId: semester.id, groups: [] }
+                }
+            })
 
-        const semesterGroupsResults = await Promise.all(semesterGroupsPromises)
+            const semesterGroupsResults = await Promise.all(semesterGroupsPromises)
 
-        // Poblar el mapa de grupos por semestre
-        semesterGroups.value.clear()
-        semesterGroupsResults.forEach(result => {
-            semesterGroups.value.set(result.semesterId, result.groups)
-        })
+            // Poblar el mapa de grupos por semestre
+            semesterGroups.value.clear()
+            semesterGroupsResults.forEach(result => {
+                semesterGroups.value.set(result.semesterId, result.groups)
+            })
+        }
 
     } catch (error) {
         console.error('Error loading dashboard data:', error)
@@ -451,6 +459,32 @@ const loadData = async () => {
         loading.value = false
     }
 }
+
+// Función para cargar solo los grupos del semestre actual
+const loadSemesterGroups = async (semesterId: number) => {
+    try {
+        loading.value = true
+        groups.value = await groupsService.getGroups(semesterId)
+        semesterGroups.value.set(semesterId, groups.value)
+    } catch (error) {
+        console.error('Error loading semester groups:', error)
+    } finally {
+        loading.value = false
+    }
+}
+
+// Watcher para recargar datos cuando cambie el semestre
+watch(() => semesterStore.currentSemester, (newSemester, oldSemester) => {
+    if (newSemester && newSemester.id !== oldSemester?.id) {
+        // Si ya tenemos las áreas cargadas, solo cargar los grupos del nuevo semestre
+        if (areas.value.length > 0) {
+            loadSemesterGroups(newSemester.id)
+        } else {
+            // Si no tenemos las áreas, cargar todo
+            loadData()
+        }
+    }
+}, { deep: true })
 
 onMounted(() => {
     loadData()
