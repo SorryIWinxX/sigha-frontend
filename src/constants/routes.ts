@@ -1,8 +1,8 @@
 export const ROUTES = {
   LOGIN: '/login',
-  DEFAULT: '/available',
+  DEFAULT: '/dashboard',
   ADMIN: {
-    HOME: '/available-teacher',
+    HOME: '/available-management',
   },
   USER: {
     HOME: '/calendar-asigned',

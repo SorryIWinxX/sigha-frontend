@@ -360,6 +360,131 @@ export class GroupsService {
       throw error
     }
   }
+
+  // Obtener grupos de un semestre específico
+  async getGroupsBySemester(semesterId: number): Promise<Group[]> {
+    try {
+      const authStore = useAuthStore()
+      const token = authStore.getToken()
+      const userId = authStore.userId
+
+      if (!token) {
+        throw new Error('No authentication token available')
+      }
+
+      if (!userId) {
+        throw new Error('No user ID available')
+      }
+
+      // Construir headers con el semestre específico
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        UserId: userId.toString(),
+        semesterId: semesterId.toString(),
+      }
+
+      console.log(`Obteniendo grupos del semestre ${semesterId}`)
+
+      const response = await fetch(`/api/v1/group/by-semesters`, {
+        method: 'GET',
+        headers: headers,
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const groups = await response.json()
+      console.log(`Grupos obtenidos del semestre ${semesterId}:`, groups.length)
+
+      return groups
+    } catch (error) {
+      console.error('Error fetching groups by semester:', error)
+      throw error
+    }
+  }
+
+  // Copiar horarios de semestre anterior
+  async copyPreviousSchedule(previousSemesterId: number, targetSemesterId?: number): Promise<void> {
+    try {
+      // Obtener las mismas referencias que usa getHeaders()
+      const authStore = useAuthStore()
+      const semesterStore = useSemesterStore()
+
+      const userId = authStore.userId
+      const semesterId = targetSemesterId || semesterStore.currentSemester?.id
+      const token = authStore.getToken()
+
+      if (!token) {
+        throw new Error('No authentication token available')
+      }
+
+      if (!userId) {
+        throw new Error('No user ID available')
+      }
+
+      if (!semesterId) {
+        throw new Error('No target semester ID available')
+      }
+
+      console.log(
+        'Copiando horarios del semestre:',
+        previousSemesterId,
+        'al semestre:',
+        semesterId,
+        'usuario:',
+        userId,
+      )
+
+      // Paso 1: Obtener los grupos del semestre anterior
+      const previousGroups = await this.getGroupsBySemester(previousSemesterId)
+      console.log(`Encontrados ${previousGroups.length} grupos en el semestre anterior`)
+
+      // Paso 2: Formatear los grupos al formato requerido
+      const groupsToCreate = previousGroups.map((group: Group) => ({
+        id: group.id,
+        idSemestre: semesterId, // Cambiar al semestre de destino
+        idSubject: group.idSubject,
+        idDocente: null, // Siempre null como especificaste
+        levelName: group.levelName || null,
+        code: group.code,
+        scheduleList: group.scheduleList || [],
+      }))
+
+      console.log('Grupos formateados para copiar:', groupsToCreate.length)
+
+      // Construir headers manualmente para asegurar que el token se incluya
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        UserId: userId.toString(),
+        semesterId: semesterId.toString(),
+      }
+
+      console.log('Headers enviados:', { ...headers, Authorization: 'Bearer [HIDDEN]' })
+      console.log('Body enviado (primeros 2 grupos):', groupsToCreate.slice(0, 2))
+
+      const response = await fetch('/api/v1/group/bulk', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(groupsToCreate),
+      })
+
+      console.log('Respuesta de la API:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        console.error('Error data from API:', errorData)
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`)
+      }
+
+      console.log('Previous schedule copied successfully')
+    } catch (error) {
+      console.error('Error copying previous schedule:', error)
+      throw error
+    }
+  }
 }
 
 export const groupsService = new GroupsService()
