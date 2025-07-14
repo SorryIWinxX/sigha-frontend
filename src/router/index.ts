@@ -1,15 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginView from '../views/LoginView.vue'
-import AssignedCalendarView from '../views/AssignedCalendarView.vue'
-import AvailableView from '../views/AvailableView.vue'
-import UserView from '../views/UserView.vue'
-import UsersView from '../views/UsersView.vue'
+import LoginView from '../views/auth/LoginView.vue'
+import AvailableView from '../views/available/AvailableView.vue'
+import ProfileView from '../views/users/ProfileView.vue'
+import UsersView from '../views/users/UsersView.vue'
 import { useAuthStore } from '@/store/authStore'
-import AreasSubjectsView from '@/views/AreasSubjectsView.vue'
-import AvailableTeacherView from '@/views/AvailableTeacherView.vue'
-import SettingsView from '@/views/SettingsView.vue'
-import GroupsView from '@/views/GroupsView.vue'
-import ScheduleGroupsView from '@/views/ScheduleGroupsView.vue'
+import AreasSubjectsView from '@/views/areas/AreasSubjectsView.vue'
+import AvailableManagementView from '@/views/available/AvailableManagementView.vue'
+import SettingsView from '@/views/settings/SettingsView.vue'
+import GroupsView from '@/views/groups/GroupsView.vue'
+import ScheduleGroupsView from '@/views/groups/ScheduleGroupsView.vue'
+import DashboardView from '@/views/dashboard/DashboardView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),
@@ -30,15 +30,6 @@ const router = createRouter({
       },
     },
     {
-      path: '/calendar-asigned',
-      name: 'calendar-asigned',
-      component: AssignedCalendarView,
-      meta: {
-        requiresAuth: true,
-        roles: ['PROFESOR'],
-      },
-    },
-    {
       path: '/available',
       name: 'available',
       component: AvailableView,
@@ -50,15 +41,15 @@ const router = createRouter({
     {
       path: '/user',
       name: 'user',
-      component: UserView,
+      component: ProfileView,
       meta: {
         requiresAuth: true,
       },
     },
     {
-      path: '/available-teacher',
-      name: 'available-teacher',
-      component: AvailableTeacherView,
+      path: '/available-management',
+      name: 'available-management',
+      component: AvailableManagementView,
       meta: {
         requiresAuth: true,
         roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
@@ -104,6 +95,15 @@ const router = createRouter({
       path: '/schedule-groups',
       name: 'schedule-groups',
       component: ScheduleGroupsView,
+      meta: {
+        requiresAuth: true,
+        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
+      },
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
       meta: {
         requiresAuth: true,
         roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],

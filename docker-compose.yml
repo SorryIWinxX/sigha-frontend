@@ -5,16 +5,19 @@ services:
       dockerfile: Dockerfile
     container_name: sigha-frontend-preprod
     ports:
-      - '80:80'
+      - '3001:3000'
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - VITE_API_URL=${VITE_API_URL:-http://sigha-back:8080}
     networks:
-      - sigha-network
+      - sigha-network-preprod
     restart: unless-stopped
+    volumes:
+      - .:/app
+      - /app/node_modules
 
 networks:
-  sigha-network:
+  sigha-network-preprod:
     external: true
