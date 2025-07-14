@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col items-center w-full max-w-md">
+    <div class="flex flex-col items-center w-full max-w-lg">
         <div v-if="semesterStore.loading" class="flex items-center justify-center py-4">
             <div class="text-sm text-gray-500">Cargando semestres...</div>
         </div>

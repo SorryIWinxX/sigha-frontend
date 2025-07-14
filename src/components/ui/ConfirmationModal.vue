@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import Button from './Button.vue'
+import Button from '@/components/ui/base/BaseButton.vue'
 
 // Props
 const props = defineProps({
