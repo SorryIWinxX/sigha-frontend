@@ -1,4 +1,4 @@
-# SIGHA - FRONTEND - DESARROLLO
+# SIGHA - FRONTEND - PREPROD
 
 <div style="display: flex; align-items: center; gap: 20px; justify-content: center; padding-bottom: 30px">
   <img src="src/assets/logoSIGHA.svg" alt="Logo SIGHA" height="200">

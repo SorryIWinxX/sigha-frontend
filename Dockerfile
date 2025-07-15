@@ -1,4 +1,4 @@
-# Dockerfile para desarrollo - Vue.js + Vite
+# Dockerfile para pre-prod - Vue.js + Vite (sin nginx)
 
 FROM node:20-alpine
 
@@ -14,8 +14,11 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Expose Vite dev server port
-EXPOSE 5173
+# Build the application for preview
+RUN npm run build
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 
+# Expose port 3000 (Vite preview default)
+EXPOSE 3000
+
+# Start with Vite preview (sin nginx)
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"] 
