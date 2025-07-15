@@ -7,8 +7,9 @@
                     <div class="mb-12 flex items-center justify-center">
                         <LogoSIGHA :width="60" :height="60" />
                         <h1 class="font-bold text-5xl px-4 text-gray-800">SIGHA</h1>
-                    </div>
 
+                    </div>
+                    <h1 class="font-bold text-center text-xl px-4 text-blue-500">ESCUELA DE {{ schoolName }}</h1>
                     <!-- Login Form -->
                     <form v-if="!isForgotPasswordMode && !isChangePasswordMode" class="space-y-6">
                         <div class="space-y-2">
@@ -179,6 +180,9 @@ import { useRouter } from 'vue-router'
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
 const router = useRouter()
+
+// Environment variables
+const schoolName = import.meta.env.VITE_SCHOOL
 
 // Form state
 const documento = ref('')
