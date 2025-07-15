@@ -335,12 +335,16 @@
             </div>
 
             <div class="flex justify-end space-x-2">
+                <Button @click="openDeleteModal(selectedGroup)" variant="danger">
+                    Eliminar
+                </Button>
                 <Button @click="closeProfessorModal" variant="secondary">
                     Cancelar
                 </Button>
                 <Button @click="saveProfessorChange" variant="primary" :disabled="!canSaveProfessorChange">
                     Guardar
                 </Button>
+
             </div>
         </div>
     </div>
@@ -387,6 +391,12 @@
             </div>
         </div>
     </div>
+
+    <!-- Delete Group Confirmation Modal -->
+    <ConfirmationModal :is-visible="showDeleteModal" title="Eliminar Grupo"
+        :message="groupToDelete ? `¿Estás seguro de que quieres eliminar el grupo ${groupToDelete.code}? Esta acción no se puede deshacer.` : ''"
+        confirm-text="Eliminar" cancel-text="Cancelar" confirm-variant="danger" cancel-variant="secondary"
+        @confirm="confirmDeleteGroup" @cancel="closeDeleteModal" />
 </template>
 
 <script setup lang="ts">
@@ -394,6 +404,7 @@ import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
 import Select from '@/components/ui/base/BaseSelect.vue';
 import Button from '@/components/ui/base/BaseButton.vue';
+import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 
 // Toast notifications
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
@@ -1057,15 +1068,28 @@ function saveProfessorChange() {
         newProfessor = foundProfessor;
     }
 
-    // Update the group's professor
-    const groupIndex = groups.value.findIndex(g => g.id === selectedGroup.value!.id);
-    if (groupIndex !== -1) {
-        groups.value[groupIndex].professor = newProfessor;
+    // Update ALL cards that belong to the same group (same code)
+    const groupCode = selectedGroup.value.code;
+    const groupsToUpdate = groups.value.filter(g => g.code === groupCode);
 
-        // Mark group as changed
-        changedGroups.value.add(selectedGroup.value!.id);
-        hasUnsavedChanges.value = true;
-    }
+    groupsToUpdate.forEach(group => {
+        const groupIndex = groups.value.findIndex(g => g.id === group.id);
+        if (groupIndex !== -1) {
+            groups.value[groupIndex].professor = { ...newProfessor };
+
+            // Mark each card as changed
+            changedGroups.value.add(group.id);
+        }
+    });
+
+    // Also update allGroups to maintain consistency
+    allGroups.value.forEach((group, index) => {
+        if (group.code === groupCode) {
+            allGroups.value[index].professor = { ...newProfessor };
+        }
+    });
+
+    hasUnsavedChanges.value = true;
 
     // Update change details if they are currently shown
     if (showChangesDetails.value) {
@@ -1074,11 +1098,10 @@ function saveProfessorChange() {
 
     // Show success message
     showSuccessToast(
-        `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name}`
+        `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name} en todos los horarios`
     );
 
-    // TODO: In a real app, this would make an API call
-    console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name}`);
+    console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name} en ${groupsToUpdate.length} horarios`);
 
     closeProfessorModal();
 }
@@ -1230,10 +1253,16 @@ async function saveChanges() {
         // Send update to API
         await groupsService.updateSchedules(completeGroupChanges);
 
-        // Update original state and clear changes
+        // Update original state and clear changes (no reload needed)
         originalGroups.value = JSON.parse(JSON.stringify(groups.value));
+        allGroups.value = JSON.parse(JSON.stringify(groups.value));
         hasUnsavedChanges.value = false;
         changedGroups.value.clear();
+
+        // Clear detailed changes if shown
+        if (showChangesDetails.value) {
+            detailedChanges.value = [];
+        }
 
         showSuccessToast('Cambios guardados exitosamente');
 
@@ -1383,6 +1412,11 @@ const availableSemesters = ref<Semester[]>([]);
 const selectedPreviousSemesterId = ref<number | null>(null);
 const isCopyingSchedule = ref(false);
 
+// Delete group modal state
+const showDeleteModal = ref(false);
+const groupToDelete = ref<GroupDisplay | null>(null);
+const isDeleting = ref(false);
+
 function isGroupModified(groupId: string): boolean {
     const currentGroup = groups.value.find(g => g.id === groupId);
     const originalGroup = originalGroups.value.find(g => g.id === groupId);
@@ -1515,6 +1549,66 @@ async function copyPreviousSchedule() {
         showErrorToast('Error al copiar el horario anterior: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     } finally {
         isCopyingSchedule.value = false;
+    }
+}
+
+function openDeleteModal(group: GroupDisplay) {
+    groupToDelete.value = group;
+    showDeleteModal.value = true;
+}
+
+function closeDeleteModal() {
+    showDeleteModal.value = false;
+    groupToDelete.value = null;
+}
+
+async function confirmDeleteGroup() {
+    if (!groupToDelete.value) {
+        closeDeleteModal();
+        return;
+    }
+
+    if (hasUnsavedChanges.value) {
+        showErrorToast('Tienes cambios sin guardar. Guarda o descarta los cambios antes de eliminar un grupo.');
+        closeDeleteModal();
+        return;
+    }
+
+    try {
+        isDeleting.value = true;
+
+        // Extract the API group ID from the display group ID (format: apiGroupId-hour-day)
+        const apiGroupId = parseInt(groupToDelete.value.id.split('-')[0]);
+        await groupsService.deleteGroup(apiGroupId);
+
+        // Remove all cards for this group (same code) from local state
+        const groupCode = groupToDelete.value.code;
+
+        // Remove from changed groups set first (before filtering groups)
+        const groupsToRemove = Array.from(changedGroups.value).filter(id => {
+            const group = groups.value.find(g => g.id === id);
+            return group && group.code === groupCode;
+        });
+        groupsToRemove.forEach(id => changedGroups.value.delete(id));
+
+        // Now remove from all arrays
+        groups.value = groups.value.filter(g => g.code !== groupCode);
+        allGroups.value = allGroups.value.filter(g => g.code !== groupCode);
+        originalGroups.value = originalGroups.value.filter(g => g.code !== groupCode);
+
+        // Update unsaved changes status
+        hasUnsavedChanges.value = changedGroups.value.size > 0;
+        showProfessorModal.value = false
+
+        showSuccessToast(`Grupo ${groupToDelete.value.code} eliminado exitosamente.`);
+        closeDeleteModal();
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        showErrorToast('Error al eliminar el grupo: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+        closeDeleteModal(); // Close modal even on error
+    } finally {
+        isDeleting.value = false;
+
     }
 }
 </script>
