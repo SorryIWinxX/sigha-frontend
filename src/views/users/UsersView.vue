@@ -5,13 +5,13 @@
         </div>
 
         <!-- Users Management -->
-        <ManagmentUser />
+        <UsersManagement />
 
     </Layout>
 </template>
 
 <script setup>
 import Layout from '@/components/layout/Layout.vue';
-import ManagmentUser from '@/components/users/ManagmentUser.vue';
+import UsersManagement from '@/components/users/UsersManagement.vue';
 
 </script>

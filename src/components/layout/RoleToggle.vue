@@ -29,12 +29,7 @@
         </div>
 
         <!-- Indicador de rol actual (texto) -->
-        <div class="ml-3 hidden md:block">
-            <span class="text-xs text-gray-500">Vista:</span>
-            <span class="text-sm font-medium text-gray-700 ml-1">
-                {{ currentRoleDisplay }}
-            </span>
-        </div>
+
     </div>
 </template>
 

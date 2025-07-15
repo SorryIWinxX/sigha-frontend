@@ -12,6 +12,9 @@
 
                         <LogoUIS />
                     </div>
+                    <div class="flex px-2">
+                        <h1 class="font-bold text-center text-xl px-4 text-blue-500">{{ schoolName }}</h1>
+                    </div>
                 </div>
 
                 <div class="w-1/3 items-center justify-center">
@@ -62,6 +65,9 @@ import { onMounted } from 'vue';
 const router = useRouter();
 const authStore = useAuthStore();
 const roleStore = useRoleStore();
+
+// Environment variables
+const schoolName = import.meta.env.VITE_SCHOOL
 
 onMounted(() => {
     // Inicializar el rol activo cuando se monta el componente
