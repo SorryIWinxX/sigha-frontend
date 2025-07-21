@@ -506,10 +506,10 @@ const dayLabels = {
 const dayMapping: { [key: string]: string } = {
     'LUNES': 'monday',
     'MARTES': 'tuesday',
-    'MIÉRCOLES': 'wednesday',
+    'MIERCOLES': 'wednesday',
     'JUEVES': 'thursday',
     'VIERNES': 'friday',
-    'SÁBADO': 'saturday'
+    'SABADO': 'saturday'
 };
 
 // Time slots (6 AM to 10 PM)
@@ -628,42 +628,7 @@ const activeFiltersCount = computed(() => {
     return count;
 });
 
-const filteredGroups = computed(() => {
-    let result = allGroups.value;
 
-    // Apply search filter
-    if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase().trim();
-        result = result.filter(group => {
-            return group.code.toLowerCase().includes(query) ||
-                group.subject.toLowerCase().includes(query) ||
-                group.professor.name.toLowerCase().includes(query);
-        });
-    }
-
-    // Apply level filter
-    if (filters.level && !searchQuery.value.trim()) {
-        result = result.filter(group => group.level === filters.level);
-    }
-
-    // Apply professor filter
-    if (filters.professor && !searchQuery.value.trim()) {
-        result = result.filter(group => group.professor.id === filters.professor);
-    }
-
-    // Apply subject filter
-    if (filters.subject && !searchQuery.value.trim()) {
-        const subjectId = parseInt(filters.subject);
-        const subject = subjects.value.find(s => s.id === subjectId);
-        if (subject) {
-            result = result.filter(group => group.subject === subject.name);
-        }
-    }
-
-    // Update groups ref to trigger re-render
-    groups.value = result;
-    return result;
-});
 
 /**
  * Filtra los profesores que pueden enseñar la materia del grupo seleccionado
@@ -706,7 +671,8 @@ const professorConflictValidation = computed(() => {
         return { hasConflict: false, conflictMessage: '', conflictingGroups: [] };
     }
 
-    const conflictingGroups = groups.value.filter(group =>
+    // Validate against ALL groups in the system, not just filtered ones
+    const conflictingGroups = allGroups.value.filter(group =>
         group.id !== selectedGroup.value!.id && // Not the same group
         group.professor.id === selectedProfessorId.value && // Same professor
         group.hour === selectedGroup.value!.hour && // Same hour
@@ -917,8 +883,8 @@ function canDropInSlot(hour: string, day: string): boolean {
     // Si el profesor está sin asignar, permitir el drop sin verificar conflictos
     if (draggedGroup.value.professor.id === 'null') return true;
 
-    // Check if the professor has a conflict at this time
-    const conflictingGroups = groups.value.filter(group =>
+    // Check if the professor has a conflict at this time against ALL groups
+    const conflictingGroups = allGroups.value.filter(group =>
         group.id !== draggedGroup.value!.id &&
         group.hour === hour &&
         group.day === day &&
@@ -938,8 +904,8 @@ function handleDrop(event: DragEvent, hour: string, day: string) {
 
     // Check if the drop is valid and show specific error messages
     if (!canDropInSlot(hour, day)) {
-        // Find conflicting groups to provide a specific error message
-        const conflictingGroups = groups.value.filter(group =>
+        // Find conflicting groups to provide a specific error message (check ALL groups)
+        const conflictingGroups = allGroups.value.filter(group =>
             group.id !== draggedGroup.value!.id &&
             group.hour === hour &&
             group.day === day &&
@@ -969,6 +935,13 @@ function handleDrop(event: DragEvent, hour: string, day: string) {
 
         groups.value[groupIndex].hour = hour;
         groups.value[groupIndex].day = day;
+
+        // Also update allGroups to maintain consistency
+        const allGroupsIndex = allGroups.value.findIndex(g => g.id === draggedGroup.value!.id);
+        if (allGroupsIndex !== -1) {
+            allGroups.value[allGroupsIndex].hour = hour;
+            allGroups.value[allGroupsIndex].day = day;
+        }
 
         // Mark group as changed
         changedGroups.value.add(draggedGroup.value!.id);
@@ -1068,23 +1041,25 @@ function saveProfessorChange() {
         newProfessor = foundProfessor;
     }
 
-    // Update ALL cards that belong to the same group (same code)
-    const groupCode = selectedGroup.value.code;
-    const groupsToUpdate = groups.value.filter(g => g.code === groupCode);
+    // Extract the API group ID from the selected group (format: apiGroupId-hour-day)
+    const apiGroupId = selectedGroup.value.id.split('-')[0];
+
+    // Update ALL groups that belong to the same API group (same base ID)
+    const groupsToUpdate = groups.value.filter(g => g.id.split('-')[0] === apiGroupId);
 
     groupsToUpdate.forEach(group => {
         const groupIndex = groups.value.findIndex(g => g.id === group.id);
         if (groupIndex !== -1) {
             groups.value[groupIndex].professor = { ...newProfessor };
 
-            // Mark each card as changed
+            // Mark each group as changed
             changedGroups.value.add(group.id);
         }
     });
 
     // Also update allGroups to maintain consistency
     allGroups.value.forEach((group, index) => {
-        if (group.code === groupCode) {
+        if (group.id.split('-')[0] === apiGroupId) {
             allGroups.value[index].professor = { ...newProfessor };
         }
     });
@@ -1098,7 +1073,7 @@ function saveProfessorChange() {
 
     // Show success message
     showSuccessToast(
-        `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name} en todos los horarios`
+        `Profesor del grupo ${selectedGroup.value.code} cambiado a ${newProfessor.name} en todos sus horarios (${groupsToUpdate.length} horarios)`
     );
 
     console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name} en ${groupsToUpdate.length} horarios`);
@@ -1163,15 +1138,10 @@ async function saveChanges() {
 
             // Check if professor changed (always check, not just when creating new item)
             if (currentGroup.professor.id !== originalGroup.professor.id) {
-                console.log(`Professor change detected for group ${currentGroup.code}:`,
-                    `${originalGroup.professor.name} (${originalGroup.professor.id}) -> ${currentGroup.professor.name} (${currentGroup.professor.id})`);
-
                 if (currentGroup.professor.id === 'null') {
                     updateItem.idDocente = null;
-                    console.log(`Setting idDocente to null for group ${apiGroupId}`);
                 } else {
                     updateItem.idDocente = parseInt(currentGroup.professor.id);
-                    console.log(`Setting idDocente to ${updateItem.idDocente} for group ${apiGroupId}`);
                 }
             }
 
@@ -1179,10 +1149,10 @@ async function saveChanges() {
             const dayMapping: { [key: string]: string } = {
                 'monday': 'LUNES',
                 'tuesday': 'MARTES',
-                'wednesday': 'MIÉRCOLES',
+                'wednesday': 'MIERCOLES',
                 'thursday': 'JUEVES',
                 'friday': 'VIERNES',
-                'saturday': 'SÁBADO'
+                'saturday': 'SABADO'
             };
 
             const apiDay = dayMapping[currentGroup.day];
@@ -1211,9 +1181,6 @@ async function saveChanges() {
                 return groupApiId === apiGroupId;
             });
 
-            console.log(`Found ${allGroupSchedules.length} schedules for API group ${apiGroupId}:`,
-                allGroupSchedules.map(g => ({ id: g.id, code: g.code, day: g.day, hour: g.hour })));
-
             if (allGroupSchedules.length === 0) {
                 console.warn(`No schedules found for API group ${apiGroupId}, skipping...`);
                 continue;
@@ -1223,10 +1190,10 @@ async function saveChanges() {
             const dayMapping: { [key: string]: string } = {
                 'monday': 'LUNES',
                 'tuesday': 'MARTES',
-                'wednesday': 'MIÉRCOLES',
+                'wednesday': 'MIERCOLES',
                 'thursday': 'JUEVES',
                 'friday': 'VIERNES',
-                'saturday': 'SÁBADO'
+                'saturday': 'SABADO'
             };
 
             const completeScheduleList = allGroupSchedules.map(g => ({
@@ -1242,13 +1209,10 @@ async function saveChanges() {
             // Add professor change if it exists
             if (updateItem.idDocente !== undefined) {
                 completeUpdateItem.idDocente = updateItem.idDocente;
-                console.log(`Setting idDocente for group ${apiGroupId} to:`, updateItem.idDocente);
             }
 
             completeGroupChanges.push(completeUpdateItem);
         }
-
-        console.log('Complete group changes to send:', JSON.stringify(completeGroupChanges, null, 2));
 
         // Send update to API
         await groupsService.updateSchedules(completeGroupChanges);
@@ -1294,55 +1258,56 @@ function toggleFilters() {
     showFilters.value = !showFilters.value;
 }
 
-async function applyFilters() {
+function applyFilters() {
     if (!hasActiveFilters.value) {
         // If no filters, show all groups
-        groups.value = allGroups.value;
+        groups.value = [...allGroups.value];
         return;
     }
 
-    try {
-        let filteredData: GroupDisplay[] = [];
+    let filteredData = [...allGroups.value];
 
-        // Apply filters using API endpoints
-        if (filters.level) {
-            // Map level filter to API format
-            const levelMapping: { [key: string]: number[] } = {
-                '1-2-3': [1, 2, 3],
-                '3-4-5': [3, 4, 5],
-                '5-6-7': [5, 6, 7],
-                '7-8-9-E': [7, 8, 9, 10]
-            };
+    // Apply level filter
+    if (filters.level) {
+        filteredData = filteredData.filter(group => {
+            // Check if the group level matches the selected level range
+            const groupLevel = group.level;
 
-            const levelIds = levelMapping[filters.level];
-            if (levelIds) {
-                const apiGroups = await groupsService.getGroupsByLevels(levelIds);
-                filteredData = apiGroups
-                    .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
-                    .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
-                    .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
+            switch (filters.level) {
+                case '1-2-3':
+                    return ['1', '2', '3'].some(level => groupLevel.includes(level));
+                case '3-4-5':
+                    return ['3', '4', '5'].some(level => groupLevel.includes(level));
+                case '5-6-7':
+                    return ['5', '6', '7'].some(level => groupLevel.includes(level));
+                case '7-8-9-E':
+                    return ['7', '8', '9', 'E'].some(level => groupLevel.includes(level));
+                default:
+                    return true;
             }
-        } else if (filters.professor) {
-            const professorId = parseInt(filters.professor);
-            const apiGroups = await groupsService.getGroupsByDocente(professorId);
-            filteredData = apiGroups
-                .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
-                .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
-                .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
-        } else if (filters.subject) {
-            const subjectId = parseInt(filters.subject);
-            const apiGroups = await groupsService.getGroupsBySubjectId(subjectId);
-            filteredData = apiGroups
-                .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
-                .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
-                .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
-        }
-
-        groups.value = filteredData;
-    } catch (error) {
-        console.error('Error applying filters:', error);
-        showErrorToast('Error al aplicar filtros');
+        });
     }
+
+    // Apply professor filter
+    if (filters.professor) {
+        filteredData = filteredData.filter(group =>
+            group.professor.id === filters.professor
+        );
+    }
+
+    // Apply subject filter
+    if (filters.subject) {
+        const selectedSubject = subjects.value.find(s => s.id.toString() === filters.subject);
+        if (selectedSubject) {
+            filteredData = filteredData.filter(group =>
+                group.subject === selectedSubject.name
+            );
+        }
+    }
+
+    // Apply filters but don't validate conflicts here - we want to show filtered groups
+    // Conflicts will be validated when assigning professors
+    groups.value = filteredData;
 }
 
 const hasActiveFilters = computed(() => {
