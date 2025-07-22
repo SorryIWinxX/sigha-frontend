@@ -199,7 +199,8 @@ const availableSubjects = computed(() => {
             subjects.push(subject)
         })
     })
-    return subjects
+    // Ordenar alfabéticamente por nombre
+    return subjects.sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const availableSemesters = computed(() => {
@@ -400,8 +401,12 @@ const handleSubmit = async () => {
         const groupData = {
             code: formData.value.code.trim(),
             idSubject: parseInt(formData.value.idSubject),
-            idDocente: formData.value.idDocente === 'null' ? null : parseInt(formData.value.idDocente),
             scheduleList: formData.value.scheduleList
+        }
+
+        // Solo incluir idDocente si no es "SIN ASIGNAR"
+        if (formData.value.idDocente !== 'null') {
+            groupData.idDocente = parseInt(formData.value.idDocente)
         }
 
         // Para modo de edición, incluir el ID

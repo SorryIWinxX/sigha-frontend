@@ -90,7 +90,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
                     <Select id="filter-professor" v-model="filters.professor" @change="applyFilters">
                         <option value="">Todos los profesores</option>
-                        <option v-for="professor in professors" :key="professor.id" :value="professor.id">
+                        <option v-for="professor in sortedProfessors" :key="professor.id" :value="professor.id">
                             {{ professor.name }}
                         </option>
                     </Select>
@@ -628,6 +628,10 @@ const activeFiltersCount = computed(() => {
     return count;
 });
 
+// Profesores ordenados alfabéticamente para el filtro
+const sortedProfessors = computed(() => {
+    return [...professors.value].sort((a, b) => a.name.localeCompare(b.name));
+});
 
 
 /**
@@ -658,11 +662,16 @@ function getProfessorsForSubject(subjectName: string): Professor[] {
 }
 
 const availableProfessors = computed(() => {
+    let availableProfs = [];
+
     if (!selectedGroup.value) {
-        return professors.value;
+        availableProfs = professors.value;
+    } else {
+        availableProfs = getProfessorsForSubject(selectedGroup.value.subject);
     }
 
-    return getProfessorsForSubject(selectedGroup.value.subject);
+    // Ordenar alfabéticamente
+    return [...availableProfs].sort((a, b) => a.name.localeCompare(b.name));
 });
 
 // Validation for professor assignment
@@ -1028,7 +1037,7 @@ function saveProfessorChange() {
         // Handle "SIN ASIGNAR" case
         newProfessor = {
             id: 'null',
-            name: 'Sin asignar',
+            name: 'SIN ASIGNAR',
             department: 'Sin departamento'
         };
     } else {
@@ -1079,6 +1088,7 @@ function saveProfessorChange() {
     console.log(`Cambiando profesor del grupo ${selectedGroup.value.code} a ${newProfessor.name} en ${groupsToUpdate.length} horarios`);
 
     closeProfessorModal();
+
 }
 
 function toggleFullscreen() {
@@ -1217,15 +1227,12 @@ async function saveChanges() {
         // Send update to API
         await groupsService.updateSchedules(completeGroupChanges);
 
-        // Update original state and clear changes (no reload needed)
-        originalGroups.value = JSON.parse(JSON.stringify(groups.value));
-        allGroups.value = JSON.parse(JSON.stringify(groups.value));
-        hasUnsavedChanges.value = false;
-        changedGroups.value.clear();
+        // Reload data from API to ensure consistency
+        await loadScheduleData();
 
-        // Clear detailed changes if shown
-        if (showChangesDetails.value) {
-            detailedChanges.value = [];
+        // Reapply filters if any were active
+        if (hasActiveFilters.value) {
+            applyFilters();
         }
 
         showSuccessToast('Cambios guardados exitosamente');
@@ -1245,10 +1252,12 @@ function undoChanges() {
     }
 
     // Restore original state
-    groups.value = JSON.parse(JSON.stringify(originalGroups.value));
     allGroups.value = JSON.parse(JSON.stringify(originalGroups.value));
     hasUnsavedChanges.value = false;
     changedGroups.value.clear();
+
+    // Reapply filters to update the displayed groups
+    applyFilters();
 
     showSuccessToast('Cambios deshechados exitosamente');
 }

@@ -48,6 +48,7 @@
                             <option value="8">NIVEL 8</option>
                             <option value="9">NIVEL 9</option>
                             <option value="10">NIVEL 10</option>
+                            <option value="11">NIVEL E</option>
                         </Select>
                     </div>
 
@@ -226,6 +227,7 @@
                                             <option value="8">NIVEL 8</option>
                                             <option value="9">NIVEL 9</option>
                                             <option value="10">NIVEL 10</option>
+                                            <option value="11">NIVEL E</option>
                                         </Select>
                                     </div>
                                 </div>
@@ -276,9 +278,9 @@
                                     <div v-if="editingSubjectId === subject.id" class="p-4">
                                         <div class="grid grid-cols-3 gap-4 mb-4">
                                             <div>
-                                                <Input id="edit-subject-code" v-model="editSubjectForm.code" type="text"
-                                                    label="Código" uppercase @keyup.enter="saveEditSubject"
-                                                    @keyup.escape="cancelEditSubject" />
+                                                <Input id="edit-subject-code" v-model="editSubjectForm.code"
+                                                    type="number" label="Código" uppercase
+                                                    @keyup.enter="saveEditSubject" @keyup.escape="cancelEditSubject" />
                                             </div>
                                             <div>
                                                 <Input id="edit-subject-name" v-model="editSubjectForm.name" type="text"
@@ -289,12 +291,17 @@
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
                                                 <Select id="edit-subject-level" v-model="editSubjectForm.level">
-                                                    <option value="">Seleccionar nivel</option>
-                                                    <option value="1">Nivel 1</option>
-                                                    <option value="2">Nivel 2</option>
-                                                    <option value="3">Nivel 3</option>
-                                                    <option value="4">Nivel 4</option>
-                                                    <option value="5">Nivel 5</option>
+                                                    <option value="1">NIVEL 1</option>
+                                                    <option value="2">NIVEL 2</option>
+                                                    <option value="3">NIVEL 3</option>
+                                                    <option value="4">NIVEL 4</option>
+                                                    <option value="5">NIVEL 5</option>
+                                                    <option value="6">NIVEL 6</option>
+                                                    <option value="7">NIVEL 7</option>
+                                                    <option value="8">NIVEL 8</option>
+                                                    <option value="9">NIVEL 9</option>
+                                                    <option value="10">NIVEL 10</option>
+                                                    <option value="11">NIVEL E</option>
                                                 </Select>
                                             </div>
                                         </div>
@@ -749,6 +756,25 @@ const resetNewSubject = () => {
     newSubject.level = ''
 }
 
+// Función helper para normalizar el nivel
+const normalizeLevel = (level: string): string => {
+    if (!level) return ''
+
+    // Caso especial para NIVEL E
+    if (level.toUpperCase().includes('NIVEL E') || level.toUpperCase() === 'E') {
+        return '11'
+    }
+
+    // Si el nivel viene como "NIVEL 1", "NIVEL 2", etc., extraer solo el número
+    const match = level.match(/(\d+)/)
+    if (match) {
+        return match[1]
+    }
+
+    // Si ya es un número, devolverlo como string
+    return level.toString()
+}
+
 const startEditSubject = (subject: Subject, areaId: number) => {
     if (creatingSubjectForArea.value) {
         cancelCreateSubject()
@@ -761,7 +787,7 @@ const startEditSubject = (subject: Subject, areaId: number) => {
     currentEditingAreaId.value = areaId
     editSubjectForm.code = subject.code
     editSubjectForm.name = subject.name
-    editSubjectForm.level = subject.level || ''
+    editSubjectForm.level = normalizeLevel(subject.level || '')
 }
 
 const saveEditSubject = async () => {
