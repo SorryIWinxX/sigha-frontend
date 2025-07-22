@@ -6,7 +6,7 @@
                 <div class="w-1/4">
                     <Select id="professor-select" v-model="selectedProfessor" placeholder="Seleccionar profesor"
                         :disabled="loading || !props.selectedSemester">
-                        <option v-for="professor in professors" :key="professor.id" :value="professor.id">
+                        <option v-for="professor in sortedProfessors" :key="professor.id" :value="professor.id">
                             {{ professor.firstName }} {{ professor.lastName }}
                         </option>
                     </Select>
@@ -142,6 +142,15 @@ const selectedProfessorData = computed(() => {
     return professors.value.find(p => p.id.toString() === selectedProfessor.value)
 })
 
+// Profesores ordenados alfabéticamente
+const sortedProfessors = computed(() => {
+    return [...professors.value].sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`;
+        const nameB = `${b.firstName} ${b.lastName}`;
+        return nameA.localeCompare(nameB);
+    });
+});
+
 // Methods
 async function loadProfessors() {
     try {
@@ -156,8 +165,8 @@ async function loadProfessors() {
             )
         )
 
-        if (professors.value.length > 0) {
-            selectedProfessor.value = professors.value[0].id.toString()
+        if (sortedProfessors.value.length > 0) {
+            selectedProfessor.value = sortedProfessors.value[0].id.toString()
         }
     } catch (err) {
         error.value = 'Error al cargar profesores'
