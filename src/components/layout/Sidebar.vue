@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, type Component } from 'vue';
 import { useRouter } from 'vue-router';
-import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays } from 'lucide-vue-next';
+import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays, Home, ChevronDown, Earth } from 'lucide-vue-next';
 import { usePermissions } from '@/composables/usePermissions';
 import { useSidebarStore } from '@/store/sidebarStore';
 
@@ -56,6 +56,18 @@ const toggleSidebar = () => {
     sidebarStore.toggleSidebar();
 };
 
+// Estado abierto/cerrado para submenús, indexado por etiqueta del item padre
+const openSubmenus = ref<Record<string, boolean>>({});
+
+const isSubmenuOpen = (key: string) => {
+    return !!openSubmenus.value[key];
+};
+
+const toggleSubmenu = (key: string) => {
+    hasBeenToggled.value = true;
+    openSubmenus.value[key] = !openSubmenus.value[key];
+};
+
 const handleLogout = () => {
     // Limpiar tokens y datos de sesión
     localStorage.removeItem('token');
@@ -64,87 +76,114 @@ const handleLogout = () => {
     router.push('/login');
 };
 
-const menuItems = computed(() => {
-    const items = [];
+type SidebarLinkItem = { to: string; icon: Component; label: string };
+type SidebarParentItem = { icon: Component; label: string; submenu: SidebarLinkItem[] };
+type SidebarItem = SidebarLinkItem | SidebarParentItem;
+
+const menuItems = computed<SidebarItem[]>(() => {
+    const items: SidebarItem[] = [];
 
     // Elementos para profesores
     if (isProfesor.value) {
-        items.push(
-            {
-                to: '/available',
-                icon: CalendarCog,
-                label: 'Disponibilidad',
-            },
-
-        );
+        items.push({
+            to: '/available',
+            icon: CalendarCog,
+            label: 'Disponibilidad',
+        });
     }
 
     // Elementos para directores y coordinadores
     if (isAdmin.value) {
         items.push(
+            { to: '/dashboard', icon: Home, label: 'Dashboard' },
             {
-                to: '/schedule-groups',
                 icon: CalendarDays,
                 label: 'Horarios de Grupos',
+                submenu: [
+                    { to: '/schedule-groups-teachers', icon: Users, label: 'Docentes' },
+                    { to: '/schedule-groups', icon: Earth, label: 'General' },
+                ],
             },
-            {
-                to: '/groups',
-                icon: Blocks,
-                label: 'Grupos',
-            },
-            {
-                to: '/areas-subjects',
-                icon: SquareLibrary,
-                label: 'Areas y Materias',
-            },
-            {
-                to: '/available-management',
-                icon: CalendarRange,
-                label: 'Disponibilidades',
-            },
-            {
-                to: '/users',
-                icon: Users,
-                label: 'Usuarios',
-            },
-            {
-                to: '/settings',
-                icon: Settings,
-                label: 'Configuración',
-            },
-
-
+            { to: '/groups', icon: Blocks, label: 'Grupos' },
+            { to: '/areas-subjects', icon: SquareLibrary, label: 'Areas y Materias' },
+            { to: '/available-management', icon: CalendarRange, label: 'Disponibilidades' },
+            { to: '/users', icon: Users, label: 'Usuarios' },
+            { to: '/settings', icon: Settings, label: 'Configuración' },
         );
     }
 
     return items;
 });
+
+const isParentItem = (item: SidebarItem): item is SidebarParentItem => {
+    return 'submenu' in item;
+};
+
+const isLinkItem = (item: SidebarItem): item is SidebarLinkItem => {
+    return 'to' in item;
+};
 </script>
 
 <template>
     <aside
         :class="[isSidebarOpen ? 'w-60' : 'w-20', 'bg-gray-50 flex rounded-r-lg flex-col transition-all duration-300 ease-in-out']">
         <div :class="['flex p-4 items-center', isSidebarOpen ? 'justify-between' : 'justify-center']">
-            <h1 v-if="isSidebarOpen" :class="['font-semibold', titleAnimationClasses]">Menu</h1>
-            <button @click="toggleSidebar" class="p-2 rounded-md hover:bg-gray-200 transition-colors flex items-center">
-                <PanelLeftClose v-if="isSidebarOpen" :size="20" :class="toggleButtonAnimationClasses" />
-                <PanelLeftOpen v-else :size="20" :class="toggleButtonAnimationClasses" />
+            <h1 v-if="isSidebarOpen" :class="['font-semibold']">Menu</h1>
+            <button @click="toggleSidebar"
+                class="p-2 rounded-md hover:bg-gray-100 hover:text-primary-500 transition-colors flex items-center">
+                <PanelLeftClose v-if="isSidebarOpen" :size="20" />
+                <PanelLeftOpen v-else :size="20" />
             </button>
         </div>
         <nav class="flex-1">
             <ul>
-                <li v-for="item in menuItems" :key="item.to">
-                    <router-link :to="item.to"
-                        :class="['flex items-center py-3 text-gray-600 hover:bg-gray-100 rounded-r-sm transition-colors', isSidebarOpen ? 'px-6' : 'px-4 justify-center']"
-                        active-class="text-black font-semibold bg-gray-200 rounded-r-sm">
-                        <component :is="item.icon" :class="[
-                            isSidebarOpen ? 'mr-3' : 'mr-0',
-                            iconAnimationClasses
-                        ]" :size="20" />
-                        <span v-if="isSidebarOpen" :class="textAnimationClasses">
-                            {{ item.label }}
-                        </span>
-                    </router-link>
+                <li v-for="item in menuItems" :key="item.label">
+                    <!-- Item con submenú -->
+                    <template v-if="isParentItem(item)">
+                        <button type="button" @click="isSidebarOpen && toggleSubmenu(item.label)"
+                            :class="['w-full flex items-center py-3  text-gray-600 hover:bg-gray-100 hover:text-primary-500 rounded-r-sm transition-colors', isSidebarOpen ? 'px-6' : 'px-4 justify-center']">
+                            <component :is="item.icon" :class="[
+                                isSidebarOpen ? 'mr-3' : 'mr-0',
+
+                            ]" :size="20" />
+                            <span v-if="isSidebarOpen" :class="['flex-1 text-left']">
+                                {{ item.label }}
+                            </span>
+                            <ChevronDown v-if="isSidebarOpen" :size="16" :class="[
+                                'transition-transform duration-200',
+                                isSubmenuOpen(item.label) ? 'rotate-180' : 'rotate-0'
+                            ]" />
+                        </button>
+                        <ul v-if="isSidebarOpen && isSubmenuOpen(item.label)"
+                            class=" rounded-sm  border-t border-r border-l border-gray-200 mt-1 mr-4 ml-4">
+                            <li v-for="sub in item.submenu" :key="sub.to">
+                                <router-link :to="sub.to"
+                                    :class="['flex items-center py-2 text-gray-600 hover:text-primary-500 border-b border-gray-200 rounded-r-sm transition-colors', isSidebarOpen ? 'pl-10 pr-6' : 'px-4 justify-center']"
+                                    active-class="text-white hover:text-primary-500 font-semibold bg-gray-700 rounded-r-sm">
+                                    <component :is="sub.icon" :class="[
+                                        isSidebarOpen ? 'mr-3' : 'mr-0',
+                                    ]" :size="18" />
+                                    <span v-if="isSidebarOpen">
+                                        {{ sub.label }}
+                                    </span>
+                                </router-link>
+                            </li>
+                        </ul>
+                    </template>
+
+                    <!-- Item normal -->
+                    <template v-else-if="isLinkItem(item)">
+                        <router-link :to="item.to"
+                            :class="['flex items-center py-3 text-gray-600 hover:bg-gray-100 hover:text-primary-500 rounded-r-sm transition-colors', isSidebarOpen ? 'px-6' : 'px-4 justify-center']"
+                            active-class="text-white hover:text-primary-500 font-semibold bg-gray-700 rounded-r-sm">
+                            <component :is="item.icon" :class="[
+                                isSidebarOpen ? 'mr-3' : 'mr-0',
+                            ]" :size="20" />
+                            <span v-if="isSidebarOpen">
+                                {{ item.label }}
+                            </span>
+                        </router-link>
+                    </template>
                 </li>
             </ul>
         </nav>
