@@ -52,8 +52,11 @@
             </div>
             <div class="overflow-auto max-h-[50vh] rounded-sm">
                 <table class="w-full">
-                    <thead class="bg-gray-100 border-b border-gray-200">
+                    <thead class="bg-gray-100 border-b border-gray-200 sticky top-0 z-10">
                         <tr>
+                            <th class="px-6 py-3 text-left">
+                                <span class="text-gray-900 font-semibold">N°</span>
+                            </th>
 
                             <th class="px-6 py-3 text-left">
                                 <span class="text-gray-900 font-semibold">Asignatura</span>
@@ -93,11 +96,13 @@
                         </tr>
                         <!-- Subject rows -->
                         <tr v-else v-for="(stat, index) in subjectStats" :key="stat.subjectId" :class="[
-                            'border-b border-gray-100 hover:bg-gray-50',
+                            'border-b border-gray-300 hover:bg-gray-100',
                             { 'bg-gray-50/30': index % 2 === 0 },
                             { 'border-b-0': index === subjectStats.length - 1 }
                         ]">
-
+                            <td class="px-6 py-3">
+                                <span class="text-gray-900 font-medium">{{ index + 1 }}</span>
+                            </td>
                             <td class="px-6 py-3">
                                 <span class="text-gray-900 font-medium">{{ stat.subjectName }}</span>
                             </td>

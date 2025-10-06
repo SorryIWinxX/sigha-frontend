@@ -24,7 +24,7 @@
                 </Button>
 
                 <!-- Botón crear -->
-                <Button variant="primary" @click="openCreateModal">
+                <Button variant="primary" @click="groupsStore.openCreateModal()">
                     <template #icon>
                         <Plus :size="18" />
                     </template>
@@ -121,7 +121,8 @@
                                             index >= paginatedGroups.length - 2 ? 'bottom-10 right-0' : 'top-10 right-0'
                                         ]">
                                             <div class="py-1">
-                                                <button @click.stop="openEditModal(group)"
+                                                <button
+                                                    @click.stop="groupsStore.openEditModal(group); openDropdown = null"
                                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 cursor-pointer last:border-b-0">
                                                     Editar grupo
                                                 </button>
@@ -191,8 +192,8 @@
         </div>
 
         <!-- New Group Modal -->
-        <GroupModal :is-visible="showModal" :mode="modalMode" :edit-data="editingGroup" @close="closeModal"
-            @submit="handleModalSubmit" />
+        <GroupModal :is-visible="groupsStore.isModalOpen" :mode="groupsStore.getModalMode"
+            :edit-data="groupsStore.getEditingGroup" @close="groupsStore.closeModal()" @submit="handleModalSubmit" />
 
         <!-- Modal de confirmación de eliminación -->
         <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -244,10 +245,7 @@ const semesterStore = useSemesterStore()
 // Estado reactivo
 const searchTerm = ref('')
 const selectedSubjectFilter = ref('')
-const showModal = ref(false)
 const showDeleteModal = ref(false)
-const modalMode = ref('create') // 'create' | 'edit'
-const editingGroup = ref(null)
 const groupToDelete = ref(null)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
@@ -368,26 +366,6 @@ const refreshTable = async () => {
     }
 }
 
-// Funciones del modal
-const openCreateModal = () => {
-    modalMode.value = 'create'
-    editingGroup.value = null
-    showModal.value = true
-    openDropdown.value = null
-}
-
-const openEditModal = (group) => {
-    modalMode.value = 'edit'
-    editingGroup.value = group
-    showModal.value = true
-    openDropdown.value = null
-}
-
-const closeModal = () => {
-    showModal.value = false
-    editingGroup.value = null
-}
-
 // Funciones del modal de eliminación
 const openDeleteModal = (group) => {
     groupToDelete.value = group
@@ -425,21 +403,21 @@ const handleModalSubmit = async (groupData) => {
     isSubmitting.value = true
 
     try {
-        if (modalMode.value === 'create') {
+        if (groupsStore.getModalMode === 'create') {
             await groupsStore.createGroup(groupData)
             showSuccessToast(`Grupo ${groupData.code} creado exitosamente`)
         } else {
-            await groupsStore.updateGroup(editingGroup.value.id, groupData)
+            await groupsStore.updateGroup(groupsStore.getEditingGroup.id, groupData)
             showSuccessToast(`Grupo ${groupData.code} actualizado exitosamente`)
         }
 
         // Refrescar la tabla después de crear/editar
         await refreshTable()
 
-        closeModal()
+        groupsStore.closeModal()
     } catch (error) {
         console.error('Error guardando grupo:', error)
-        const action = modalMode.value === 'create' ? 'crear' : 'actualizar'
+        const action = groupsStore.getModalMode === 'create' ? 'crear' : 'actualizar'
         showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`)
     } finally {
         isSubmitting.value = false

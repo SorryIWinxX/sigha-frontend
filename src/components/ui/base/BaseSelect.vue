@@ -9,7 +9,7 @@
             </select>
             <!-- Custom dropdown arrow -->
             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <ChevronDown class="w-5 h-5 text-gray-400" />
+                <ChevronDown :class="['w-5 h-5', disabled ? 'text-gray-300' : 'text-gray-400']" />
             </div>
         </div>
     </div>
@@ -65,7 +65,11 @@ const props = defineProps({
 defineEmits(['update:modelValue']);
 
 const selectClasses = computed(() => {
-    const baseClasses = `${props.width} ${props.height} px-3 py-2 border border-[#dcdfe3] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] bg-white text-[#3b3e45] text-sm appearance-none cursor-pointer`;
-    return props.customClass ? `${baseClasses} ${props.customClass}` : baseClasses;
+    const baseClasses = `${props.width} ${props.height} px-3 py-2 border border-[#dcdfe3] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#67B83C] text-sm appearance-none`;
+    const stateClasses = props.disabled
+        ? 'bg-gray-100 text-gray-500 cursor-not-allowed opacity-60'
+        : 'bg-white text-[#3b3e45] cursor-pointer hover:border-gray-400';
+    const finalClasses = `${baseClasses} ${stateClasses}`;
+    return props.customClass ? `${finalClasses} ${props.customClass}` : finalClasses;
 });
 </script>

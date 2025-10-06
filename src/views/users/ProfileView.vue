@@ -146,17 +146,46 @@
                                     <div class="space-y-3">
                                         <div>
                                             <Input id="current-password" label="Contraseña Actual"
-                                                v-model="passwordChange.currentPassword" type="password" />
+                                                v-model="passwordChange.currentPassword"
+                                                :type="showCurrentPassword ? 'text' : 'password'"
+                                                :errorMessage="currentPasswordError"
+                                                @blur="passwordTouched.current = true">
+                                            <template #suffix>
+                                                <button type="button" class="text-gray-500 hover:text-gray-700"
+                                                    @click="showCurrentPassword = !showCurrentPassword">
+                                                    <component :is="showCurrentPassword ? EyeOff : Eye" :size="18" />
+                                                </button>
+                                            </template>
+                                            </Input>
                                         </div>
 
                                         <div>
                                             <Input id="new-password" label="Nueva Contraseña"
-                                                v-model="passwordChange.newPassword" type="password" />
+                                                v-model="passwordChange.newPassword"
+                                                :type="showNewPassword ? 'text' : 'password'"
+                                                :errorMessage="newPasswordError" @blur="passwordTouched.new = true">
+                                            <template #suffix>
+                                                <button type="button" class="text-gray-500 hover:text-gray-700"
+                                                    @click="showNewPassword = !showNewPassword">
+                                                    <component :is="showNewPassword ? EyeOff : Eye" :size="18" />
+                                                </button>
+                                            </template>
+                                            </Input>
                                         </div>
 
                                         <div>
                                             <Input id="confirm-password" label="Confirmar Contraseña"
-                                                v-model="passwordChange.confirmPassword" type="password" />
+                                                v-model="passwordChange.confirmPassword"
+                                                :type="showConfirmPassword ? 'text' : 'password'"
+                                                :errorMessage="confirmPasswordError"
+                                                @blur="passwordTouched.confirm = true">
+                                            <template #suffix>
+                                                <button type="button" class="text-gray-500 hover:text-gray-700"
+                                                    @click="showConfirmPassword = !showConfirmPassword">
+                                                    <component :is="showConfirmPassword ? EyeOff : Eye" :size="18" />
+                                                </button>
+                                            </template>
+                                            </Input>
                                         </div>
 
                                         <div v-if="passwordError" class="text-red-500 text-sm">
@@ -233,7 +262,7 @@
 <script setup>
 import Layout from '@/components/layout/Layout.vue';
 import { ref, computed, onMounted } from 'vue';
-import { User, PlusCircle } from 'lucide-vue-next';
+import { User, PlusCircle, Eye, EyeOff } from 'lucide-vue-next';
 import Input from '@/components/ui/base/BaseInput.vue';
 import Select from '@/components/ui/base/BaseSelect.vue';
 import { userService } from '@/services/userServices';
@@ -292,14 +321,54 @@ const passwordChange = ref({
 
 const passwordError = ref('');
 
+// Visibilidad de contraseñas
+const showCurrentPassword = ref(false);
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
+
+// Campos "tocados" para mostrar validaciones al usuario
+const passwordTouched = ref({
+    current: false,
+    new: false,
+    confirm: false
+});
+
+// Mensajes de error por campo
+const currentPasswordError = computed(() => {
+    if (!passwordTouched.value.current) return '';
+    if (!passwordChange.value.currentPassword) return 'La contraseña actual es requerida';
+    return '';
+});
+
+const newPasswordError = computed(() => {
+    if (!passwordTouched.value.new) return '';
+    const current = passwordChange.value.currentPassword || '';
+    const next = passwordChange.value.newPassword || '';
+    if (!next) return 'La nueva contraseña es requerida';
+    if (next.length < 6) return 'La nueva contraseña debe tener al menos 6 caracteres';
+    if (current && next === current) return 'La nueva contraseña debe ser diferente a la actual';
+    return '';
+});
+
+const confirmPasswordError = computed(() => {
+    if (!passwordTouched.value.confirm) return '';
+    const next = passwordChange.value.newPassword || '';
+    const confirm = passwordChange.value.confirmPassword || '';
+    if (!confirm) return 'Confirma tu nueva contraseña';
+    if (next !== confirm) return 'Las contraseñas no coinciden';
+    return '';
+});
+
 // Computed para validar si se puede cambiar la contraseña
 const canChangePassword = computed(() => {
+    const current = passwordChange.value.currentPassword || '';
+    const next = passwordChange.value.newPassword || '';
+    const confirm = passwordChange.value.confirmPassword || '';
     return (
-        passwordChange.value.currentPassword &&
-        passwordChange.value.newPassword &&
-        passwordChange.value.confirmPassword &&
-        passwordChange.value.newPassword === passwordChange.value.confirmPassword &&
-        passwordChange.value.newPassword.length >= 6
+        current.length > 0 &&
+        next.length >= 6 &&
+        next !== current &&
+        confirm === next
     );
 });
 
