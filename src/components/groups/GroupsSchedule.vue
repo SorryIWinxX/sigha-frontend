@@ -101,7 +101,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
                     <Select id="filter-subject" v-model="filters.subject" @change="applyFilters">
                         <option value="">Todas las materias</option>
-                        <option v-for="subject in subjects" :key="subject.id" :value="subject.id.toString()">
+                        <option v-for="subject in sortedSubjects" :key="subject.id" :value="subject.id.toString()">
                             {{ subject.code }} - {{ subject.name }}
                         </option>
                     </Select>
@@ -719,6 +719,11 @@ const canSaveProfessorChange = computed(() => {
     }
 
     return true;
+});
+
+// Computed para materias ordenadas alfabéticamente
+const sortedSubjects = computed(() => {
+    return [...subjects.value].sort((a, b) => a.name.localeCompare(b.name));
 });
 
 // Methods
