@@ -111,13 +111,17 @@ const dayKeys = ref(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABAD
 
 // Computed properties
 const filteredSubjects = computed(() => {
+    let subjects = []
     if (!selectedAreaFilter.value) {
-        return areasStore.areas.flatMap(area =>
+        subjects = areasStore.areas.flatMap(area =>
             areasStore.getSubjectsByArea(area.id || 0)
         )
+    } else {
+        const areaId = parseInt(selectedAreaFilter.value)
+        subjects = areaId ? areasStore.getSubjectsByArea(areaId) : []
     }
-    const areaId = parseInt(selectedAreaFilter.value)
-    return areaId ? areasStore.getSubjectsByArea(areaId) : []
+    // Ordenar alfabéticamente por nombre
+    return subjects.sort((a, b) => a.name.localeCompare(b.name))
 })
 
 // Methods
