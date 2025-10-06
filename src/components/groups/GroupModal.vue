@@ -35,8 +35,9 @@
 
                         <!-- Nivel (automático basado en la materia) -->
                         <div>
-                            <Input id="level-input" :value="getSelectedSubjectLevel()" label="Nivel" type="text"
-                                readonly placeholder="Se asigna automáticamente según la materia" />
+                            <Input id="level-input" :value="getSelectedSubjectLevel()" label="Nivel" readonly
+                                :disabled="!formData.idSubject"
+                                placeholder="Se asigna automáticamente según la materia" />
                         </div>
                     </div>
 
@@ -53,13 +54,18 @@
 
                         <!-- Usuario -->
                         <div>
-                            <Select id="user-select" v-model="formData.idDocente" label="Profesor">
+                            <Select id="user-select" v-model="formData.idDocente" label="Profesor"
+                                :disabled="!formData.idSubject">
                                 <option value="null">SIN ASIGNAR</option>
                                 <option v-for="user in filteredAvailableUsers" :key="user.id" :value="user.id">
                                     {{ user.firstName }} {{ user.lastName }}
                                 </option>
                             </Select>
-                            <div v-if="formData.idSubject && filteredAvailableUsers.length === 0"
+                            <div v-if="!formData.idSubject"
+                                class="mt-1 text-sm text-yellow-500 flex items-center gap-1">
+                                <span>Selecciona una materia primero</span>
+                            </div>
+                            <div v-else-if="formData.idSubject && filteredAvailableUsers.length === 0"
                                 class="mt-1 text-sm text-amber-600 flex items-center gap-1">
                                 <AlertTriangle :size="16" />
                                 <span>No hay profesores disponibles para esta materia</span>
@@ -184,7 +190,7 @@ const loadingUsers = ref(false)
 // Form data
 const formData = ref({
     id: null,
-    code: '',
+    code: ''.toUpperCase(),
     idSemestre: '',
     idSubject: '',
     idDocente: '',
@@ -326,7 +332,7 @@ const formatHourShort = (hour) => {
 const resetForm = () => {
     formData.value = {
         id: null,
-        code: '',
+        code: ''.toUpperCase(),
         idSemestre: semesterStore.currentSemester?.id || '',
         idSubject: '',
         idDocente: 'null',
@@ -338,7 +344,7 @@ const loadFormData = () => {
     if (props.mode === 'edit' && props.editData) {
         formData.value = {
             id: props.editData.id,
-            code: props.editData.code || '',
+            code: props.editData.code || ''.toUpperCase(),
             idSemestre: props.editData.idSemestre || '',
             idSubject: props.editData.idSubject || '',
             idDocente: props.editData.idDocente !== null ? props.editData.idDocente : 'null',
@@ -399,7 +405,7 @@ const handleSubmit = async () => {
     try {
         // Preparar datos según la interfaz CreateGroupRequest/UpdateGroupRequest
         const groupData = {
-            code: formData.value.code.trim(),
+            code: formData.value.code.trim().toUpperCase(),
             idSubject: parseInt(formData.value.idSubject),
             scheduleList: formData.value.scheduleList
         }

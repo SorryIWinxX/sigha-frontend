@@ -9,7 +9,7 @@
                 <!-- Areas Filter -->
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Área</label>
-                    <Select v-model="selectedAreaFilter" placeholder="Todas las áreas">
+                    <Select id="area-filter" v-model="selectedAreaFilter" placeholder="Todas las áreas">
                         <option value="">Todas las áreas</option>
                         <option v-for="area in areasStore.areas" :key="area.id" :value="area.id">
                             {{ area.description }}
@@ -20,7 +20,7 @@
                 <!-- Subjects Filter -->
                 <div class="flex-1 max-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Materia</label>
-                    <Select v-model="selectedSubjectFilter" placeholder="Todas las materias">
+                    <Select id="subject-filter" v-model="selectedSubjectFilter" placeholder="Todas las materias">
                         <option value="">Todas las materias</option>
                         <option v-for="subject in filteredSubjects" :key="subject.id" :value="subject.id">
                             {{ subject.code }} - {{ subject.name }}

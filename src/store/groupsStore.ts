@@ -8,6 +8,10 @@ export const useGroupsStore = defineStore('groups', {
     loading: false,
     error: null as string | null,
     currentSemesterId: null as number | null,
+    // Modal state
+    showModal: false,
+    modalMode: 'create' as 'create' | 'edit',
+    editingGroup: null as Group | null,
   }),
 
   getters: {
@@ -70,6 +74,11 @@ export const useGroupsStore = defineStore('groups', {
         return groupsService.formatScheduleDisplay(group.schedule, group.scheduleList)
       }
     },
+
+    // Modal state getters
+    isModalOpen: (state) => state.showModal,
+    getModalMode: (state) => state.modalMode,
+    getEditingGroup: (state) => state.editingGroup,
   },
 
   actions: {
@@ -231,6 +240,24 @@ export const useGroupsStore = defineStore('groups', {
       this.loading = false
       this.error = null
       this.currentSemesterId = null
+    },
+
+    // Modal actions
+    openCreateModal() {
+      this.modalMode = 'create'
+      this.editingGroup = null
+      this.showModal = true
+    },
+
+    openEditModal(group: Group) {
+      this.modalMode = 'edit'
+      this.editingGroup = group
+      this.showModal = true
+    },
+
+    closeModal() {
+      this.showModal = false
+      this.editingGroup = null
     },
   },
 })

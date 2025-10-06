@@ -34,13 +34,15 @@
 
         <!-- Filters Section -->
         <div class="flex flex-col sm:flex-row gap-4 justify-end items-center">
+            <Button variant="primary" @click="groupsStore.openCreateModal()">
+                <template #icon>
+                    <Plus :size="18" />
+                </template>
+                Crear grupo
+            </Button>
 
 
             <div class="w-full sm:w-auto flex gap-2">
-                <Button variant="secondary">
-                    <FileText :size="18" />
-                    Exportar a pdf
-                </Button>
                 <Button variant="secondary" @click="toggleFilters">
                     <Filter class="w-4 h-4" />
                     Filtros
@@ -49,6 +51,7 @@
                         {{ activeFiltersCount }}
                     </span>
                 </Button>
+
                 <Button variant="secondary" @click="toggleFullscreen"
                     :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                     <Maximize2 :size="18" />
@@ -113,8 +116,20 @@
                     Limpiar filtros
                 </Button>
                 <span class="text-sm text-gray-600 flex items-center">
-                    Mostrando {{ groups.length }} de {{ allGroups.length }} grupos
+                    Mostrando {{ groups.length }} de {{ allGroups.length }} horarios (grupos únicos: {{
+                        uniqueFilteredGroupCount }} de {{ uniqueTotalGroupCount }})
                 </span>
+            </div>
+        </div>
+
+        <!-- Color Legend -->
+        <div class="p-3 bg-gray-50 border border-gray-200 rounded-sm">
+            <div class="text-lg font-bold text-gray-700 mb-2">Colores por nivel</div>
+            <div class="flex flex-wrap gap-x-4 gap-y-2 items-center">
+                <div v-for="item in legendItems" :key="item.level" class="flex items-center gap-2">
+                    <span :class="['inline-block w-4 h-4 rounded-full', item.bgClass]"></span>
+                    <span class="text-sm text-gray-700">Nivel {{ item.level }}</span>
+                </div>
             </div>
         </div>
 
@@ -392,6 +407,10 @@
         </div>
     </div>
 
+    <!-- Group Modal (Create/Edit) -->
+    <GroupModal :is-visible="groupsStore.isModalOpen" :mode="groupsStore.getModalMode"
+        :edit-data="groupsStore.getEditingGroup" @close="groupsStore.closeModal()" @submit="handleModalSubmit" />
+
     <!-- Delete Group Confirmation Modal -->
     <ConfirmationModal :is-visible="showDeleteModal" title="Eliminar Grupo"
         :message="groupToDelete ? `¿Estás seguro de que quieres eliminar el grupo ${groupToDelete.code}? Esta acción no se puede deshacer.` : ''"
@@ -401,10 +420,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
-import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, Plus, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
 import Select from '@/components/ui/base/BaseSelect.vue';
 import Button from '@/components/ui/base/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import GroupModal from '@/components/groups/GroupModal.vue';
 
 // Toast notifications
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
@@ -415,6 +435,7 @@ import { userService } from '@/services/userServices';
 import { AreasService } from '@/services/areasService';
 import { SemesterService } from '@/services/semesterService';
 import { useSemesterStore } from '@/store/semesterStore';
+import { useGroupsStore } from '@/store/groupsStore';
 
 // Props
 interface Props {
@@ -488,6 +509,7 @@ const usersData = ref<User[]>([]);
 
 // Store
 const semesterStore = useSemesterStore();
+const groupsStore = useGroupsStore();
 const areasService = new AreasService();
 const semesterService = new SemesterService();
 
@@ -567,6 +589,15 @@ async function loadScheduleData() {
         hasUnsavedChanges.value = false;
         changedGroups.value.clear();
 
+        console.log('groups.value', groups.value);
+
+        // Summary counts for quick comparison
+        const uniqueApiGroupIds = new Set(mappedGroups.map(g => parseInt(g.id.split('-')[0])));
+        console.log('Total de horarios (tarjetas):', mappedGroups.length);
+        console.log('Total de grupos únicos:', uniqueApiGroupIds.size);
+
+
+
         loading.value = false;
     } catch (err) {
         console.error('Error loading schedule data:', err);
@@ -626,6 +657,17 @@ const activeFiltersCount = computed(() => {
     if (filters.professor) count++;
     if (filters.subject) count++;
     return count;
+});
+
+// Conteo de grupos únicos (por id de grupo del API) para comparar
+const uniqueTotalGroupCount = computed(() => {
+    const ids = new Set(allGroups.value.map(g => parseInt(g.id.split('-')[0])));
+    return ids.size;
+});
+
+const uniqueFilteredGroupCount = computed(() => {
+    const ids = new Set(groups.value.map(g => parseInt(g.id.split('-')[0])));
+    return ids.size;
 });
 
 // Profesores ordenados alfabéticamente para el filtro
@@ -760,24 +802,45 @@ function getGroupsForSlot(hour: string, day: string): GroupDisplay[] {
  * Cada nivel tiene un color único asignado
  */
 function getLevelColor(level: string): string {
-    // Mapeo directo de niveles a colores
+    // Colores definidos por variables de entorno (si existen)
+    const envLevelColors: { [key: string]: string } = {
+        '1': import.meta.env.VITE_LEVEL_COLOR_1 || '',
+        '2': import.meta.env.VITE_LEVEL_COLOR_2 || '',
+        '3': import.meta.env.VITE_LEVEL_COLOR_3 || '',
+        '4': import.meta.env.VITE_LEVEL_COLOR_4 || '',
+        '5': import.meta.env.VITE_LEVEL_COLOR_5 || '',
+        '6': import.meta.env.VITE_LEVEL_COLOR_6 || '',
+        '7': import.meta.env.VITE_LEVEL_COLOR_7 || '',
+        '8': import.meta.env.VITE_LEVEL_COLOR_8 || '',
+        '9': import.meta.env.VITE_LEVEL_COLOR_9 || '',
+        '10': import.meta.env.VITE_LEVEL_COLOR_10 || '',
+        'E': import.meta.env.VITE_LEVEL_COLOR_E || ''
+    };
+
+    // Si hay color en env para el nivel exacto, usarlo
+    if (envLevelColors[level]) {
+        return envLevelColors[level];
+    }
+
+    // Mapeo por defecto de niveles a colores
     const levelColorMap: { [key: string]: string } = {
+        // Colores vibrantes, bien diferenciados
         '1': 'red-500',
-        '2': 'orange-500',
+        '2': 'purple-500',
         '3': 'amber-500',
-        '4': 'amber-500',
+        '4': 'indigo-600',
         '5': 'lime-500',
         '6': 'green-500',
-        '7': 'emerald-500',
-        '8': 'teal-500',
-        '9': 'cyan-500',
-        '10': 'sky-500',
-        'E': 'blue-500',
+        '7': 'yellow-500',
+        '8': 'rose-500',
+        '9': 'violet-500',
+        '10': 'blue-500',
+        'E': 'stone-700', // Marrón aproximado
         // Rangos de niveles
-        '1-2-3': 'red-500',
-        '3-4-5': 'amber-500',
-        '5-6-7': 'green-500',
-        '7-8-9-E': 'teal-500'
+        '1-2-3': 'pink-600',
+        '3-4-5': 'indigo-600',
+        '5-6-7': 'teal-600',
+        '7-8-9-E': 'yellow-600'
     };
 
     // Buscar coincidencia exacta primero
@@ -789,6 +852,10 @@ function getLevelColor(level: string): string {
     const match = level.match(/(\d+)/);
     if (match) {
         const firstNumber = match[1];
+        // Intentar con variables de entorno para el primer número del rango
+        if (envLevelColors[firstNumber]) {
+            return envLevelColors[firstNumber];
+        }
         if (levelColorMap[firstNumber]) {
             return levelColorMap[firstNumber];
         }
@@ -807,21 +874,40 @@ function getGroupCardClasses(group: GroupDisplay): string {
     // Mapear colores Tailwind a clases de border y hover
     const colorMap: { [key: string]: { border: string; hover: string } } = {
         'red-500': { border: 'border-red-500', hover: 'hover:bg-red-500' },
+        'red-600': { border: 'border-red-600', hover: 'hover:bg-red-600' },
         'orange-500': { border: 'border-orange-500', hover: 'hover:bg-orange-500' },
+        'orange-600': { border: 'border-orange-600', hover: 'hover:bg-orange-600' },
         'amber-500': { border: 'border-amber-500', hover: 'hover:bg-amber-500' },
+        'amber-600': { border: 'border-amber-600', hover: 'hover:bg-amber-600' },
+        'yellow-500': { border: 'border-yellow-500', hover: 'hover:bg-yellow-500' },
+        'yellow-600': { border: 'border-yellow-600', hover: 'hover:bg-yellow-600' },
         'lime-500': { border: 'border-lime-500', hover: 'hover:bg-lime-500' },
+        'lime-600': { border: 'border-lime-600', hover: 'hover:bg-lime-600' },
         'green-500': { border: 'border-green-500', hover: 'hover:bg-green-500' },
+        'green-600': { border: 'border-green-600', hover: 'hover:bg-green-600' },
         'emerald-500': { border: 'border-emerald-500', hover: 'hover:bg-emerald-500' },
+        'emerald-600': { border: 'border-emerald-600', hover: 'hover:bg-emerald-600' },
         'teal-500': { border: 'border-teal-500', hover: 'hover:bg-teal-500' },
+        'teal-600': { border: 'border-teal-600', hover: 'hover:bg-teal-600' },
         'cyan-500': { border: 'border-cyan-500', hover: 'hover:bg-cyan-500' },
+        'cyan-600': { border: 'border-cyan-600', hover: 'hover:bg-cyan-600' },
         'sky-500': { border: 'border-sky-500', hover: 'hover:bg-sky-500' },
+        'sky-600': { border: 'border-sky-600', hover: 'hover:bg-sky-600' },
         'blue-500': { border: 'border-blue-500', hover: 'hover:bg-blue-500' },
+        'blue-600': { border: 'border-blue-600', hover: 'hover:bg-blue-600' },
         'indigo-500': { border: 'border-indigo-500', hover: 'hover:bg-indigo-500' },
+        'indigo-600': { border: 'border-indigo-600', hover: 'hover:bg-indigo-600' },
         'violet-500': { border: 'border-violet-500', hover: 'hover:bg-violet-500' },
+        'violet-600': { border: 'border-violet-600', hover: 'hover:bg-violet-600' },
         'purple-500': { border: 'border-purple-500', hover: 'hover:bg-purple-500' },
+        'purple-600': { border: 'border-purple-600', hover: 'hover:bg-purple-600' },
         'fuchsia-500': { border: 'border-fuchsia-500', hover: 'hover:bg-fuchsia-500' },
+        'fuchsia-600': { border: 'border-fuchsia-600', hover: 'hover:bg-fuchsia-600' },
         'pink-500': { border: 'border-pink-500', hover: 'hover:bg-pink-500' },
-        'rose-500': { border: 'border-rose-500', hover: 'hover:bg-rose-500' }
+        'pink-600': { border: 'border-pink-600', hover: 'hover:bg-pink-600' },
+        'rose-500': { border: 'border-rose-500', hover: 'hover:bg-rose-500' },
+        'rose-600': { border: 'border-rose-600', hover: 'hover:bg-rose-600' },
+        'stone-700': { border: 'border-stone-700', hover: 'hover:bg-stone-700' }
     };
 
     const colors = colorMap[levelColor] || { border: 'border-gray-500', hover: 'hover:bg-gray-500' };
@@ -836,25 +922,96 @@ function getModalBorderClass(group: GroupDisplay): string {
 
     const colorMap: { [key: string]: string } = {
         'red-500': 'border-red-500',
+        'red-600': 'border-red-600',
         'orange-500': 'border-orange-500',
+        'orange-600': 'border-orange-600',
         'amber-500': 'border-amber-500',
+        'amber-600': 'border-amber-600',
+        'yellow-500': 'border-yellow-500',
+        'yellow-600': 'border-yellow-600',
         'lime-500': 'border-lime-500',
+        'lime-600': 'border-lime-600',
         'green-500': 'border-green-500',
+        'green-600': 'border-green-600',
         'emerald-500': 'border-emerald-500',
+        'emerald-600': 'border-emerald-600',
         'teal-500': 'border-teal-500',
+        'teal-600': 'border-teal-600',
         'cyan-500': 'border-cyan-500',
+        'cyan-600': 'border-cyan-600',
         'sky-500': 'border-sky-500',
+        'sky-600': 'border-sky-600',
         'blue-500': 'border-blue-500',
+        'blue-600': 'border-blue-600',
         'indigo-500': 'border-indigo-500',
+        'indigo-600': 'border-indigo-600',
         'violet-500': 'border-violet-500',
+        'violet-600': 'border-violet-600',
         'purple-500': 'border-purple-500',
+        'purple-600': 'border-purple-600',
         'fuchsia-500': 'border-fuchsia-500',
+        'fuchsia-600': 'border-fuchsia-600',
         'pink-500': 'border-pink-500',
-        'rose-500': 'border-rose-500'
+        'pink-600': 'border-pink-600',
+        'rose-500': 'border-rose-500',
+        'rose-600': 'border-rose-600',
+        'stone-700': 'border-stone-700'
     };
 
     return colorMap[levelColor] || 'border-gray-500';
 }
+
+// Leyenda de colores
+const legendItems = computed(() => {
+    const levels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'E'];
+    // Mapear tokens a clases bg-*
+    const bgColorMap: { [key: string]: string } = {
+        'red-500': 'bg-red-500',
+        'red-600': 'bg-red-600',
+        'orange-500': 'bg-orange-500',
+        'orange-600': 'bg-orange-600',
+        'amber-500': 'bg-amber-500',
+        'amber-600': 'bg-amber-600',
+        'yellow-500': 'bg-yellow-500',
+        'yellow-600': 'bg-yellow-600',
+        'lime-500': 'bg-lime-500',
+        'lime-600': 'bg-lime-600',
+        'green-500': 'bg-green-500',
+        'green-600': 'bg-green-600',
+        'emerald-500': 'bg-emerald-500',
+        'emerald-600': 'bg-emerald-600',
+        'teal-500': 'bg-teal-500',
+        'teal-600': 'bg-teal-600',
+        'cyan-500': 'bg-cyan-500',
+        'cyan-600': 'bg-cyan-600',
+        'sky-500': 'bg-sky-500',
+        'sky-600': 'bg-sky-600',
+        'blue-500': 'bg-blue-500',
+        'blue-600': 'bg-blue-600',
+        'indigo-500': 'bg-indigo-500',
+        'indigo-600': 'bg-indigo-600',
+        'violet-500': 'bg-violet-500',
+        'violet-600': 'bg-violet-600',
+        'purple-500': 'bg-purple-500',
+        'purple-600': 'bg-purple-600',
+        'fuchsia-500': 'bg-fuchsia-500',
+        'fuchsia-600': 'bg-fuchsia-600',
+        'pink-500': 'bg-pink-500',
+        'pink-600': 'bg-pink-600',
+        'rose-500': 'bg-rose-500',
+        'rose-600': 'bg-rose-600',
+        'stone-700': 'bg-stone-700',
+        'gray-500': 'bg-gray-500'
+    };
+
+    return levels.map(lvl => {
+        const token = getLevelColor(lvl);
+        return {
+            level: lvl,
+            bgClass: bgColorMap[token] || 'bg-gray-500'
+        };
+    });
+});
 
 // Drag and Drop Methods
 function handleDragStart(event: DragEvent, group: GroupDisplay) {
@@ -1588,6 +1745,28 @@ async function confirmDeleteGroup() {
     } finally {
         isDeleting.value = false;
 
+    }
+}
+
+// Handle group modal submit (create/edit)
+async function handleModalSubmit(groupData: any) {
+    try {
+        if (groupsStore.getModalMode === 'create') {
+            await groupsStore.createGroup(groupData);
+            showSuccessToast(`Grupo ${groupData.code} creado exitosamente`);
+        } else {
+            await groupsStore.updateGroup(groupsStore.getEditingGroup!.id, groupData);
+            showSuccessToast(`Grupo ${groupData.code} actualizado exitosamente`);
+        }
+
+        // Reload schedule data to show the new/updated group
+        await loadScheduleData();
+
+        groupsStore.closeModal();
+    } catch (error) {
+        console.error('Error guardando grupo:', error);
+        const action = groupsStore.getModalMode === 'create' ? 'crear' : 'actualizar';
+        showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`);
     }
 }
 </script>
