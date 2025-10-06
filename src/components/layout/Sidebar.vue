@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, type Component } from 'vue';
 import { useRouter } from 'vue-router';
-import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays, Home, ChevronDown, Earth } from 'lucide-vue-next';
+import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays, Home, ChevronDown, Earth, FileText } from 'lucide-vue-next';
 import { usePermissions } from '@/composables/usePermissions';
 import { useSidebarStore } from '@/store/sidebarStore';
 
@@ -108,7 +108,9 @@ const menuItems = computed<SidebarItem[]>(() => {
             { to: '/areas-subjects', icon: SquareLibrary, label: 'Areas y Materias' },
             { to: '/available-management', icon: CalendarRange, label: 'Disponibilidades' },
             { to: '/users', icon: Users, label: 'Usuarios' },
+            { to: '/requests', icon: FileText, label: 'Solicitudes' },
             { to: '/settings', icon: Settings, label: 'Configuración' },
+
         );
     }
 
@@ -158,8 +160,8 @@ const isLinkItem = (item: SidebarItem): item is SidebarLinkItem => {
                             class=" rounded-sm  border-t border-r border-l border-gray-200 mt-1 mr-4 ml-4">
                             <li v-for="sub in item.submenu" :key="sub.to">
                                 <router-link :to="sub.to"
-                                    :class="['flex items-center py-2 text-gray-600 hover:text-primary-500 border-b border-gray-200 rounded-r-sm transition-colors', isSidebarOpen ? 'pl-10 pr-6' : 'px-4 justify-center']"
-                                    active-class="text-white hover:text-primary-500 font-semibold bg-gray-700 rounded-r-sm">
+                                    :class="['flex items-center py-2 text-gray-600  hover:text-primary-500 hover:bg-gray-100 border-b border-gray-200 rounded-r-sm transition-colors', isSidebarOpen ? 'pl-10 pr-6' : 'px-4 justify-center']"
+                                    active-class="text-white hover:text-primary-500  font-semibold bg-gray-700 rounded-r-sm">
                                     <component :is="sub.icon" :class="[
                                         isSidebarOpen ? 'mr-3' : 'mr-0',
                                     ]" :size="18" />

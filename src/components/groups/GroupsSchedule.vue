@@ -34,13 +34,15 @@
 
         <!-- Filters Section -->
         <div class="flex flex-col sm:flex-row gap-4 justify-end items-center">
+            <Button variant="primary" @click="groupsStore.openCreateModal()">
+                <template #icon>
+                    <Plus :size="18" />
+                </template>
+                Crear grupo
+            </Button>
 
 
             <div class="w-full sm:w-auto flex gap-2">
-                <Button variant="secondary">
-                    <FileText :size="18" />
-                    Exportar a pdf
-                </Button>
                 <Button variant="secondary" @click="toggleFilters">
                     <Filter class="w-4 h-4" />
                     Filtros
@@ -49,6 +51,7 @@
                         {{ activeFiltersCount }}
                     </span>
                 </Button>
+
                 <Button variant="secondary" @click="toggleFullscreen"
                     :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                     <Maximize2 :size="18" />
@@ -404,6 +407,10 @@
         </div>
     </div>
 
+    <!-- Group Modal (Create/Edit) -->
+    <GroupModal :is-visible="groupsStore.isModalOpen" :mode="groupsStore.getModalMode"
+        :edit-data="groupsStore.getEditingGroup" @close="groupsStore.closeModal()" @submit="handleModalSubmit" />
+
     <!-- Delete Group Confirmation Modal -->
     <ConfirmationModal :is-visible="showDeleteModal" title="Eliminar Grupo"
         :message="groupToDelete ? `¿Estás seguro de que quieres eliminar el grupo ${groupToDelete.code}? Esta acción no se puede deshacer.` : ''"
@@ -413,10 +420,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
-import { User as UserIcon, X, Save, Trash2, ArrowLeft, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
+import { User as UserIcon, X, Save, Trash2, ArrowLeft, Plus, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
 import Select from '@/components/ui/base/BaseSelect.vue';
 import Button from '@/components/ui/base/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import GroupModal from '@/components/groups/GroupModal.vue';
 
 // Toast notifications
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
@@ -427,6 +435,7 @@ import { userService } from '@/services/userServices';
 import { AreasService } from '@/services/areasService';
 import { SemesterService } from '@/services/semesterService';
 import { useSemesterStore } from '@/store/semesterStore';
+import { useGroupsStore } from '@/store/groupsStore';
 
 // Props
 interface Props {
@@ -500,6 +509,7 @@ const usersData = ref<User[]>([]);
 
 // Store
 const semesterStore = useSemesterStore();
+const groupsStore = useGroupsStore();
 const areasService = new AreasService();
 const semesterService = new SemesterService();
 
@@ -1730,6 +1740,28 @@ async function confirmDeleteGroup() {
     } finally {
         isDeleting.value = false;
 
+    }
+}
+
+// Handle group modal submit (create/edit)
+async function handleModalSubmit(groupData: any) {
+    try {
+        if (groupsStore.getModalMode === 'create') {
+            await groupsStore.createGroup(groupData);
+            showSuccessToast(`Grupo ${groupData.code} creado exitosamente`);
+        } else {
+            await groupsStore.updateGroup(groupsStore.getEditingGroup!.id, groupData);
+            showSuccessToast(`Grupo ${groupData.code} actualizado exitosamente`);
+        }
+
+        // Reload schedule data to show the new/updated group
+        await loadScheduleData();
+
+        groupsStore.closeModal();
+    } catch (error) {
+        console.error('Error guardando grupo:', error);
+        const action = groupsStore.getModalMode === 'create' ? 'crear' : 'actualizar';
+        showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`);
     }
 }
 </script>

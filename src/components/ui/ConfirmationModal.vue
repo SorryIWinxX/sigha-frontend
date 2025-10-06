@@ -6,9 +6,7 @@
                     <h3 class="text-lg font-semibold text-[#3b3e45] mb-4">
                         {{ title }}
                     </h3>
-                    <p class="text-sm text-[#666e7d] mb-6">
-                        {{ message }}
-                    </p>
+                    <div class="text-sm text-[#666e7d] mb-6" v-html="message"></div>
                     <div class="flex justify-center gap-3">
                         <Button @click="handleCancel" :variant="cancelVariant">
                             {{ cancelText }}
