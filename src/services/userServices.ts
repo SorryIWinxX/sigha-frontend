@@ -289,4 +289,21 @@ export const userService = {
       return dateString // Return original if formatting fails
     }
   },
+
+  async forgotPassword(documento: string): Promise<void> {
+    const response = await fetch(`/public/auth/send-recovery`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        documento: documento,
+        fake: false,
+      }),
+    })
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message)
+    }
+  },
 }

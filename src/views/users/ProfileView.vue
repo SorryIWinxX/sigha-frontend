@@ -10,12 +10,12 @@
                             <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-100 ring-2 ring-white">
                                 <img v-if="userInfo.photo" :src="userInfo.photo" alt="Foto de perfil"
                                     class="w-full h-full object-cover" />
-                                <div v-else class="w-full h-full flex items-center justify-center text-[#67B83C]">
+                                <div v-else class="w-full h-full flex items-center justify-center text-primary-500">
                                     <User size="32" />
                                 </div>
                             </div>
                             <label for="photo-upload"
-                                class="flex items-center gap-1 bg-[#67B83C] hover:bg-[#69a14a] text-white px-3 py-1.5 rounded-md cursor-pointer transition-all text-sm font-medium">
+                                class="flex items-center gap-1 bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-md cursor-pointer transition-all text-sm font-medium">
                                 <PlusCircle :size="18" />
                                 Cambiar foto
                             </label>

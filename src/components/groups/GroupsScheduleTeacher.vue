@@ -79,24 +79,35 @@
                 <!-- Filter by level -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                    <BaseMultiSelect v-model="filters.level" :options="levelOptions" placeholder="Todos los niveles"
-                        search-placeholder="Buscar nivel..." @update:modelValue="applyFilters" />
+                    <Select id="filter-level" v-model="filters.level" @change="applyFilters">
+                        <option value="">Todos los niveles</option>
+                        <option value="1-2-3">1-2-3</option>
+                        <option value="3-4-5">3-4-5</option>
+                        <option value="5-6-7">5-6-7</option>
+                        <option value="7-8-9-E">7-8-9-E</option>
+                    </Select>
                 </div>
 
                 <!-- Filter by professor -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
-                    <BaseMultiSelect v-model="filters.professor" :options="professorOptions"
-                        placeholder="Todos los profesores" search-placeholder="Buscar profesor..."
-                        @update:modelValue="applyFilters" />
+                    <Select id="filter-professor" v-model="filters.professor" @change="applyFilters">
+                        <option value="">Todos los profesores</option>
+                        <option v-for="professor in sortedProfessors" :key="professor.id" :value="professor.id">
+                            {{ professor.name }}
+                        </option>
+                    </Select>
                 </div>
 
                 <!-- Filter by subject -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
-                    <BaseMultiSelect v-model="filters.subject" :options="subjectOptions"
-                        placeholder="Todas las materias" search-placeholder="Buscar materia..."
-                        @update:modelValue="applyFilters" />
+                    <Select id="filter-subject" v-model="filters.subject" @change="applyFilters">
+                        <option value="">Todas las materias</option>
+                        <option v-for="subject in subjects" :key="subject.id" :value="subject.id.toString()">
+                            {{ subject.code }} - {{ subject.name }}
+                        </option>
+                    </Select>
                 </div>
             </div>
 
@@ -411,7 +422,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { User as UserIcon, X, Save, Trash2, ArrowLeft, Plus, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
 import Select from '@/components/ui/base/BaseSelect.vue';
-import BaseMultiSelect from '@/components/ui/base/BaseMultiSelect.vue';
 import Button from '@/components/ui/base/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import GroupModal from '@/components/groups/GroupModal.vue';
@@ -474,9 +484,9 @@ const error = ref<string | null>(null);
 const searchQuery = ref('');
 const showFilters = ref(false);
 const filters = reactive({
-    level: [] as string[],
-    professor: [] as string[],
-    subject: [] as string[]
+    level: '',
+    professor: '',
+    subject: ''
 });
 
 // Drag and drop state
@@ -579,12 +589,6 @@ async function loadScheduleData() {
         hasUnsavedChanges.value = false;
         changedGroups.value.clear();
 
-        // Reset filters when loading new data
-        filters.level = [];
-        filters.professor = [];
-        filters.subject = [];
-        applyFilters();
-
         console.log('groups.value', groups.value);
 
         // Summary counts for quick comparison
@@ -649,29 +653,10 @@ function formatHourToTimeSlot(hour: number): string | null {
 // Computed
 const activeFiltersCount = computed(() => {
     let count = 0;
-    if (filters.level.length > 0) count++;
-    if (filters.professor.length > 0) count++;
-    if (filters.subject.length > 0) count++;
+    if (filters.level) count++;
+    if (filters.professor) count++;
+    if (filters.subject) count++;
     return count;
-});
-
-// Options for multi-select filters
-const levelOptions = computed(() => [
-    '1-2-3',
-    '3-4-5',
-    '5-6-7',
-    '7-8-9-E'
-]);
-
-const professorOptions = computed(() => {
-    return sortedProfessors.value.map(professor => professor.name);
-});
-
-const subjectOptions = computed(() => {
-    return subjects.value.map(subject => {
-        // Use the same format for display
-        return `${subject.code} - ${subject.name}`;
-    });
 });
 
 // Conteo de grupos únicos (por id de grupo del API) para comparar
@@ -1449,52 +1434,41 @@ function applyFilters() {
     let filteredData = [...allGroups.value];
 
     // Apply level filter
-    if (filters.level.length > 0) {
+    if (filters.level) {
         filteredData = filteredData.filter(group => {
-            // Check if the group level matches any of the selected level ranges
+            // Check if the group level matches the selected level range
             const groupLevel = group.level;
 
-            return filters.level.some(selectedLevel => {
-                switch (selectedLevel) {
-                    case '1-2-3':
-                        return ['1', '2', '3'].some(level => groupLevel.includes(level));
-                    case '3-4-5':
-                        return ['3', '4', '5'].some(level => groupLevel.includes(level));
-                    case '5-6-7':
-                        return ['5', '6', '7'].some(level => groupLevel.includes(level));
-                    case '7-8-9-E':
-                        return ['7', '8', '9', 'E'].some(level => groupLevel.includes(level));
-                    default:
-                        return false;
-                }
-            });
+            switch (filters.level) {
+                case '1-2-3':
+                    return ['1', '2', '3'].some(level => groupLevel.includes(level));
+                case '3-4-5':
+                    return ['3', '4', '5'].some(level => groupLevel.includes(level));
+                case '5-6-7':
+                    return ['5', '6', '7'].some(level => groupLevel.includes(level));
+                case '7-8-9-E':
+                    return ['7', '8', '9', 'E'].some(level => groupLevel.includes(level));
+                default:
+                    return true;
+            }
         });
     }
 
     // Apply professor filter
-    if (filters.professor.length > 0) {
-        // Convert professor names to IDs for filtering
-        const selectedProfessorIds = sortedProfessors.value
-            .filter(prof => filters.professor.includes(prof.name))
-            .map(prof => prof.id);
-
+    if (filters.professor) {
         filteredData = filteredData.filter(group =>
-            selectedProfessorIds.includes(group.professor.id)
+            group.professor.id === filters.professor
         );
     }
 
     // Apply subject filter
-    if (filters.subject.length > 0) {
-        // Extract subject names from the filter options (format: "code - name")
-        const selectedSubjectNames = filters.subject.map(filterValue => {
-            // Extract name from "code - name" format
-            const parts = filterValue.split(' - ');
-            return parts.length > 1 ? parts.slice(1).join(' - ') : filterValue;
-        });
-
-        filteredData = filteredData.filter(group =>
-            selectedSubjectNames.includes(group.subject)
-        );
+    if (filters.subject) {
+        const selectedSubject = subjects.value.find(s => s.id.toString() === filters.subject);
+        if (selectedSubject) {
+            filteredData = filteredData.filter(group =>
+                group.subject === selectedSubject.name
+            );
+        }
     }
 
     // Apply filters but don't validate conflicts here - we want to show filtered groups
@@ -1503,14 +1477,14 @@ function applyFilters() {
 }
 
 const hasActiveFilters = computed(() => {
-    return filters.level.length > 0 || filters.professor.length > 0 || filters.subject.length > 0;
+    return !!(filters.level || filters.professor || filters.subject);
 });
 
 function clearFilters() {
-    filters.level = [];
-    filters.professor = [];
-    filters.subject = [];
-    applyFilters();
+    filters.level = '';
+    filters.professor = '';
+    filters.subject = '';
+    groups.value = allGroups.value;
 }
 
 // Watch for semester changes

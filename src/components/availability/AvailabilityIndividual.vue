@@ -3,14 +3,15 @@
         <!-- Professor Selector -->
         <div class="mt-4">
             <div class="flex items-center justify-between">
-                <div class="w-1/4">
-                    <Select id="professor-select" v-model="selectedProfessor" placeholder="Seleccionar profesor"
-                        :disabled="loading || !props.selectedSemester">
-                        <option v-for="professor in sortedProfessors" :key="professor.id" :value="professor.id">
-                            {{ professor.firstName }} {{ professor.lastName }}
-                        </option>
-                    </Select>
+                <div class="flex items-center gap-2 ">
+                    <BaseSelect id="professor-select" v-model="selectedProfessor" :options="professorOptions"
+                        placeholder="Seleccionar profesor" :disabled="loading || !props.selectedSemester"
+                        :searchable="true" />
+
+                    <Toggle />
+                    <span> Disponibilidad Desactivada</span>
                 </div>
+
 
                 <div class="flex gap-2">
 
@@ -99,7 +100,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { CheckCircle2, XCircle, Clock, ChevronDown } from 'lucide-vue-next'
-import Select from '@/components/ui/base/BaseSelect.vue'
+import BaseSelect from '@/components/ui/base/BaseSelect.vue'
 import Button from '@/components/ui/base/BaseButton.vue'
 import { userService } from '@/services/userServices'
 import type { User } from '@/types/user'
@@ -110,7 +111,7 @@ import { useAreasStore } from '@/store/areasStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast.js'
 import AvailibilityList from '@/components/availability/AvailibilityList.vue'
 import type { StatusAvailability } from '@/types/status'
-
+import Toggle from '@/components/ui/Toggle.vue'
 // Props
 const props = defineProps<{
     selectedSemester: any
@@ -149,6 +150,14 @@ const sortedProfessors = computed(() => {
         const nameB = `${b.firstName} ${b.lastName}`;
         return nameA.localeCompare(nameB);
     });
+});
+
+// Opciones para el BaseSelect
+const professorOptions = computed(() => {
+    return sortedProfessors.value.map(professor => ({
+        value: professor.id.toString(),
+        label: `${professor.firstName} ${professor.lastName}`
+    }));
 });
 
 // Methods

@@ -89,7 +89,18 @@ const menuItems = computed<SidebarItem[]>(() => {
             to: '/available',
             icon: CalendarCog,
             label: 'Disponibilidad',
-        });
+        },
+            {
+                to: '/requests-teacher',
+                icon: FileText,
+                label: 'Solicitudes',
+            },
+            {
+                to: '/calendar-asigned',
+                icon: CalendarDays,
+                label: 'Horario Asignado',
+            }
+        );
     }
 
     // Elementos para directores y coordinadores

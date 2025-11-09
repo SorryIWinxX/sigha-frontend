@@ -26,12 +26,12 @@
         </div>
 
         <!-- Contenedores principales -->
-        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="flex-1 flex min-h-0 gap-4">
             <!-- Bandeja de solicitudes -->
-            <div class="flex flex-col bg-white border border-gray-200 rounded-sm overflow-hidden">
+            <div class="flex w-1/3 flex-col bg-white border border-gray-200 rounded-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <h2 class="text-lg font-semibold text-gray-900">Bandeja de Solicitudes</h2>
-                    <p class="text-sm text-gray-600 mt-1">{{ filteredRequests.length }} solicitudes pendientes</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ filteredRequests.length }} solicitudes</p>
                 </div>
 
                 <div class="flex-1 overflow-y-auto">
@@ -54,8 +54,8 @@
                             :class="[
                                 'px-6 py-4 cursor-pointer transition-all duration-150',
                                 selectedRequest?.id === request.id
-                                    ? 'bg-primary-50 border-l-4 border-l-primary-500'
-                                    : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                                    ? 'bg-primary-50 border-l-6 border-l-primary-500'
+                                    : 'hover:bg-gray-50 border-l-6 border-l-transparent'
                             ]">
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
@@ -84,7 +84,7 @@
             </div>
 
             <!-- Detalle de solicitud -->
-            <div class="flex flex-col bg-white border border-gray-200 rounded-sm overflow-hidden">
+            <div class="flex w-full flex-col bg-white border border-gray-200 rounded-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <h2 class="text-lg font-semibold text-gray-900">Detalle de Solicitud</h2>
                 </div>
@@ -361,13 +361,13 @@ const getRequestTypeLabel = (type) => {
 
 const getRequestTypeColor = (type) => {
     const colors = {
-        schedule_change: 'bg-info-100 text-info-700',
-        absence: 'bg-warning-100 text-warning-700',
-        group_assignment: 'bg-success-100 text-success-700',
-        availability_update: 'bg-primary-100 text-primary-700',
-        other: 'bg-gray-100 text-gray-700'
+        schedule_change: 'bg-info-500 text-white',
+        absence: 'bg-danger-500 text-white',
+        group_assignment: 'bg-yellow-500 text-white',
+        availability_update: 'bg-orange-500 text-white',
+        other: 'bg-gray-500 text-white'
     }
-    return colors[type] || 'bg-gray-100 text-gray-700'
+    return colors[type] || 'bg-gray-500 text-white'
 }
 
 const acceptRequest = () => {

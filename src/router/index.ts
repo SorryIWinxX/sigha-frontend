@@ -11,6 +11,9 @@ import GroupsView from '@/views/groups/GroupsView.vue'
 import ScheduleGroupsView from '@/views/groups/ScheduleGroupsView.vue'
 import DashboardView from '@/views/dashboard/DashboardView.vue'
 import RequestsView from '@/views/requests/requestsView.vue'
+import ScheduleGroupsTeachersView from '@/views/groups/ScheduleGroupsTeachersView.vue'
+import CalendarAsignedView from '@/views/groups/CalendarAsignedView.vue'
+import RequestsTeacherView from '@/views/requests/RequestsTeacherView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),
@@ -34,6 +37,15 @@ const router = createRouter({
       path: '/available',
       name: 'available',
       component: AvailableView,
+      meta: {
+        requiresAuth: true,
+        roles: ['PROFESOR'],
+      },
+    },
+    {
+      path: '/requests-teacher',
+      name: 'requests-teacher',
+      component: RequestsTeacherView,
       meta: {
         requiresAuth: true,
         roles: ['PROFESOR'],
@@ -96,6 +108,24 @@ const router = createRouter({
       path: '/requests',
       name: 'requests',
       component: RequestsView,
+      meta: {
+        requiresAuth: true,
+        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
+      },
+    },
+    {
+      path: '/calendar-asigned',
+      name: 'calendar-asigned',
+      component: CalendarAsignedView,
+      meta: {
+        requiresAuth: true,
+        roles: ['PROFESOR'],
+      },
+    },
+    {
+      path: '/schedule-groups-teachers',
+      name: 'schedule-groups-teachers',
+      component: ScheduleGroupsTeachersView,
       meta: {
         requiresAuth: true,
         roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
