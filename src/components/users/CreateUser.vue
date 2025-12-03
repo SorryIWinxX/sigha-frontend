@@ -25,11 +25,8 @@
                             <Input id="apellido" v-model="formData.apellido" label="Apellido"
                                 placeholder="Ingrese el apellido" required :uppercase="true" />
 
-                            <Select id="tipoDocumento" v-model="formData.tipoDocumento" label="Tipo de documento">
-                                <option value="" disabled>Seleccione un tipo de documento</option>
-                                <option v-for="tipo in tiposDocumento" :key="tipo.id" :value="tipo.idSigla">
-                                    {{ tipo.sigla }} - {{ tipo.description }}
-                                </option>
+                            <Select id="tipoDocumento" v-model="formData.tipoDocumento" label="Tipo de documento"
+                                :options="tiposDocumentoOptions" placeholder="Seleccione un tipo de documento">
                             </Select>
 
                             <Input id="numeroDocumento" v-model="formData.numeroDocumento" label="Número de documento"
@@ -224,6 +221,12 @@ const loadingAreas = ref(false)
 
 // Data from services
 const tiposDocumento = ref([])
+const tiposDocumentoOptions = computed(() => {
+    return tiposDocumento.value.map(tipo => ({
+        label: `${tipo.sigla} - ${tipo.description}`,
+        value: tipo.idSigla
+    }))
+})
 const availableAreas = ref([])
 
 // Form data

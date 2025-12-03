@@ -29,8 +29,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Código -->
                         <div>
-                            <Input id="code-input" v-model="formData.code" label="Código *" type="text"
-                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" required :uppercase="true" />
+                            <Input id="code-input" v-model="formData.code" label="Código" type="text"
+                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" :uppercase="true" required />
                         </div>
 
                         <!-- Nivel (automático basado en la materia) -->
@@ -44,23 +44,13 @@
                     <!-- Selectors Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Materia -->
-                        <Select id="subject-select" v-model="formData.idSubject" label="Materia *"
-                            placeholder="Seleccionar materia" required>
-                            <option value="">Seleccionar materia</option>
-                            <option v-for="subject in availableSubjects" :key="subject.id" :value="subject.id">
-                                {{ subject.code }} - {{ subject.name }}
-                            </option>
-                        </Select>
+                        <Select id="subject-select" v-model="formData.idSubject" :options="subjectOptions"
+                            label="Materia" placeholder="Seleccionar materia" required />
 
                         <!-- Usuario -->
                         <div>
-                            <Select id="user-select" v-model="formData.idDocente" label="Profesor"
-                                :disabled="!formData.idSubject">
-                                <option value="null">SIN ASIGNAR</option>
-                                <option v-for="user in filteredAvailableUsers" :key="user.id" :value="user.id">
-                                    {{ user.firstName }} {{ user.lastName }}
-                                </option>
-                            </Select>
+                            <Select id="user-select" v-model="formData.idDocente" :options="teacherOptions"
+                                label="Profesor" :disabled="!formData.idSubject" />
                             <div v-if="!formData.idSubject"
                                 class="mt-1 text-sm text-yellow-500 flex items-center gap-1">
                                 <span>Selecciona una materia primero</span>
@@ -90,7 +80,7 @@
                                         'border-b border-l border-gray-200 relative h-12 flex items-center justify-center transition-all cursor-pointer group',
                                         isScheduleSelected(day.value, hour.value)
                                             ? 'bg-[#67b83c] text-white'
-                                            : 'hover:bg-gray-100'
+                                            : getAvailabilityBackgroundClass(day.value, hour.value) || 'hover:bg-gray-100'
                                     ]" @click="toggleSchedule(day.value, hour.value)">
                                         <div v-if="isScheduleSelected(day.value, hour.value)"
                                             class="flex items-center justify-center">
@@ -153,6 +143,7 @@ import Select from '@/components/ui/base/BaseSelect.vue'
 import Input from '@/components/ui/base/BaseInput.vue'
 import Button from '@/components/ui/base/BaseButton.vue'
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue'
+import { AvailabilityService } from '@/services/availabilityService'
 
 // Props
 const props = defineProps({
@@ -177,7 +168,7 @@ const emit = defineEmits(['close', 'submit'])
 // Stores
 const areasStore = useAreasStore()
 const semesterStore = useSemesterStore()
-
+const availabilityService = new AvailabilityService()
 // Animation and modal state
 const isClosing = ref(false)
 const showConfirmation = ref(false)
@@ -186,6 +177,8 @@ const showConfirmation = ref(false)
 const isSubmitting = ref(false)
 const availableUsers = ref([])
 const loadingUsers = ref(false)
+const teacherAvailability = ref(null)
+const loadingAvailability = ref(false)
 
 // Form data
 const formData = ref({
@@ -196,6 +189,30 @@ const formData = ref({
     idDocente: '',
     scheduleList: []
 })
+
+
+// Fetch teacher availability
+const fetchTeacherAvailability = async () => {
+    if (!formData.value.idDocente || formData.value.idDocente === 'null') {
+        teacherAvailability.value = null
+        return
+    }
+
+    loadingAvailability.value = true
+    try {
+        const response = await availabilityService.getGlobalAvailability(
+            formData.value.idDocente,
+            semesterStore.currentSemester?.id
+        )
+        teacherAvailability.value = response
+        console.log('Teacher availability:', response)
+    } catch (error) {
+        console.error('Error fetching teacher availability:', error)
+        teacherAvailability.value = null
+    } finally {
+        loadingAvailability.value = false
+    }
+}
 
 // Computed
 const availableSubjects = computed(() => {
@@ -243,6 +260,28 @@ const filteredAvailableUsers = computed(() => {
     )
 })
 
+const subjectOptions = computed(() => {
+    const options = availableSubjects.value.map(subject => ({
+        value: subject.id,
+        label: `${subject.code} - ${subject.name}`
+    }))
+    return [
+        { value: '', label: 'Seleccionar materia' },
+        ...options
+    ]
+})
+
+const teacherOptions = computed(() => {
+    const options = filteredAvailableUsers.value.map(user => ({
+        value: user.id,
+        label: `${user.firstName} ${user.lastName}`
+    }))
+    return [
+        { value: 'null', label: 'SIN ASIGNAR' },
+        ...options
+    ]
+})
+
 // Check if form has any data
 const hasFormData = computed(() => {
     return formData.value.code ||
@@ -267,6 +306,40 @@ const isScheduleSelected = (day, hour) => {
     return formData.value.scheduleList.some(schedule =>
         schedule.day === getDayName(day).toUpperCase() && schedule.hour === hour
     )
+}
+
+const getAvailabilityStatus = (day, hour) => {
+    if (!teacherAvailability.value || !teacherAvailability.value.disponibilidad) {
+        return null
+    }
+
+    const dayName = getDayName(day).toUpperCase()
+    const dayAvailability = teacherAvailability.value.disponibilidad[dayName]
+
+    if (!dayAvailability) {
+        return null
+    }
+
+    const slot = dayAvailability.find(slot => slot.hour === hour)
+    return slot ? { statusId: slot.statusId, statusDescription: slot.statusDescription } : null
+}
+
+const getAvailabilityBackgroundClass = (day, hour) => {
+    const availability = getAvailabilityStatus(day, hour)
+    if (!availability) {
+        return ''
+    }
+
+    switch (availability.statusId) {
+        case 1: // ENVIADO
+            return 'bg-info-200'
+        case 2: // APROBADO
+            return 'bg-primary-200'
+        case 3: // RECHAZADO (assuming 3 is rejected based on user description)
+            return 'bg-danger-200'
+        default:
+            return ''
+    }
 }
 
 const toggleSchedule = (day, hour) => {
@@ -478,6 +551,15 @@ watch(() => formData.value.idSubject, (newSubjectId, oldSubjectId) => {
                 formData.value.idDocente = 'null'
             }
         }
+    }
+})
+
+// Fetch availability when docente changes
+watch(() => formData.value.idDocente, async (newDocenteId) => {
+    if (newDocenteId && newDocenteId !== 'null') {
+        await fetchTeacherAvailability()
+    } else {
+        teacherAvailability.value = null
     }
 })
 

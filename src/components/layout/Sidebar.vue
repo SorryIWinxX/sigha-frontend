@@ -89,7 +89,18 @@ const menuItems = computed<SidebarItem[]>(() => {
             to: '/available',
             icon: CalendarCog,
             label: 'Disponibilidad',
-        });
+        },
+            // {
+            //     to: '/requests-teacher',
+            //     icon: FileText,
+            //     label: 'Solicitudes',
+            // },
+            {
+                to: '/calendar-asigned',
+                icon: CalendarDays,
+                label: 'Horario Asignado',
+            }
+        );
     }
 
     // Elementos para directores y coordinadores
@@ -99,16 +110,13 @@ const menuItems = computed<SidebarItem[]>(() => {
             {
                 icon: CalendarDays,
                 label: 'Horarios de Grupos',
-                submenu: [
-                    { to: '/schedule-groups-teachers', icon: Users, label: 'Docentes' },
-                    { to: '/schedule-groups', icon: Earth, label: 'General' },
-                ],
+                to: '/schedule-groups',
             },
             { to: '/groups', icon: Blocks, label: 'Grupos' },
             { to: '/areas-subjects', icon: SquareLibrary, label: 'Areas y Materias' },
             { to: '/available-management', icon: CalendarRange, label: 'Disponibilidades' },
             { to: '/users', icon: Users, label: 'Usuarios' },
-            { to: '/requests', icon: FileText, label: 'Solicitudes' },
+            // { to: '/requests', icon: FileText, label: 'Solicitudes' },
             { to: '/settings', icon: Settings, label: 'Configuración' },
 
         );

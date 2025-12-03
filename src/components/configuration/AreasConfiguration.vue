@@ -23,45 +23,20 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- Filter by subject count -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad de materias</label>
-                        <Select id="filter-subject-count" v-model="filters.subjectCount" @change="applyFilters">
-                            <option value="">Todas</option>
-                            <option value="0">Sin materias</option>
-                            <option value="1-5">1-5 materias</option>
-                            <option value="6-10">6-10 materias</option>
-                            <option value="11+">Más de 10 materias</option>
-                        </Select>
+                        <Select id="filter-subject-count" v-model="filters.subjectCount" :options="subjectCountOptions"
+                            label="Cantidad de materias" placeholder="Todas" />
                     </div>
 
                     <!-- Filter by subject level -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nivel de materias</label>
-                        <Select id="filter-subject-level" v-model="filters.subjectLevel" @change="applyFilters">
-                            <option value="">Todos los niveles</option>
-                            <option value="1">NIVEL 1</option>
-                            <option value="2">NIVEL 2</option>
-                            <option value="3">NIVEL 3</option>
-                            <option value="4">NIVEL 4</option>
-                            <option value="5">NIVEL 5</option>
-                            <option value="6">NIVEL 6</option>
-                            <option value="7">NIVEL 7</option>
-                            <option value="8">NIVEL 8</option>
-                            <option value="9">NIVEL 9</option>
-                            <option value="10">NIVEL 10</option>
-                            <option value="11">NIVEL E</option>
-                        </Select>
+                        <Select id="filter-subject-level" v-model="filters.subjectLevel" :options="subjectLevelOptions"
+                            label="Nivel de materias" placeholder="Todos los niveles" />
                     </div>
 
                     <!-- Filter by area type -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de área</label>
-                        <Select id="filter-area-type" v-model="filters.areaType" @change="applyFilters">
-                            <option value="">Todos los tipos</option>
-                            <option value="matematicas">Matemáticas</option>
-                            <option value="arquitectura">Arquitectura/Hardware</option>
-                            <option value="software">Software</option>
-                            <option value="other">Otros</option>
-                        </Select>
+                        <Select id="filter-area-type" v-model="filters.areaType" :options="areaTypeOptions"
+                            label="Tipo de área" placeholder="Todos los tipos" />
                     </div>
                 </div>
 
@@ -214,21 +189,9 @@
                                             @keyup.enter="saveNewSubject" @keyup.escape="cancelCreateSubject" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                                        <Select id="new-subject-level" v-model="newSubject.level">
-                                            <option value="">Seleccionar nivel</option>
-                                            <option value="1">NIVEL 1</option>
-                                            <option value="2">NIVEL 2</option>
-                                            <option value="3">NIVEL 3</option>
-                                            <option value="4">NIVEL 4</option>
-                                            <option value="5">NIVEL 5</option>
-                                            <option value="6">NIVEL 6</option>
-                                            <option value="7">NIVEL 7</option>
-                                            <option value="8">NIVEL 8</option>
-                                            <option value="9">NIVEL 9</option>
-                                            <option value="10">NIVEL 10</option>
-                                            <option value="11">NIVEL E</option>
-                                        </Select>
+                                        <Select id="new-subject-level" v-model="newSubject.level"
+                                            :options="subjectLevelOptions" label="Nivel"
+                                            placeholder="Seleccionar nivel" />
                                     </div>
                                 </div>
                                 <div class="flex gap-2 justify-end">
@@ -288,21 +251,9 @@
                                                     @keyup.escape="cancelEditSubject" />
                                             </div>
                                             <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                                                <Select id="edit-subject-level" v-model="editSubjectForm.level">
-                                                    <option value="1">NIVEL 1</option>
-                                                    <option value="2">NIVEL 2</option>
-                                                    <option value="3">NIVEL 3</option>
-                                                    <option value="4">NIVEL 4</option>
-                                                    <option value="5">NIVEL 5</option>
-                                                    <option value="6">NIVEL 6</option>
-                                                    <option value="7">NIVEL 7</option>
-                                                    <option value="8">NIVEL 8</option>
-                                                    <option value="9">NIVEL 9</option>
-                                                    <option value="10">NIVEL 10</option>
-                                                    <option value="11">NIVEL E</option>
-                                                </Select>
+                                                <Select id="edit-subject-level" v-model="editSubjectForm.level"
+                                                    :options="subjectLevelOptionsWithoutEmpty" label="Nivel"
+                                                    placeholder="Seleccionar nivel" />
                                             </div>
                                         </div>
                                         <div class="flex gap-2 justify-end">
@@ -453,6 +404,52 @@ const activeFiltersCount = computed(() => {
     return count
 })
 
+// Options for Select components
+const subjectCountOptions = computed(() => [
+    { value: '', label: 'Todas' },
+    { value: '0', label: 'Sin materias' },
+    { value: '1-5', label: '1-5 materias' },
+    { value: '6-10', label: '6-10 materias' },
+    { value: '11+', label: 'Más de 10 materias' }
+])
+
+const subjectLevelOptions = computed(() => [
+    { value: '', label: 'Todos los niveles' },
+    { value: '1', label: 'NIVEL 1' },
+    { value: '2', label: 'NIVEL 2' },
+    { value: '3', label: 'NIVEL 3' },
+    { value: '4', label: 'NIVEL 4' },
+    { value: '5', label: 'NIVEL 5' },
+    { value: '6', label: 'NIVEL 6' },
+    { value: '7', label: 'NIVEL 7' },
+    { value: '8', label: 'NIVEL 8' },
+    { value: '9', label: 'NIVEL 9' },
+    { value: '10', label: 'NIVEL 10' },
+    { value: '11', label: 'NIVEL E' }
+])
+
+const subjectLevelOptionsWithoutEmpty = computed(() => [
+    { value: '1', label: 'NIVEL 1' },
+    { value: '2', label: 'NIVEL 2' },
+    { value: '3', label: 'NIVEL 3' },
+    { value: '4', label: 'NIVEL 4' },
+    { value: '5', label: 'NIVEL 5' },
+    { value: '6', label: 'NIVEL 6' },
+    { value: '7', label: 'NIVEL 7' },
+    { value: '8', label: 'NIVEL 8' },
+    { value: '9', label: 'NIVEL 9' },
+    { value: '10', label: 'NIVEL 10' },
+    { value: '11', label: 'NIVEL E' }
+])
+
+const areaTypeOptions = computed(() => [
+    { value: '', label: 'Todos los tipos' },
+    { value: 'matematicas', label: 'Matemáticas' },
+    { value: 'arquitectura', label: 'Arquitectura/Hardware' },
+    { value: 'software', label: 'Software' },
+    { value: 'other', label: 'Otros' }
+])
+
 const filteredAreas = computed(() => {
     let result = areas.value
 
@@ -536,10 +533,6 @@ const filteredAreas = computed(() => {
 // Funciones para filtros
 const toggleFilters = () => {
     showFilters.value = !showFilters.value
-}
-
-const applyFilters = () => {
-    // Los filtros se aplican automáticamente a través del computed filteredAreas
 }
 
 const clearFilters = () => {

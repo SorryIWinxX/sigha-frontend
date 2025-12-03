@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col gap-4 py-4">
         <!-- Unsaved Changes Indicator -->
-        <div v-if="hasUnsavedChanges && !readOnly" class="bg-yellow-500 rounded-sm p-3">
+        <div v-if="hasUnsavedChanges" class="bg-yellow-500 rounded-sm p-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <span class="text-white font-medium">
@@ -34,7 +34,7 @@
 
         <!-- Filters Section -->
         <div class="flex flex-col sm:flex-row gap-4 justify-end items-center">
-            <Button v-if="!readOnly" variant="primary" @click="groupsStore.openCreateModal()">
+            <Button variant="primary" @click="groupsStore.openCreateModal()">
                 <template #icon>
                     <Plus :size="18" />
                 </template>
@@ -56,17 +56,16 @@
                     :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                     <Maximize2 :size="18" />
                 </Button>
-                <Button v-if="!readOnly" variant="info" @click="openCopyScheduleModal">
+                <Button variant="info" @click="openCopyScheduleModal">
                     Horario anterior
                     <ClipboardCopy :size="18" />
                 </Button>
-                <Button v-if="!readOnly" variant="danger" @click="undoChanges" :disabled="!hasUnsavedChanges">
+                <Button variant="danger" @click="undoChanges" :disabled="!hasUnsavedChanges">
                     Deshacer Cambios
                     <Trash2 :size="18" />
                 </Button>
 
-                <Button v-if="!readOnly" variant="primary" @click="saveChanges"
-                    :disabled="!hasUnsavedChanges || isSaving">
+                <Button variant="primary" @click="saveChanges" :disabled="!hasUnsavedChanges || isSaving">
                     <span v-if="isSaving">Guardando...</span>
                     <span v-else>Guardar cambios</span>
                     <Save :size="18" />
@@ -80,24 +79,24 @@
                 <!-- Filter by level -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                    <BaseMultiSelect v-model="filters.level" :options="levelOptions" placeholder="Todos los niveles"
-                        search-placeholder="Buscar nivel..." @update:modelValue="applyFilters" />
+                    <Select id="filter-level" v-model="filters.level" :options="levelOptions" @change="applyFilters">
+                    </Select>
                 </div>
 
                 <!-- Filter by professor -->
-                <div v-if="!docenteId">
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
-                    <BaseMultiSelect v-model="filters.professor" :options="professorOptions"
-                        placeholder="Todos los profesores" search-placeholder="Buscar profesor..."
-                        @update:modelValue="applyFilters" />
+                    <Select id="filter-professor" v-model="filters.professor" :options="professorOptions"
+                        @change="applyFilters">
+                    </Select>
                 </div>
 
                 <!-- Filter by subject -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
-                    <BaseMultiSelect v-model="filters.subject" :options="subjectOptions"
-                        placeholder="Todas las materias" search-placeholder="Buscar materia..."
-                        @update:modelValue="applyFilters" />
+                    <Select id="filter-subject" v-model="filters.subject" :options="subjectOptions"
+                        @change="applyFilters">
+                    </Select>
                 </div>
             </div>
 
@@ -176,10 +175,10 @@
 
                                 <!-- Groups Container -->
                                 <div class="flex flex-col gap-2">
-                                    <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id"
-                                        :draggable="!readOnly" @dragstart="handleDragStart($event, group)"
-                                        @dragend="handleDragEnd" @click="openProfessorModal(group, $event)"
-                                        class="group w-52 rounded-sm p-3 transition-all duration-300 hover:translate-x-1 relative"
+                                    <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id" draggable="true"
+                                        @dragstart="handleDragStart($event, group)" @dragend="handleDragEnd"
+                                        @click="openProfessorModal(group, $event)"
+                                        class="group w-52 rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer relative"
                                         :class="[
                                             // Default styles
                                             'bg-gray-100 border-l-8',
@@ -190,10 +189,8 @@
                                             // Drag states
                                             {
                                                 'opacity-50 scale-95': draggedGroup?.id === group.id,
-                                                'cursor-grab': !draggedGroup && !readOnly,
-                                                'cursor-pointer': !readOnly,
-                                                'cursor-grabbing': draggedGroup?.id === group.id,
-                                                'cursor-default': readOnly
+                                                'cursor-grab': !draggedGroup,
+                                                'cursor-grabbing': draggedGroup?.id === group.id
                                             }
                                         ]">
 
@@ -406,7 +403,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { User as UserIcon, X, Save, Trash2, ArrowLeft, Plus, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
 import Select from '@/components/ui/base/BaseSelect.vue';
-import BaseMultiSelect from '@/components/ui/base/BaseMultiSelect.vue';
 import Button from '@/components/ui/base/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import GroupModal from '@/components/groups/GroupModal.vue';
@@ -425,14 +421,10 @@ import { useGroupsStore } from '@/store/groupsStore';
 // Props
 interface Props {
     semesterId?: number | null;
-    docenteId?: number | null;
-    readOnly?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    semesterId: null,
-    docenteId: null,
-    readOnly: false
+    semesterId: null
 });
 
 // Types
@@ -473,9 +465,9 @@ const error = ref<string | null>(null);
 const searchQuery = ref('');
 const showFilters = ref(false);
 const filters = reactive({
-    level: [] as string[],
-    professor: [] as string[],
-    subject: [] as string[]
+    level: '',
+    professor: '',
+    subject: ''
 });
 
 // Drag and drop state
@@ -530,6 +522,35 @@ const timeSlots = [
     '19:00', '20:00', '21:00', '22:00'
 ];
 
+// Options for selects
+const levelOptions = [
+    { label: 'Todos los niveles', value: '' },
+    { label: '1-2-3', value: '1-2-3' },
+    { label: '3-4-5', value: '3-4-5' },
+    { label: '5-6-7', value: '5-6-7' },
+    { label: '7-8-9-E', value: '7-8-9-E' }
+]
+
+const professorOptions = computed(() => [
+    { label: 'Todos los profesores', value: '' },
+    ...sortedProfessors.value.map(p => ({ label: p.name, value: p.id }))
+])
+
+const subjectOptions = computed(() => [
+    { label: 'Todas las materias', value: '' },
+    ...subjects.value.map(s => ({ label: `${s.code} - ${s.name}`, value: s.id.toString() }))
+])
+
+const modalProfessorOptions = computed(() => [
+    { label: 'SIN ASIGNAR', value: 'null' },
+    ...availableProfessors.value.map(p => ({ label: p.name, value: p.id }))
+])
+
+const semesterOptions = computed(() => [
+    { label: 'Selecciona un semestre', value: '' },
+    ...availableSemesters.value.map(s => ({ label: s.description, value: s.id }))
+])
+
 // Load data functions
 async function loadScheduleData() {
     try {
@@ -543,12 +564,8 @@ async function loadScheduleData() {
         }
 
         // Load data in parallel
-        const groupsPromise = props.docenteId
-            ? groupsService.getGroupsByDocente(props.docenteId)
-            : groupsService.getGroups(semesterId);
-
         const [apiGroups, users, areas] = await Promise.all([
-            groupsPromise,
+            groupsService.getGroups(semesterId),
             userService.getUsers(),
             areasService.getAreas()
         ]);
@@ -581,12 +598,6 @@ async function loadScheduleData() {
         originalGroups.value = JSON.parse(JSON.stringify(mappedGroups));
         hasUnsavedChanges.value = false;
         changedGroups.value.clear();
-
-        // Reset filters when loading new data
-        filters.level = [];
-        filters.professor = [];
-        filters.subject = [];
-        applyFilters();
 
         console.log('groups.value', groups.value);
 
@@ -652,40 +663,11 @@ function formatHourToTimeSlot(hour: number): string | null {
 // Computed
 const activeFiltersCount = computed(() => {
     let count = 0;
-    if (filters.level.length > 0) count++;
-    if (filters.professor.length > 0) count++;
-    if (filters.subject.length > 0) count++;
+    if (filters.level) count++;
+    if (filters.professor) count++;
+    if (filters.subject) count++;
     return count;
 });
-
-// Options for multi-select filters
-const levelOptions = computed(() => [
-    '1-2-3',
-    '3-4-5',
-    '5-6-7',
-    '7-8-9-E'
-]);
-
-const professorOptions = computed(() => {
-    return sortedProfessors.value.map(professor => professor.name);
-});
-
-const subjectOptions = computed(() => {
-    return subjects.value.map(subject => {
-        // Use the same format for display
-        return `${subject.code} - ${subject.name}`;
-    });
-});
-
-const modalProfessorOptions = computed(() => [
-    { label: 'SIN ASIGNAR', value: 'null' },
-    ...availableProfessors.value.map(p => ({ label: p.name, value: p.id }))
-])
-
-const semesterOptions = computed(() => [
-    { label: 'Selecciona un semestre', value: '' },
-    ...availableSemesters.value.map(s => ({ label: s.description, value: s.id }))
-])
 
 // Conteo de grupos únicos (por id de grupo del API) para comparar
 const uniqueTotalGroupCount = computed(() => {
@@ -1161,8 +1143,8 @@ function handleDrop(event: DragEvent, hour: string, day: string) {
 }
 
 function openProfessorModal(group: GroupDisplay, event: MouseEvent) {
-    // Don't open modal if we're dragging or if readOnly is true
-    if (draggedGroup.value || props.readOnly) return;
+    // Don't open modal if we're dragging
+    if (draggedGroup.value) return;
 
     selectedGroup.value = group;
     selectedProfessor.value = null;
@@ -1462,52 +1444,41 @@ function applyFilters() {
     let filteredData = [...allGroups.value];
 
     // Apply level filter
-    if (filters.level.length > 0) {
+    if (filters.level) {
         filteredData = filteredData.filter(group => {
-            // Check if the group level matches any of the selected level ranges
+            // Check if the group level matches the selected level range
             const groupLevel = group.level;
 
-            return filters.level.some(selectedLevel => {
-                switch (selectedLevel) {
-                    case '1-2-3':
-                        return ['1', '2', '3'].some(level => groupLevel.includes(level));
-                    case '3-4-5':
-                        return ['3', '4', '5'].some(level => groupLevel.includes(level));
-                    case '5-6-7':
-                        return ['5', '6', '7'].some(level => groupLevel.includes(level));
-                    case '7-8-9-E':
-                        return ['7', '8', '9', 'E'].some(level => groupLevel.includes(level));
-                    default:
-                        return false;
-                }
-            });
+            switch (filters.level) {
+                case '1-2-3':
+                    return ['1', '2', '3'].some(level => groupLevel.includes(level));
+                case '3-4-5':
+                    return ['3', '4', '5'].some(level => groupLevel.includes(level));
+                case '5-6-7':
+                    return ['5', '6', '7'].some(level => groupLevel.includes(level));
+                case '7-8-9-E':
+                    return ['7', '8', '9', 'E'].some(level => groupLevel.includes(level));
+                default:
+                    return true;
+            }
         });
     }
 
     // Apply professor filter
-    if (filters.professor.length > 0) {
-        // Convert professor names to IDs for filtering
-        const selectedProfessorIds = sortedProfessors.value
-            .filter(prof => filters.professor.includes(prof.name))
-            .map(prof => prof.id);
-
+    if (filters.professor) {
         filteredData = filteredData.filter(group =>
-            selectedProfessorIds.includes(group.professor.id)
+            group.professor.id === filters.professor
         );
     }
 
     // Apply subject filter
-    if (filters.subject.length > 0) {
-        // Extract subject names from the filter options (format: "code - name")
-        const selectedSubjectNames = filters.subject.map(filterValue => {
-            // Extract name from "code - name" format
-            const parts = filterValue.split(' - ');
-            return parts.length > 1 ? parts.slice(1).join(' - ') : filterValue;
-        });
-
-        filteredData = filteredData.filter(group =>
-            selectedSubjectNames.includes(group.subject)
-        );
+    if (filters.subject) {
+        const selectedSubject = subjects.value.find(s => s.id.toString() === filters.subject);
+        if (selectedSubject) {
+            filteredData = filteredData.filter(group =>
+                group.subject === selectedSubject.name
+            );
+        }
     }
 
     // Apply filters but don't validate conflicts here - we want to show filtered groups
@@ -1516,14 +1487,14 @@ function applyFilters() {
 }
 
 const hasActiveFilters = computed(() => {
-    return filters.level.length > 0 || filters.professor.length > 0 || filters.subject.length > 0;
+    return !!(filters.level || filters.professor || filters.subject);
 });
 
 function clearFilters() {
-    filters.level = [];
-    filters.professor = [];
-    filters.subject = [];
-    applyFilters();
+    filters.level = '';
+    filters.professor = '';
+    filters.subject = '';
+    groups.value = allGroups.value;
 }
 
 // Watch for semester changes

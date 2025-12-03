@@ -5,40 +5,33 @@
             <h2 class="text-xl font-semibold mb-2 text-gray-900">Vista General</h2>
 
             <!-- Filters Section -->
-            <div class="flex flex-wrap gap-4 mb-4">
-                <!-- Areas Filter -->
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Área</label>
-                    <Select id="area-filter" v-model="selectedAreaFilter" placeholder="Todas las áreas">
-                        <option value="">Todas las áreas</option>
-                        <option v-for="area in areasStore.areas" :key="area.id" :value="area.id">
-                            {{ area.description }}
-                        </option>
-                    </Select>
-                </div>
-
-                <!-- Subjects Filter -->
-                <div class="flex-1 max-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Materia</label>
-                    <Select id="subject-filter" v-model="selectedSubjectFilter" placeholder="Todas las materias">
-                        <option value="">Todas las materias</option>
-                        <option v-for="subject in filteredSubjects" :key="subject.id" :value="subject.id">
-                            {{ subject.code }} - {{ subject.name }}
-                        </option>
-                    </Select>
-                </div>
-
-                <!-- Clear Filters Button -->
+            <div class="flex justify-between mb-4">
                 <div class="flex items-end gap-2">
-                    <Button variant="secondary" @click="clearFilters">
-                        Limpiar filtros
-                    </Button>
-                    <Button variant="secondary" @click="toggleFullscreen"
-                        :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+                    <!-- Areas Filter -->
+                    <div class="w-96">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Área</label>
+                        <BaseMultiSelect v-model="selectedAreaFilter" :options="areaOptions"
+                            placeholder="Todas las áreas" search-placeholder="Buscar áreas..." />
+                    </div>
 
-                        <Maximize2 :size="20" class="text-gray-600" />
+                    <!-- Subjects Filter -->
+                    <div class="w-96">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Materia</label>
+                        <BaseMultiSelect v-model="selectedSubjectFilter" :options="subjectOptions"
+                            placeholder="Todas las materias" search-placeholder="Buscar materias..." />
+                    </div>
+                    <div class="flex gap-2">
+                        <Button variant="secondary" @click="clearFilters">
+                            Limpiar filtros
+                        </Button>
+                        <Button variant="secondary" @click="toggleFullscreen"
+                            :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+                            <Maximize2 :size="20" class="text-gray-600" />
+                        </Button>
+                    </div>
+                </div>
 
-                    </Button>
+                <div class="flex flex-col gap-2">
 
                     <Button variant="danger" @click="rejectAll">
 
@@ -65,15 +58,15 @@
         <!-- Table Component -->
         <AvailibilityList active-tab="general" :selected-professor-data="null" :time-slots="timeSlots"
             :day-keys="dayKeys" :global-availability="null" :all-professors-availability="allProfessorsAvailability"
-            :professors="professors" :is-fullscreen="isFullscreen" :selected-area-filter="selectedAreaFilter"
-            :selected-subject-filter="selectedSubjectFilter" @toggle-slot-status-general="toggleSlotStatusGeneral" />
+            :professors="professors" :is-fullscreen="isFullscreen" :selected-area-filter="selectedAreaFilterIds"
+            :selected-subject-filter="selectedSubjectFilterIds" @toggle-slot-status-general="toggleSlotStatusGeneral" />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { CheckCircle2, XCircle, Clock, Maximize2 } from 'lucide-vue-next'
-import Select from '@/components/ui/base/BaseSelect.vue'
+import BaseMultiSelect from '@/components/ui/base/BaseMultiSelect.vue'
 import Button from '@/components/ui/base/BaseButton.vue'
 import { userService } from '@/services/userServices'
 import type { User } from '@/types/user'
@@ -98,8 +91,8 @@ const areasStore = useAreasStore()
 const professors = ref<User[]>([])
 const allProfessorsAvailability = ref<ProfessorAvailability[]>([])
 const loadingAllAvailability = ref(false)
-const selectedAreaFilter = ref('')
-const selectedSubjectFilter = ref('')
+const selectedAreaFilter = ref<string[]>([])
+const selectedSubjectFilter = ref<string[]>([])
 const isFullscreen = ref(false)
 
 const timeSlots = ref([
@@ -110,14 +103,70 @@ const timeSlots = ref([
 const dayKeys = ref(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'])
 
 // Computed properties
+// Opciones de áreas usando solo la descripción (más legible)
+const areaOptions = computed(() => {
+    return areasStore.areas.map(area => area.description)
+})
+
+// Mapeo de descripción a ID para áreas
+const areaDescriptionToId = computed(() => {
+    const map: Record<string, number> = {}
+    areasStore.areas.forEach(area => {
+        map[area.description] = area.id || 0
+    })
+    return map
+})
+
 const filteredSubjects = computed(() => {
-    if (!selectedAreaFilter.value) {
+    if (selectedAreaFilter.value.length === 0) {
         return areasStore.areas.flatMap(area =>
             areasStore.getSubjectsByArea(area.id || 0)
         )
     }
-    const areaId = parseInt(selectedAreaFilter.value)
-    return areaId ? areasStore.getSubjectsByArea(areaId) : []
+    // Si hay áreas seleccionadas, mostrar solo materias de esas áreas
+    const selectedAreaIds = selectedAreaFilter.value.map(areaDescription => {
+        return areaDescriptionToId.value[areaDescription] || 0
+    }).filter(id => id !== 0)
+
+    if (selectedAreaIds.length === 0) {
+        return areasStore.areas.flatMap(area =>
+            areasStore.getSubjectsByArea(area.id || 0)
+        )
+    }
+
+    return selectedAreaIds.flatMap(areaId =>
+        areasStore.getSubjectsByArea(areaId)
+    )
+})
+
+// Opciones de materias usando código y nombre (más legible)
+const subjectOptions = computed(() => {
+    return filteredSubjects.value.map(subject => `${subject.code} - ${subject.name}`)
+})
+
+// Mapeo de "código - nombre" a ID para materias
+const subjectDisplayToId = computed(() => {
+    const map: Record<string, number> = {}
+    filteredSubjects.value.forEach(subject => {
+        map[`${subject.code} - ${subject.name}`] = subject.id
+    })
+    return map
+})
+
+// Convert selected area filter descriptions to IDs
+const selectedAreaFilterIds = computed(() => {
+    const ids = selectedAreaFilter.value.map(areaDescription => {
+        return areaDescriptionToId.value[areaDescription]?.toString() || ''
+    }).filter(id => id !== '')
+    return ids.join(',') // Convert to comma-separated string for compatibility
+})
+
+// Convert selected subject filter displays to IDs
+const selectedSubjectFilterIds = computed(() => {
+    const ids = selectedSubjectFilter.value.map(subjectDisplay => {
+        return subjectDisplayToId.value[subjectDisplay]?.toString() || ''
+    }).filter(id => id !== '')
+    return ids.join(',') // Convert to comma-separated string for compatibility
 })
 
 // Methods
@@ -183,8 +232,8 @@ async function toggleSlotStatusGeneral(hour: string, day: string, professorId: s
 }
 
 function clearFilters() {
-    selectedAreaFilter.value = ''
-    selectedSubjectFilter.value = ''
+    selectedAreaFilter.value = []
+    selectedSubjectFilter.value = []
 }
 
 function toggleFullscreen() {
@@ -361,4 +410,13 @@ watch(() => props.selectedSemester, (newSemester) => {
         loadAllProfessorsAvailability()
     }
 }, { immediate: true })
+
+// Limpiar materias seleccionadas que ya no están disponibles cuando cambian las áreas
+watch(() => selectedAreaFilter.value, () => {
+    // Filtrar las materias seleccionadas para mantener solo las que están disponibles
+    const availableSubjectDisplays = new Set(subjectOptions.value)
+    selectedSubjectFilter.value = selectedSubjectFilter.value.filter(subjectDisplay =>
+        availableSubjectDisplays.has(subjectDisplay)
+    )
+})
 </script>
