@@ -263,7 +263,8 @@ const availableSubjects = computed(() => {
             subjects.push(subject)
         })
     })
-    return subjects
+    // Ordenar alfabéticamente por nombre
+    return subjects.sort((a, b) => a.name.localeCompare(b.name))
 })
 
 // Opciones para el BaseMultiSelect de filtro por materia

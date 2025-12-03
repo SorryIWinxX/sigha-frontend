@@ -132,6 +132,9 @@ const filteredSubjects = computed(() => {
         return areasStore.areas.flatMap(area =>
             areasStore.getSubjectsByArea(area.id || 0)
         )
+    } else {
+        const areaId = parseInt(selectedAreaFilter.value)
+        subjects = areaId ? areasStore.getSubjectsByArea(areaId) : []
     }
 
     return selectedAreaIds.flatMap(areaId =>
