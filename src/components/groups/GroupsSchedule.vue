@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col gap-4 py-4">
         <!-- Unsaved Changes Indicator -->
-        <div v-if="hasUnsavedChanges" class="bg-yellow-500 rounded-sm p-3">
+        <div v-if="hasUnsavedChanges && !readOnly" class="bg-yellow-500 rounded-sm p-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <span class="text-white font-medium">
@@ -34,7 +34,7 @@
 
         <!-- Filters Section -->
         <div class="flex flex-col sm:flex-row gap-4 justify-end items-center">
-            <Button variant="primary" @click="groupsStore.openCreateModal()">
+            <Button v-if="!readOnly" variant="primary" @click="groupsStore.openCreateModal()">
                 <template #icon>
                     <Plus :size="18" />
                 </template>
@@ -56,16 +56,17 @@
                     :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                     <Maximize2 :size="18" />
                 </Button>
-                <Button variant="info" @click="openCopyScheduleModal">
+                <Button v-if="!readOnly" variant="info" @click="openCopyScheduleModal">
                     Horario anterior
                     <ClipboardCopy :size="18" />
                 </Button>
-                <Button variant="danger" @click="undoChanges" :disabled="!hasUnsavedChanges">
+                <Button v-if="!readOnly" variant="danger" @click="undoChanges" :disabled="!hasUnsavedChanges">
                     Deshacer Cambios
                     <Trash2 :size="18" />
                 </Button>
 
-                <Button variant="primary" @click="saveChanges" :disabled="!hasUnsavedChanges || isSaving">
+                <Button v-if="!readOnly" variant="primary" @click="saveChanges"
+                    :disabled="!hasUnsavedChanges || isSaving">
                     <span v-if="isSaving">Guardando...</span>
                     <span v-else>Guardar cambios</span>
                     <Save :size="18" />
@@ -84,7 +85,7 @@
                 </div>
 
                 <!-- Filter by professor -->
-                <div>
+                <div v-if="!docenteId">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
                     <BaseMultiSelect v-model="filters.professor" :options="professorOptions"
                         placeholder="Todos los profesores" search-placeholder="Buscar profesor..."
@@ -175,10 +176,10 @@
 
                                 <!-- Groups Container -->
                                 <div class="flex flex-col gap-2">
-                                    <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id" draggable="true"
-                                        @dragstart="handleDragStart($event, group)" @dragend="handleDragEnd"
-                                        @click="openProfessorModal(group, $event)"
-                                        class="group w-52 rounded-sm p-3 transition-all duration-300 hover:translate-x-1 cursor-pointer relative"
+                                    <div v-for="group in getGroupsForSlot(hour, day)" :key="group.id"
+                                        :draggable="!readOnly" @dragstart="handleDragStart($event, group)"
+                                        @dragend="handleDragEnd" @click="openProfessorModal(group, $event)"
+                                        class="group w-52 rounded-sm p-3 transition-all duration-300 hover:translate-x-1 relative"
                                         :class="[
                                             // Default styles
                                             'bg-gray-100 border-l-8',
@@ -189,8 +190,10 @@
                                             // Drag states
                                             {
                                                 'opacity-50 scale-95': draggedGroup?.id === group.id,
-                                                'cursor-grab': !draggedGroup,
-                                                'cursor-grabbing': draggedGroup?.id === group.id
+                                                'cursor-grab': !draggedGroup && !readOnly,
+                                                'cursor-pointer': !readOnly,
+                                                'cursor-grabbing': draggedGroup?.id === group.id,
+                                                'cursor-default': readOnly
                                             }
                                         ]">
 
@@ -297,11 +300,7 @@
 
             <div class="mb-4">
                 <Select id="professor-select" label="Profesor" v-model="selectedProfessorId"
-                    placeholder="Elige un profesor" width="w-full">
-                    <option value="null">SIN ASIGNAR</option>
-                    <option v-for="professor in availableProfessors" :key="professor.id" :value="professor.id">
-                        {{ professor.name }}
-                    </option>
+                    :options="modalProfessorOptions" placeholder="Elige un profesor" width="w-full">
                 </Select>
 
                 <!-- Error de conflicto de horario -->
@@ -374,11 +373,7 @@
                 </p>
 
                 <Select id="semester-select" label="Semestre anterior" v-model="selectedPreviousSemesterId"
-                    placeholder="Selecciona un semestre" width="w-full">
-                    <option value="">Selecciona un semestre</option>
-                    <option v-for="semester in availableSemesters" :key="semester.id" :value="semester.id">
-                        {{ semester.description }}
-                    </option>
+                    :options="semesterOptions" placeholder="Selecciona un semestre" width="w-full">
                 </Select>
             </div>
 
@@ -430,10 +425,14 @@ import { useGroupsStore } from '@/store/groupsStore';
 // Props
 interface Props {
     semesterId?: number | null;
+    docenteId?: number | null;
+    readOnly?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    semesterId: null
+    semesterId: null,
+    docenteId: null,
+    readOnly: false
 });
 
 // Types
@@ -544,8 +543,12 @@ async function loadScheduleData() {
         }
 
         // Load data in parallel
+        const groupsPromise = props.docenteId
+            ? groupsService.getGroupsByDocente(props.docenteId)
+            : groupsService.getGroups(semesterId);
+
         const [apiGroups, users, areas] = await Promise.all([
-            groupsService.getGroups(semesterId),
+            groupsPromise,
             userService.getUsers(),
             areasService.getAreas()
         ]);
@@ -673,6 +676,16 @@ const subjectOptions = computed(() => {
         return `${subject.code} - ${subject.name}`;
     });
 });
+
+const modalProfessorOptions = computed(() => [
+    { label: 'SIN ASIGNAR', value: 'null' },
+    ...availableProfessors.value.map(p => ({ label: p.name, value: p.id }))
+])
+
+const semesterOptions = computed(() => [
+    { label: 'Selecciona un semestre', value: '' },
+    ...availableSemesters.value.map(s => ({ label: s.description, value: s.id }))
+])
 
 // Conteo de grupos únicos (por id de grupo del API) para comparar
 const uniqueTotalGroupCount = computed(() => {
@@ -1148,8 +1161,8 @@ function handleDrop(event: DragEvent, hour: string, day: string) {
 }
 
 function openProfessorModal(group: GroupDisplay, event: MouseEvent) {
-    // Don't open modal if we're dragging
-    if (draggedGroup.value) return;
+    // Don't open modal if we're dragging or if readOnly is true
+    if (draggedGroup.value || props.readOnly) return;
 
     selectedGroup.value = group;
     selectedProfessor.value = null;

@@ -9,7 +9,7 @@
                         <h1 class="font-bold text-5xl px-4 text-gray-800">SIGHA</h1>
 
                     </div>
-                    <h1 class="font-bold text-center text-xl px-4 text-blue-500">ESCUELA DE {{ schoolName }}</h1>
+                    <h1 class="font-bold text-center text-xl px-4 text-[{{  }}]"> {{ schoolName }}</h1>
                     <!-- Login Form -->
                     <form v-if="!isForgotPasswordMode && !isChangePasswordMode" class="space-y-6">
                         <div class="space-y-2">
@@ -183,6 +183,7 @@ const router = useRouter()
 
 // Environment variables
 const schoolName = import.meta.env.VITE_SCHOOL
+const schoolColor = import.meta.env.VITE_COLOR
 
 // Form state
 const documento = ref('')

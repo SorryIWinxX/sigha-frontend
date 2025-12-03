@@ -29,8 +29,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Código -->
                         <div>
-                            <Input id="code-input" v-model="formData.code" label="Código *" type="text"
-                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" required :uppercase="true" />
+                            <Input id="code-input" v-model="formData.code" label="Código" type="text"
+                                placeholder="Ej: A01, B02, GRP-001, MAT-A1" :uppercase="true" required />
                         </div>
 
                         <!-- Nivel (automático basado en la materia) -->
@@ -44,23 +44,13 @@
                     <!-- Selectors Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Materia -->
-                        <Select id="subject-select" v-model="formData.idSubject" label="Materia *"
-                            placeholder="Seleccionar materia" required>
-                            <option value="">Seleccionar materia</option>
-                            <option v-for="subject in availableSubjects" :key="subject.id" :value="subject.id">
-                                {{ subject.code }} - {{ subject.name }}
-                            </option>
-                        </Select>
+                        <Select id="subject-select" v-model="formData.idSubject" :options="subjectOptions"
+                            label="Materia" placeholder="Seleccionar materia" required />
 
                         <!-- Usuario -->
                         <div>
-                            <Select id="user-select" v-model="formData.idDocente" label="Profesor"
-                                :disabled="!formData.idSubject">
-                                <option value="null">SIN ASIGNAR</option>
-                                <option v-for="user in filteredAvailableUsers" :key="user.id" :value="user.id">
-                                    {{ user.firstName }} {{ user.lastName }}
-                                </option>
-                            </Select>
+                            <Select id="user-select" v-model="formData.idDocente" :options="teacherOptions"
+                                label="Profesor" :disabled="!formData.idSubject" />
                             <div v-if="!formData.idSubject"
                                 class="mt-1 text-sm text-yellow-500 flex items-center gap-1">
                                 <span>Selecciona una materia primero</span>
@@ -268,6 +258,28 @@ const filteredAvailableUsers = computed(() => {
     return availableUsers.value.filter(user =>
         user.idAreas && user.idAreas.includes(subjectArea.id)
     )
+})
+
+const subjectOptions = computed(() => {
+    const options = availableSubjects.value.map(subject => ({
+        value: subject.id,
+        label: `${subject.code} - ${subject.name}`
+    }))
+    return [
+        { value: '', label: 'Seleccionar materia' },
+        ...options
+    ]
+})
+
+const teacherOptions = computed(() => {
+    const options = filteredAvailableUsers.value.map(user => ({
+        value: user.id,
+        label: `${user.firstName} ${user.lastName}`
+    }))
+    return [
+        { value: 'null', label: 'SIN ASIGNAR' },
+        ...options
+    ]
 })
 
 // Check if form has any data

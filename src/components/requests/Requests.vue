@@ -6,11 +6,8 @@
                 <Search v-model="searchTerm" placeholder="Buscar solicitudes..." />
 
                 <!-- Filtro por tipo de solicitud -->
-                <Select id="request-type-filter" v-model="selectedTypeFilter" placeholder="Todos los tipos">
-                    <option value="">Todos los tipos</option>
-                    <option v-for="type in requestTypes" :key="type.value" :value="type.value">
-                        {{ type.label }}
-                    </option>
+                <Select id="request-type-filter" v-model="selectedTypeFilter" :options="requestTypeFilterOptions"
+                    placeholder="Todos los tipos">
                 </Select>
             </div>
 
@@ -224,6 +221,11 @@ const requestTypes = [
     { value: 'availability_update', label: 'Actualización de Disponibilidad' },
     { value: 'other', label: 'Otro' }
 ]
+
+const requestTypeFilterOptions = computed(() => [
+    { label: 'Todos los tipos', value: '' },
+    ...requestTypes
+])
 
 // Mock data - Solicitudes de ejemplo
 const mockRequests = ref([

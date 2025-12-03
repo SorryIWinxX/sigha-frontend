@@ -6,19 +6,13 @@
                 <Search v-model="searchTerm" placeholder="Buscar solicitudes..." />
 
                 <!-- Filtro por tipo de solicitud -->
-                <Select id="request-type-filter" v-model="selectedTypeFilter" placeholder="Todos los tipos">
-                    <option value="">Todos los tipos</option>
-                    <option v-for="type in requestTypes" :key="type.value" :value="type.value">
-                        {{ type.label }}
-                    </option>
+                <Select id="request-type-filter" v-model="selectedTypeFilter" :options="requestTypeFilterOptions"
+                    placeholder="Todos los tipos">
                 </Select>
 
                 <!-- Filtro por estado -->
-                <Select id="status-filter" v-model="selectedStatusFilter" placeholder="Todos los estados">
-                    <option value="">Todos los estados</option>
-                    <option v-for="status in statusTypes" :key="status.value" :value="status.value">
-                        {{ status.label }}
-                    </option>
+                <Select id="status-filter" v-model="selectedStatusFilter" :options="statusFilterOptions"
+                    placeholder="Todos los estados">
                 </Select>
             </div>
 
@@ -216,11 +210,8 @@
                     <!-- Tipo de solicitud -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Solicitud *</label>
-                        <Select id="new-request-type" v-model="newRequest.type" placeholder="Selecciona un tipo">
-                            <option value="">Selecciona un tipo</option>
-                            <option v-for="type in requestTypes" :key="type.value" :value="type.value">
-                                {{ type.label }}
-                            </option>
+                        <Select id="new-request-type" v-model="newRequest.type" :options="requestTypes"
+                            placeholder="Selecciona un tipo">
                         </Select>
                     </div>
 
@@ -318,6 +309,11 @@ const requestTypes = [
     { value: 'other', label: 'Otro' }
 ]
 
+const requestTypeFilterOptions = computed(() => [
+    { label: 'Todos los tipos', value: '' },
+    ...requestTypes
+])
+
 // Tipos de estados
 const statusTypes = [
     { value: 'pending', label: 'Pendiente' },
@@ -325,6 +321,11 @@ const statusTypes = [
     { value: 'rejected', label: 'Rechazada' },
     { value: 'cancelled', label: 'Cancelada' }
 ]
+
+const statusFilterOptions = computed(() => [
+    { label: 'Todos los estados', value: '' },
+    ...statusTypes
+])
 
 // Mock data - Solicitudes del profesor (simulando datos del profesor logueado)
 const myRequests = ref([

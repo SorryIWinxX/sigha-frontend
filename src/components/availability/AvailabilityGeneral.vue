@@ -5,8 +5,8 @@
             <h2 class="text-xl font-semibold mb-2 text-gray-900">Vista General</h2>
 
             <!-- Filters Section -->
-            <div class="flex justify-between  mb-4">
-                <div class="flex items-center gap-2">
+            <div class="flex justify-between mb-4">
+                <div class="flex items-end gap-2">
                     <!-- Areas Filter -->
                     <div class="w-96">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Área</label>
@@ -20,19 +20,18 @@
                         <BaseMultiSelect v-model="selectedSubjectFilter" :options="subjectOptions"
                             placeholder="Todas las materias" search-placeholder="Buscar materias..." />
                     </div>
+                    <div class="flex gap-2">
+                        <Button variant="secondary" @click="clearFilters">
+                            Limpiar filtros
+                        </Button>
+                        <Button variant="secondary" @click="toggleFullscreen"
+                            :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+                            <Maximize2 :size="20" class="text-gray-600" />
+                        </Button>
+                    </div>
                 </div>
 
-                <!-- Clear Filters Button -->
-                <div class="flex items-end gap-2">
-                    <Button variant="secondary" @click="clearFilters">
-                        Limpiar filtros
-                    </Button>
-                    <Button variant="secondary" @click="toggleFullscreen"
-                        :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-
-                        <Maximize2 :size="20" class="text-gray-600" />
-
-                    </Button>
+                <div class="flex flex-col gap-2">
 
                     <Button variant="danger" @click="rejectAll">
 

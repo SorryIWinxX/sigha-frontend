@@ -13,7 +13,8 @@
                         <LogoUIS />
                     </div>
                     <div class="flex px-2">
-                        <h1 class="font-bold text-center text-xl px-4 text-blue-500">{{ schoolName }}</h1>
+                        <h1 :class="['font-bold', 'text-center', 'text-xl', 'px-4', schoolColorClass]">{{ schoolName }}
+                        </h1>
                     </div>
                 </div>
 
@@ -26,11 +27,7 @@
                     <div>
                         <Profile />
                     </div>
-                    <div>
-                        <Button variant="secondary" @click="logout">
-                            <LogOut :size="20" />
-                        </Button>
-                    </div>
+
                 </div>
             </div>
         </header>
@@ -60,7 +57,7 @@ import Button from '@/components/ui/base/BaseButton.vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useRoleStore } from '@/store/roleStore';
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -68,6 +65,25 @@ const roleStore = useRoleStore();
 
 // Environment variables
 const schoolName = import.meta.env.VITE_SCHOOL
+const schoolColor = import.meta.env.VITE_COLOR
+
+// Computed property for school color class
+const schoolColorClass = computed(() => {
+    if (!schoolColor) return 'text-gray-900' // Default color if not set
+
+    // If it's a hex color (starts with #), use Tailwind's arbitrary value syntax
+    if (schoolColor.startsWith('#')) {
+        return `text-[${schoolColor}]`
+    }
+
+    // If it's already a Tailwind class (like "blue-500"), construct the text- class
+    if (schoolColor.includes('-')) {
+        return `text-${schoolColor}`
+    }
+
+    // Default fallback
+    return `text-${schoolColor}-600`
+})
 
 onMounted(() => {
     // Inicializar el rol activo cuando se monta el componente

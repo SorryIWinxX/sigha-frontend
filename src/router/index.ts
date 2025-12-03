@@ -4,6 +4,7 @@ import AvailableView from '../views/available/AvailableView.vue'
 import ProfileView from '../views/users/ProfileView.vue'
 import UsersView from '../views/users/UsersView.vue'
 import { useAuthStore } from '@/store/authStore'
+import { useRoleStore } from '@/store/roleStore'
 import AreasSubjectsView from '@/views/areas/AreasSubjectsView.vue'
 import AvailableManagementView from '@/views/available/AvailableManagementView.vue'
 import SettingsView from '@/views/settings/SettingsView.vue'
@@ -11,7 +12,6 @@ import GroupsView from '@/views/groups/GroupsView.vue'
 import ScheduleGroupsView from '@/views/groups/ScheduleGroupsView.vue'
 import DashboardView from '@/views/dashboard/DashboardView.vue'
 import RequestsView from '@/views/requests/requestsView.vue'
-import ScheduleGroupsTeachersView from '@/views/groups/ScheduleGroupsTeachersView.vue'
 import CalendarAsignedView from '@/views/groups/CalendarAsignedView.vue'
 import RequestsTeacherView from '@/views/requests/RequestsTeacherView.vue'
 
@@ -123,15 +123,6 @@ const router = createRouter({
       },
     },
     {
-      path: '/schedule-groups-teachers',
-      name: 'schedule-groups-teachers',
-      component: ScheduleGroupsTeachersView,
-      meta: {
-        requiresAuth: true,
-        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
-      },
-    },
-    {
       path: '/schedule-groups',
       name: 'schedule-groups',
       component: ScheduleGroupsView,
@@ -162,14 +153,32 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  if (requiredRoles && requiredRoles.length > 0) {
-    const userRoles = authStore.userRoles
+  if (needsAuth && authStore.getToken() && !roleStore.activeRole) {
+    roleStore.loadFromStorage()
+  }
 
-    const hasRequiredRole = requiredRoles.some((role) => userRoles.includes(role))
+  if (requiredRoles && requiredRoles.length > 0) {
+    // Verificar contra el rol activo en lugar de todos los roles del usuario
+    const activeRole = roleStore.activeRole
+
+    // Si no hay rol activo cargado (no debería pasar si está autenticado, pero por seguridad)
+    if (!activeRole) {
+      next('/login')
+      return
+    }
+
+    const hasRequiredRole = requiredRoles.includes(activeRole)
 
     if (!hasRequiredRole) {
-      // Redirigir a una página de acceso denegado o a la página principal
-      next('/login')
+      // Redirigir a una página de acceso denegado o a la página principal del rol actual
+      // O simplemente denegar el acceso
+      if (roleStore.isTeacherRole) {
+        next('/available')
+      } else if (roleStore.isAdminRole) {
+        next('/dashboard')
+      } else {
+        next('/user')
+      }
       return
     }
   }

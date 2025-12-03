@@ -43,11 +43,8 @@
                             <Input id="apellido" v-model="formData.apellido" label="Apellido"
                                 placeholder="Ingrese el apellido" required />
 
-                            <Select id="tipoDocumento" v-model="formData.tipoDocumento" label="Tipo de documento">
-                                <option value="" disabled>Seleccione un tipo de documento</option>
-                                <option v-for="tipo in tiposDocumento" :key="tipo.id" :value="tipo.idSigla">
-                                    {{ tipo.sigla }} - {{ tipo.description }}
-                                </option>
+                            <Select id="tipoDocumento" v-model="formData.tipoDocumento" label="Tipo de documento"
+                                :options="tiposDocumentoOptions" placeholder="Seleccione un tipo de documento">
                             </Select>
 
                             <Input id="numeroDocumento" v-model="formData.numeroDocumento" label="Número de documento"
@@ -98,7 +95,7 @@
                             </div>
 
                             <!-- Areas list -->
-                            <div v-else class="space-y-2 mb-3 overflow-y-auto max-h-[calc(130vh-20vh)]">
+                            <div v-else class="space-y-2 mb-3 overflow-y-auto max-h-[400px]">
                                 <div v-for="(area, index) in availableAreas" :key="area.id || index"
                                     class="flex items-start space-x-2 p-2 bg-white border border-[#dcdfe3] rounded transition-colors"
                                     :class="isProfesorSelected ? 'hover:bg-[#f8f9fa]' : 'opacity-50 cursor-not-allowed bg-gray-50'">
@@ -177,6 +174,12 @@ const error = ref('')
 
 // Data from services
 const tiposDocumento = ref([])
+const tiposDocumentoOptions = computed(() => {
+    return tiposDocumento.value.map(tipo => ({
+        label: `${tipo.sigla} - ${tipo.description}`,
+        value: tipo.idSigla
+    }))
+})
 const userData = ref(null)
 
 // Form data

@@ -112,10 +112,7 @@
                                             Identidad</label>
                                         <div class="grid grid-cols-3 gap-2">
                                             <Select id="type-document" v-model="userInfo.idTipoDocumento"
-                                                placeholder="Tipo" class="col-span-1">
-                                                <option v-for="tipo in tiposDocumento" :key="tipo.id" :value="tipo.id">
-                                                    {{ tipo.sigla }}
-                                                </option>
+                                                :options="tiposDocumentoOptions" placeholder="Tipo" class="col-span-1">
                                             </Select>
                                             <div class="col-span-2">
                                                 <Input id="documento" v-model="userInfo.documento" type="text"
@@ -284,6 +281,12 @@ const showPasswordModal = ref(false);
 // Servicio de tipos de documento
 const tipoDocumentoService = new TipoDocumentoService();
 const tiposDocumento = ref([]);
+const tiposDocumentoOptions = computed(() => {
+    return tiposDocumento.value.map(tipo => ({
+        label: tipo.sigla,
+        value: tipo.id
+    }))
+})
 
 // Store de áreas
 const areasStore = useAreasStore();

@@ -4,12 +4,10 @@
         <div class="mt-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2 ">
-                    <BaseSelect id="professor-select" v-model="selectedProfessor" :options="professorOptions"
-                        placeholder="Seleccionar profesor" :disabled="loading || !props.selectedSemester"
-                        :searchable="true" />
 
-                    <Toggle />
-                    <span> Disponibilidad Desactivada</span>
+                    <BaseSelect class="w-128" id="professor-select" v-model="selectedProfessor"
+                        :options="professorOptions" placeholder="Seleccionar profesor"
+                        :disabled="loading || !props.selectedSemester" :searchable="true" />
                 </div>
 
 

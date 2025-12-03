@@ -79,34 +79,23 @@
                 <!-- Filter by level -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
-                    <Select id="filter-level" v-model="filters.level" @change="applyFilters">
-                        <option value="">Todos los niveles</option>
-                        <option value="1-2-3">1-2-3</option>
-                        <option value="3-4-5">3-4-5</option>
-                        <option value="5-6-7">5-6-7</option>
-                        <option value="7-8-9-E">7-8-9-E</option>
+                    <Select id="filter-level" v-model="filters.level" :options="levelOptions" @change="applyFilters">
                     </Select>
                 </div>
 
                 <!-- Filter by professor -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
-                    <Select id="filter-professor" v-model="filters.professor" @change="applyFilters">
-                        <option value="">Todos los profesores</option>
-                        <option v-for="professor in sortedProfessors" :key="professor.id" :value="professor.id">
-                            {{ professor.name }}
-                        </option>
+                    <Select id="filter-professor" v-model="filters.professor" :options="professorOptions"
+                        @change="applyFilters">
                     </Select>
                 </div>
 
                 <!-- Filter by subject -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
-                    <Select id="filter-subject" v-model="filters.subject" @change="applyFilters">
-                        <option value="">Todas las materias</option>
-                        <option v-for="subject in subjects" :key="subject.id" :value="subject.id.toString()">
-                            {{ subject.code }} - {{ subject.name }}
-                        </option>
+                    <Select id="filter-subject" v-model="filters.subject" :options="subjectOptions"
+                        @change="applyFilters">
                     </Select>
                 </div>
             </div>
@@ -308,11 +297,7 @@
 
             <div class="mb-4">
                 <Select id="professor-select" label="Profesor" v-model="selectedProfessorId"
-                    placeholder="Elige un profesor" width="w-full">
-                    <option value="null">SIN ASIGNAR</option>
-                    <option v-for="professor in availableProfessors" :key="professor.id" :value="professor.id">
-                        {{ professor.name }}
-                    </option>
+                    :options="modalProfessorOptions" placeholder="Elige un profesor" width="w-full">
                 </Select>
 
                 <!-- Error de conflicto de horario -->
@@ -385,11 +370,7 @@
                 </p>
 
                 <Select id="semester-select" label="Semestre anterior" v-model="selectedPreviousSemesterId"
-                    placeholder="Selecciona un semestre" width="w-full">
-                    <option value="">Selecciona un semestre</option>
-                    <option v-for="semester in availableSemesters" :key="semester.id" :value="semester.id">
-                        {{ semester.description }}
-                    </option>
+                    :options="semesterOptions" placeholder="Selecciona un semestre" width="w-full">
                 </Select>
             </div>
 
@@ -540,6 +521,35 @@ const timeSlots = [
     '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
     '19:00', '20:00', '21:00', '22:00'
 ];
+
+// Options for selects
+const levelOptions = [
+    { label: 'Todos los niveles', value: '' },
+    { label: '1-2-3', value: '1-2-3' },
+    { label: '3-4-5', value: '3-4-5' },
+    { label: '5-6-7', value: '5-6-7' },
+    { label: '7-8-9-E', value: '7-8-9-E' }
+]
+
+const professorOptions = computed(() => [
+    { label: 'Todos los profesores', value: '' },
+    ...sortedProfessors.value.map(p => ({ label: p.name, value: p.id }))
+])
+
+const subjectOptions = computed(() => [
+    { label: 'Todas las materias', value: '' },
+    ...subjects.value.map(s => ({ label: `${s.code} - ${s.name}`, value: s.id.toString() }))
+])
+
+const modalProfessorOptions = computed(() => [
+    { label: 'SIN ASIGNAR', value: 'null' },
+    ...availableProfessors.value.map(p => ({ label: p.name, value: p.id }))
+])
+
+const semesterOptions = computed(() => [
+    { label: 'Selecciona un semestre', value: '' },
+    ...availableSemesters.value.map(s => ({ label: s.description, value: s.id }))
+])
 
 // Load data functions
 async function loadScheduleData() {
