@@ -171,11 +171,8 @@
                     usuarios</span>
                 <span class="mx-2">|</span>
                 <span>Mostrar</span>
-                <Select :modelValue="itemsPerPage" @update:modelValue="handleItemsPerPageChange" id="itemsPerPage"
-                    customClass="px-2 py-1 text-sm" width="w-15" height="">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="100">100</option>
+                <Select :modelValue="itemsPerPage" class="w-15" @update:modelValue="handleItemsPerPageChange"
+                    id="itemsPerPage" :options="itemsPerPageOptions" :searchable="false">
                 </Select>
                 <span>por página</span>
             </div>
@@ -248,6 +245,11 @@ const sortConfig = ref(null)
 const openDropdown = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const itemsPerPageOptions = [
+    { label: '10', value: 10 },
+    { label: '20', value: 20 },
+    { label: '100', value: 100 }
+]
 const showUserDetailsModal = ref(false)
 const selectedUserId = ref(null)
 const showEditUserModal = ref(false)

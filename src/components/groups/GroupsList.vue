@@ -1,17 +1,14 @@
 <template>
     <div class="h-full flex flex-col">
         <!-- Barra de acciones superior -->
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center h-15 gap-4">
+        <div class="flex justify-between pt-2 items-center mb-4">
+            <div class="flex items-center  h-15 gap-4 w-2/3">
+
                 <Search v-model="searchTerm" placeholder="Buscar grupos..." />
 
                 <!-- Filtro por materia -->
-                <Select id="subject-filter" v-model="selectedSubjectFilter" placeholder="Todas las materias">
-                    <option value="">Todas las materias</option>
-                    <option v-for="subject in availableSubjects" :key="subject.id" :value="subject.id">
-                        {{ subject.code }} - {{ subject.name }}
-                    </option>
-                </Select>
+                <BaseMultiSelect :options="subjectOptions" v-model="selectedSubjectFilter"
+                    placeholder="Filtrar por materias" searchPlaceholder="Buscar materias..." />
             </div>
 
             <div class="flex items-center gap-2">
@@ -150,10 +147,7 @@
                 <span class="mx-2">|</span>
                 <span>Mostrar</span>
                 <Select :modelValue="itemsPerPage" @update:modelValue="handleItemsPerPageChange" id="itemsPerPage"
-                    customClass="px-2 py-1 text-sm" width="w-15" height="">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="100">100</option>
+                    :options="itemsPerPageOptions" :searchable="false">
                 </Select>
                 <span>por página</span>
             </div>
@@ -225,7 +219,7 @@ import { useAreasStore } from '@/store/areasStore'
 import { useSemesterStore } from '@/store/semesterStore'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 import Search from '@/components/ui/base/BaseSearch.vue'
-import Select from '@/components/ui/base/BaseSelect.vue'
+import BaseMultiSelect from '@/components/ui/base/BaseMultiSelect.vue'
 import Button from '@/components/ui/base/BaseButton.vue'
 import GroupModal from '@/components/groups/GroupModal.vue'
 
@@ -244,7 +238,7 @@ const semesterStore = useSemesterStore()
 
 // Estado reactivo
 const searchTerm = ref('')
-const selectedSubjectFilter = ref('')
+const selectedSubjectFilter = ref([])
 const showDeleteModal = ref(false)
 const groupToDelete = ref(null)
 const isSubmitting = ref(false)
@@ -253,6 +247,11 @@ const isRefreshing = ref(false)
 const openDropdown = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const itemsPerPageOptions = [
+    { label: '10', value: 10 },
+    { label: '20', value: 20 },
+    { label: '100', value: 100 }
+]
 
 // No longer needed - handled by NewGroupModal
 
@@ -266,6 +265,25 @@ const availableSubjects = computed(() => {
     })
     // Ordenar alfabéticamente por nombre
     return subjects.sort((a, b) => a.name.localeCompare(b.name))
+})
+
+// Opciones para el BaseMultiSelect de filtro por materia
+const subjectOptions = computed(() => {
+    return availableSubjects.value.map(subject => `${subject.code} - ${subject.name}`)
+})
+
+// Mapa para convertir de texto seleccionado a ID de materia
+const subjectTextToIdMap = computed(() => {
+    const map = new Map()
+    availableSubjects.value.forEach(subject => {
+        map.set(`${subject.code} - ${subject.name}`, subject.id)
+    })
+    return map
+})
+
+// IDs de las materias seleccionadas
+const selectedSubjectIds = computed(() => {
+    return selectedSubjectFilter.value.map(text => subjectTextToIdMap.value.get(text)).filter(id => id !== undefined)
 })
 
 // Función para obtener el nombre de la materia
@@ -291,10 +309,10 @@ const filteredGroups = computed(() => {
         })
     }
 
-    // Filtrar por materia
-    if (selectedSubjectFilter.value) {
+    // Filtrar por materias seleccionadas (múltiple)
+    if (selectedSubjectIds.value.length > 0) {
         groups = groups.filter(group =>
-            group.idSubject === parseInt(selectedSubjectFilter.value)
+            selectedSubjectIds.value.includes(group.idSubject)
         )
     }
 

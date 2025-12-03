@@ -355,21 +355,35 @@ function getGeneralSlotProfessors(hour: string, day: string): Array<{
         status: 'approved' | 'rejected' | 'pending'
     }> = []
 
+    // Parse filter IDs (support comma-separated values)
+    const selectedAreaIds = props.selectedAreaFilter
+        ? props.selectedAreaFilter.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+        : []
+
+    const selectedSubjectIds = props.selectedSubjectFilter
+        ? props.selectedSubjectFilter.split(',').map(id => id.trim()).filter(id => id !== '')
+        : []
+
     for (const professorAvailability of props.allProfessorsAvailability) {
-        // Aplicar filtro de área
-        if (props.selectedAreaFilter && !professorAvailability.areas.includes(parseInt(props.selectedAreaFilter))) {
-            continue
+        // Aplicar filtro de área (múltiples áreas)
+        if (selectedAreaIds.length > 0) {
+            const hasMatchingArea = professorAvailability.areas.some((areaId: number) =>
+                selectedAreaIds.includes(areaId)
+            )
+            if (!hasMatchingArea) {
+                continue
+            }
         }
 
-        // Aplicar filtro de materia
-        if (props.selectedSubjectFilter) {
+        // Aplicar filtro de materia (múltiples materias)
+        if (selectedSubjectIds.length > 0) {
             const professorSubjects = professorAvailability.areas.flatMap((areaId: number) =>
                 areasStore.getSubjectsByArea(areaId)
             )
-            const hasSubject = professorSubjects.some((subject: any) =>
-                subject.id.toString() === props.selectedSubjectFilter
+            const hasMatchingSubject = professorSubjects.some((subject: any) =>
+                selectedSubjectIds.includes(subject.id.toString())
             )
-            if (!hasSubject) {
+            if (!hasMatchingSubject) {
                 continue
             }
         }

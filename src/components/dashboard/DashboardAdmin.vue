@@ -201,6 +201,16 @@ const chartWidth = ref(800)
 const chartHeight = ref(320)
 const margin = ref({ top: 20, right: 30, bottom: 60, left: 60 })
 
+const testOptions = ref([
+    { label: 'Todos', value: null },
+    { label: 'juan', value: 2 },
+    { label: 'julio', value: 3 },
+    { label: 'agosto', value: 4 },
+    { label: 'septiembre', value: 5 },
+    { label: 'octubre', value: 6 },
+    { label: 'noviembre', value: 7 },
+    { label: 'diciembre', value: 8 }
+])
 // Tooltip state
 const tooltip = ref({
     visible: false,

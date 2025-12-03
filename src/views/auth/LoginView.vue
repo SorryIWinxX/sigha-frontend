@@ -9,7 +9,7 @@
                         <h1 class="font-bold text-5xl px-4 text-gray-800">SIGHA</h1>
 
                     </div>
-                    <h1 class="font-bold text-center text-xl px-4 text-blue-500">ESCUELA DE {{ schoolName }}</h1>
+                    <h1 class="font-bold text-center text-xl px-4 text-[{{  }}]"> {{ schoolName }}</h1>
                     <!-- Login Form -->
                     <form v-if="!isForgotPasswordMode && !isChangePasswordMode" class="space-y-6">
                         <div class="space-y-2">
@@ -59,7 +59,7 @@
 
                     <!-- Forgot Password Form -->
                     <form v-else-if="isForgotPasswordMode" class="space-y-6">
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex justify-between items-center my-6">
                             <h2 class="text-xl font-semibold text-gray-800">Recuperar contraseña</h2>
                         </div>
 
@@ -82,12 +82,11 @@
                         </div>
 
                         <div class="flex justify-end space-x-3 mt-6">
-                            <h1 class="text-red-500"> FUNCION NO DISPONIBLE</h1>
                             <button type="button" @click="isForgotPasswordMode = false; forgotPasswordDocumento = ''"
                                 class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                                 Volver
                             </button>
-                            <button type="submit"
+                            <button type="button" @click="forgotPassword"
                                 class="px-4 py-2 bg-[#67b83c] hover:bg-[#5aa534] text-white rounded-md"
                                 :disabled="!forgotPasswordDocumento">
                                 Enviar
@@ -176,6 +175,7 @@ import { showSuccessToast, showErrorToast, showInfoToast } from '@/utils/toast'
 import { useAuthStore } from '@/store/authStore'
 import { useRoleStore } from '@/store/roleStore'
 import { useRouter } from 'vue-router'
+import { userService } from '@/services/userServices'
 
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
@@ -183,6 +183,7 @@ const router = useRouter()
 
 // Environment variables
 const schoolName = import.meta.env.VITE_SCHOOL
+const schoolColor = import.meta.env.VITE_COLOR
 
 // Form state
 const documento = ref('')
@@ -256,6 +257,17 @@ const redirectUser = () => {
     } else {
         // Redirigir a vista de usuario por defecto
         router.push('/user')
+    }
+}
+
+const forgotPassword = async () => {
+    try {
+        await userService.forgotPassword(forgotPasswordDocumento.value)
+        showSuccessToast('Recuperación de contraseña enviada')
+        isForgotPasswordMode.value = false
+        forgotPasswordDocumento.value = ''
+    } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : 'Error al enviar la recuperación de contraseña')
     }
 }
 </script>

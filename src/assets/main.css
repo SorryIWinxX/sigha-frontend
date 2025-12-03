@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-
+@import 'vue-select/dist/vue-select.css';
 /* Colores predeterminados personalizados */
 @theme {
   --color-primary-50: #f4f9f1;
@@ -97,4 +97,46 @@
   --color-info-800: #244e72;
   --color-info-900: #1f425f;
   --color-info-950: #102434;
+}
+
+.style-chooser .vs__search::placeholder,
+.style-chooser .vs__dropdown-toggle,
+.style-chooser .vs__dropdown-menu {
+  background: var(--color-white);
+  border: border-gray-300;
+  color: var(--color-gray-700);
+}
+
+/* Sobrescribir variables CSS de vue-select */
+.style-chooser {
+  --vs-dropdown-option--active-bg: var(--color-primary-200);
+  --vs-dropdown-option--active-color: var(--color-gray-700);
+}
+
+.style-chooser .vs__dropdown-option--selected {
+  background: var(--color-primary-500) !important;
+  background-color: var(--color-primary-500) !important;
+  color: var(--color-white) !important;
+}
+
+.style-chooser .vs__dropdown-option--active {
+  background: var(--color-primary-500) !important;
+  background-color: var(--color-primary-500) !important;
+  color: var(--color-white) !important;
+}
+
+/* Forzar el color del background en el dropdown completo */
+.style-chooser .vs__dropdown-menu .vs__dropdown-option:hover {
+  background: var(--color-primary-200) !important;
+  background-color: var(--color-primary-200) !important;
+  color: var(--color-gray-700) !important;
+}
+
+.style-chooser .vs__dropdown-box-shadow {
+  box-shadow: none;
+}
+
+.style-chooser .vs__clear,
+.style-chooser .vs__open-indicator {
+  fill: var(--color-gray-700);
 }
