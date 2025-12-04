@@ -145,6 +145,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  const roleStore = useRoleStore()
   const needsAuth = to.meta.requiresAuth
   const requiredRoles = to.meta.roles as string[] | undefined
 
