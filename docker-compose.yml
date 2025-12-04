@@ -1,19 +1,52 @@
 services:
-  sigha-frontend:
+  # Instancia 1
+  sigha-frontend-1:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: sigha-frontend-preprod
+    container_name: sigha-frontend-instancia-1
     ports:
-      - '3000:3000'
-    env_file:
-      - .env
-    networks:
-      - sigha-network-preprod
+      - '3001:80'
+    environment:
+      # Usa host.docker.internal en lugar de localhost
+      - VITE_API_URL=http://host.docker.internal:8080
+      - VITE_SCHOOL=ING. SISTEMAS
+      - VITE_COLOR=blue-500
     restart: unless-stopped
-    volumes:
-      - .:/app
-      - /app/node_modules
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Instancia 2
+  sigha-frontend-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sigha-frontend-instancia-2
+    ports:
+      - '3002:80'
+    environment:
+      - VITE_API_URL=http://host.docker.internal:8080
+      - VITE_SCHOOL=ING. INTELIGENCIA ARTIFICIAL
+      - VITE_COLOR=red-500
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Instancia 3
+  sigha-frontend-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sigha-frontend-instancia-3
+    ports:
+      - '3003:80'
+    environment:
+      - VITE_API_URL=http://host.docker.internal:8080
+      - VITE_SCHOOL=ING. CIENCIA DE DATOS
+      - VITE_COLOR=green
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   sigha-network-preprod:
