@@ -530,6 +530,142 @@ const timeSlots = [
     '19:00', '20:00', '21:00', '22:00'
 ];
 
+// ==========================================
+// CONSTANTES DE COLORES (movidas fuera de funciones para evitar recrear objetos)
+// ==========================================
+const LEVEL_COLOR_MAP: { [key: string]: string } = {
+    '1': 'red-500',
+    '2': 'purple-500',
+    '3': 'amber-500',
+    '4': 'indigo-600',
+    '5': 'lime-500',
+    '6': 'green-500',
+    '7': 'yellow-500',
+    '8': 'rose-500',
+    '9': 'violet-500',
+    '10': 'blue-500',
+    'E': 'stone-700',
+    '1-2-3': 'pink-600',
+    '3-4-5': 'indigo-600',
+    '5-6-7': 'teal-600',
+    '7-8-9-E': 'yellow-600'
+};
+
+const CARD_COLOR_CLASSES: { [key: string]: { border: string; hover: string } } = {
+    'red-500': { border: 'border-red-500', hover: 'hover:bg-red-500' },
+    'red-600': { border: 'border-red-600', hover: 'hover:bg-red-600' },
+    'orange-500': { border: 'border-orange-500', hover: 'hover:bg-orange-500' },
+    'orange-600': { border: 'border-orange-600', hover: 'hover:bg-orange-600' },
+    'amber-500': { border: 'border-amber-500', hover: 'hover:bg-amber-500' },
+    'amber-600': { border: 'border-amber-600', hover: 'hover:bg-amber-600' },
+    'yellow-500': { border: 'border-yellow-500', hover: 'hover:bg-yellow-500' },
+    'yellow-600': { border: 'border-yellow-600', hover: 'hover:bg-yellow-600' },
+    'lime-500': { border: 'border-lime-500', hover: 'hover:bg-lime-500' },
+    'lime-600': { border: 'border-lime-600', hover: 'hover:bg-lime-600' },
+    'green-500': { border: 'border-green-500', hover: 'hover:bg-green-500' },
+    'green-600': { border: 'border-green-600', hover: 'hover:bg-green-600' },
+    'emerald-500': { border: 'border-emerald-500', hover: 'hover:bg-emerald-500' },
+    'emerald-600': { border: 'border-emerald-600', hover: 'hover:bg-emerald-600' },
+    'teal-500': { border: 'border-teal-500', hover: 'hover:bg-teal-500' },
+    'teal-600': { border: 'border-teal-600', hover: 'hover:bg-teal-600' },
+    'cyan-500': { border: 'border-cyan-500', hover: 'hover:bg-cyan-500' },
+    'cyan-600': { border: 'border-cyan-600', hover: 'hover:bg-cyan-600' },
+    'sky-500': { border: 'border-sky-500', hover: 'hover:bg-sky-500' },
+    'sky-600': { border: 'border-sky-600', hover: 'hover:bg-sky-600' },
+    'blue-500': { border: 'border-blue-500', hover: 'hover:bg-blue-500' },
+    'blue-600': { border: 'border-blue-600', hover: 'hover:bg-blue-600' },
+    'indigo-500': { border: 'border-indigo-500', hover: 'hover:bg-indigo-500' },
+    'indigo-600': { border: 'border-indigo-600', hover: 'hover:bg-indigo-600' },
+    'violet-500': { border: 'border-violet-500', hover: 'hover:bg-violet-500' },
+    'violet-600': { border: 'border-violet-600', hover: 'hover:bg-violet-600' },
+    'purple-500': { border: 'border-purple-500', hover: 'hover:bg-purple-500' },
+    'purple-600': { border: 'border-purple-600', hover: 'hover:bg-purple-600' },
+    'fuchsia-500': { border: 'border-fuchsia-500', hover: 'hover:bg-fuchsia-500' },
+    'fuchsia-600': { border: 'border-fuchsia-600', hover: 'hover:bg-fuchsia-600' },
+    'pink-500': { border: 'border-pink-500', hover: 'hover:bg-pink-500' },
+    'pink-600': { border: 'border-pink-600', hover: 'hover:bg-pink-600' },
+    'rose-500': { border: 'border-rose-500', hover: 'hover:bg-rose-500' },
+    'rose-600': { border: 'border-rose-600', hover: 'hover:bg-rose-600' },
+    'stone-700': { border: 'border-stone-700', hover: 'hover:bg-stone-700' }
+};
+
+const MODAL_BORDER_CLASSES: { [key: string]: string } = {
+    'red-500': 'border-red-500',
+    'red-600': 'border-red-600',
+    'orange-500': 'border-orange-500',
+    'orange-600': 'border-orange-600',
+    'amber-500': 'border-amber-500',
+    'amber-600': 'border-amber-600',
+    'yellow-500': 'border-yellow-500',
+    'yellow-600': 'border-yellow-600',
+    'lime-500': 'border-lime-500',
+    'lime-600': 'border-lime-600',
+    'green-500': 'border-green-500',
+    'green-600': 'border-green-600',
+    'emerald-500': 'border-emerald-500',
+    'emerald-600': 'border-emerald-600',
+    'teal-500': 'border-teal-500',
+    'teal-600': 'border-teal-600',
+    'cyan-500': 'border-cyan-500',
+    'cyan-600': 'border-cyan-600',
+    'sky-500': 'border-sky-500',
+    'sky-600': 'border-sky-600',
+    'blue-500': 'border-blue-500',
+    'blue-600': 'border-blue-600',
+    'indigo-500': 'border-indigo-500',
+    'indigo-600': 'border-indigo-600',
+    'violet-500': 'border-violet-500',
+    'violet-600': 'border-violet-600',
+    'purple-500': 'border-purple-500',
+    'purple-600': 'border-purple-600',
+    'fuchsia-500': 'border-fuchsia-500',
+    'fuchsia-600': 'border-fuchsia-600',
+    'pink-500': 'border-pink-500',
+    'pink-600': 'border-pink-600',
+    'rose-500': 'border-rose-500',
+    'rose-600': 'border-rose-600',
+    'stone-700': 'border-stone-700'
+};
+
+const BG_COLOR_MAP: { [key: string]: string } = {
+    'red-500': 'bg-red-500',
+    'red-600': 'bg-red-600',
+    'orange-500': 'bg-orange-500',
+    'orange-600': 'bg-orange-600',
+    'amber-500': 'bg-amber-500',
+    'amber-600': 'bg-amber-600',
+    'yellow-500': 'bg-yellow-500',
+    'yellow-600': 'bg-yellow-600',
+    'lime-500': 'bg-lime-500',
+    'lime-600': 'bg-lime-600',
+    'green-500': 'bg-green-500',
+    'green-600': 'bg-green-600',
+    'emerald-500': 'bg-emerald-500',
+    'emerald-600': 'bg-emerald-600',
+    'teal-500': 'bg-teal-500',
+    'teal-600': 'bg-teal-600',
+    'cyan-500': 'bg-cyan-500',
+    'cyan-600': 'bg-cyan-600',
+    'sky-500': 'bg-sky-500',
+    'sky-600': 'bg-sky-600',
+    'blue-500': 'bg-blue-500',
+    'blue-600': 'bg-blue-600',
+    'indigo-500': 'bg-indigo-500',
+    'indigo-600': 'bg-indigo-600',
+    'violet-500': 'bg-violet-500',
+    'violet-600': 'bg-violet-600',
+    'purple-500': 'bg-purple-500',
+    'purple-600': 'bg-purple-600',
+    'fuchsia-500': 'bg-fuchsia-500',
+    'fuchsia-600': 'bg-fuchsia-600',
+    'pink-500': 'bg-pink-500',
+    'pink-600': 'bg-pink-600',
+    'rose-500': 'bg-rose-500',
+    'rose-600': 'bg-rose-600',
+    'stone-700': 'bg-stone-700',
+    'gray-500': 'bg-gray-500'
+};
+
 // Load data functions
 async function loadScheduleData() {
     try {
@@ -649,6 +785,69 @@ function formatHourToTimeSlot(hour: number): string | null {
     return timeSlots.includes(hourStr) ? hourStr : null;
 }
 
+// ==========================================
+// ÍNDICES COMPUTADOS PARA OPTIMIZAR BÚSQUEDAS
+// ==========================================
+
+/**
+ * Índice de grupos por slot (hora-día) - evita filtrar todos los grupos 102 veces
+ * Se recalcula solo cuando cambia groups.value
+ */
+const groupsBySlot = computed(() => {
+    const index = new Map<string, GroupDisplay[]>();
+    for (const group of groups.value) {
+        const key = `${group.hour}-${group.day}`;
+        const existing = index.get(key);
+        if (existing) {
+            existing.push(group);
+        } else {
+            index.set(key, [group]);
+        }
+    }
+    return index;
+});
+
+/**
+ * Índice de grupos por profesor/hora/día para validación rápida de conflictos
+ * Se recalcula solo cuando cambia allGroups.value
+ */
+const groupsByProfessorSlot = computed(() => {
+    const index = new Map<string, GroupDisplay[]>();
+    for (const group of allGroups.value) {
+        if (group.professor.id === 'null') continue; // Ignorar sin asignar
+        const key = `${group.professor.id}-${group.hour}-${group.day}`;
+        const existing = index.get(key);
+        if (existing) {
+            existing.push(group);
+        } else {
+            index.set(key, [group]);
+        }
+    }
+    return index;
+});
+
+/**
+ * Set de IDs de grupos modificados - evita JSON.stringify en cada render
+ * Se actualiza incrementalmente en lugar de recalcular todo
+ */
+const modifiedGroupIds = computed(() => {
+    const modified = new Set<string>();
+    for (const groupId of changedGroups.value) {
+        const currentGroup = allGroups.value.find(g => g.id === groupId);
+        const originalGroup = originalGroups.value.find(g => g.id === groupId);
+
+        if (!currentGroup || !originalGroup) continue;
+
+        // Comparación directa de propiedades (más rápido que JSON.stringify)
+        if (currentGroup.hour !== originalGroup.hour ||
+            currentGroup.day !== originalGroup.day ||
+            currentGroup.professor.id !== originalGroup.professor.id) {
+            modified.add(groupId);
+        }
+    }
+    return modified;
+});
+
 // Computed
 const activeFiltersCount = computed(() => {
     let count = 0;
@@ -744,18 +943,19 @@ const availableProfessors = computed(() => {
     return [...availableProfs].sort((a, b) => a.name.localeCompare(b.name));
 });
 
-// Validation for professor assignment
+// Validation for professor assignment - usa índice para búsqueda O(1)
 const professorConflictValidation = computed(() => {
     if (!selectedGroup.value || !selectedProfessorId.value || selectedProfessorId.value === 'null') {
-        return { hasConflict: false, conflictMessage: '', conflictingGroups: [] };
+        return { hasConflict: false, conflictMessage: '', conflictingGroups: [] as GroupDisplay[] };
     }
 
-    // Validate against ALL groups in the system, not just filtered ones
-    const conflictingGroups = allGroups.value.filter(group =>
-        group.id !== selectedGroup.value!.id && // Not the same group
-        group.professor.id === selectedProfessorId.value && // Same professor
-        group.hour === selectedGroup.value!.hour && // Same hour
-        group.day === selectedGroup.value!.day // Same day
+    // Usar índice pre-computado para búsqueda O(1)
+    const key = `${selectedProfessorId.value}-${selectedGroup.value.hour}-${selectedGroup.value.day}`;
+    const potentialConflicts = groupsByProfessorSlot.value.get(key) || [];
+
+    // Filtrar solo el grupo actual (no es conflicto consigo mismo)
+    const conflictingGroups = potentialConflicts.filter(group =>
+        group.id !== selectedGroup.value!.id
     );
 
     if (conflictingGroups.length > 0) {
@@ -770,7 +970,7 @@ const professorConflictValidation = computed(() => {
         };
     }
 
-    return { hasConflict: false, conflictMessage: '', conflictingGroups: [] };
+    return { hasConflict: false, conflictMessage: '', conflictingGroups: [] as GroupDisplay[] };
 });
 
 const canSaveProfessorChange = computed(() => {
@@ -820,223 +1020,71 @@ function formatTime(hour: number, minutes: number): string {
 }
 
 function getGroupsForSlot(hour: string, day: string): GroupDisplay[] {
-    return groups.value.filter(group =>
-        group.hour === hour && group.day === day
-    );
+    // Usa el índice pre-computado en lugar de filtrar todos los grupos
+    return groupsBySlot.value.get(`${hour}-${day}`) || [];
 }
+
+// Cache para colores de nivel (evita recalcular regex)
+const levelColorCache = new Map<string, string>();
 
 /**
  * Asigna un color específico basado en el nivel del grupo
- * Cada nivel tiene un color único asignado
+ * Usa cache para evitar recálculos
  */
 function getLevelColor(level: string): string {
-    // Colores definidos por variables de entorno (si existen)
-    const envLevelColors: { [key: string]: string } = {
-        '1': import.meta.env.VITE_LEVEL_COLOR_1 || '',
-        '2': import.meta.env.VITE_LEVEL_COLOR_2 || '',
-        '3': import.meta.env.VITE_LEVEL_COLOR_3 || '',
-        '4': import.meta.env.VITE_LEVEL_COLOR_4 || '',
-        '5': import.meta.env.VITE_LEVEL_COLOR_5 || '',
-        '6': import.meta.env.VITE_LEVEL_COLOR_6 || '',
-        '7': import.meta.env.VITE_LEVEL_COLOR_7 || '',
-        '8': import.meta.env.VITE_LEVEL_COLOR_8 || '',
-        '9': import.meta.env.VITE_LEVEL_COLOR_9 || '',
-        '10': import.meta.env.VITE_LEVEL_COLOR_10 || '',
-        'E': import.meta.env.VITE_LEVEL_COLOR_E || ''
-    };
-
-    // Si hay color en env para el nivel exacto, usarlo
-    if (envLevelColors[level]) {
-        return envLevelColors[level];
-    }
-
-    // Mapeo por defecto de niveles a colores
-    const levelColorMap: { [key: string]: string } = {
-        // Colores vibrantes, bien diferenciados
-        '1': 'red-500',
-        '2': 'purple-500',
-        '3': 'amber-500',
-        '4': 'indigo-600',
-        '5': 'lime-500',
-        '6': 'green-500',
-        '7': 'yellow-500',
-        '8': 'rose-500',
-        '9': 'violet-500',
-        '10': 'blue-500',
-        'E': 'stone-700', // Marrón aproximado
-        // Rangos de niveles
-        '1-2-3': 'pink-600',
-        '3-4-5': 'indigo-600',
-        '5-6-7': 'teal-600',
-        '7-8-9-E': 'yellow-600'
-    };
+    // Verificar cache primero
+    const cached = levelColorCache.get(level);
+    if (cached) return cached;
 
     // Buscar coincidencia exacta primero
-    if (levelColorMap[level]) {
-        return levelColorMap[level];
+    if (LEVEL_COLOR_MAP[level]) {
+        levelColorCache.set(level, LEVEL_COLOR_MAP[level]);
+        return LEVEL_COLOR_MAP[level];
     }
 
     // Si no hay coincidencia exacta, extraer el primer número del nivel
     const match = level.match(/(\d+)/);
     if (match) {
         const firstNumber = match[1];
-        // Intentar con variables de entorno para el primer número del rango
-        if (envLevelColors[firstNumber]) {
-            return envLevelColors[firstNumber];
-        }
-        if (levelColorMap[firstNumber]) {
-            return levelColorMap[firstNumber];
+        if (LEVEL_COLOR_MAP[firstNumber]) {
+            levelColorCache.set(level, LEVEL_COLOR_MAP[firstNumber]);
+            return LEVEL_COLOR_MAP[firstNumber];
         }
     }
 
     // Color por defecto
+    levelColorCache.set(level, 'gray-500');
     return 'gray-500';
 }
 
 /**
  * Obtiene las clases CSS para una tarjeta de grupo basadas en el nivel
+ * Usa constantes pre-definidas para evitar recrear objetos
  */
 function getGroupCardClasses(group: GroupDisplay): string {
     const levelColor = getLevelColor(group.level);
-
-    // Mapear colores Tailwind a clases de border y hover
-    const colorMap: { [key: string]: { border: string; hover: string } } = {
-        'red-500': { border: 'border-red-500', hover: 'hover:bg-red-500' },
-        'red-600': { border: 'border-red-600', hover: 'hover:bg-red-600' },
-        'orange-500': { border: 'border-orange-500', hover: 'hover:bg-orange-500' },
-        'orange-600': { border: 'border-orange-600', hover: 'hover:bg-orange-600' },
-        'amber-500': { border: 'border-amber-500', hover: 'hover:bg-amber-500' },
-        'amber-600': { border: 'border-amber-600', hover: 'hover:bg-amber-600' },
-        'yellow-500': { border: 'border-yellow-500', hover: 'hover:bg-yellow-500' },
-        'yellow-600': { border: 'border-yellow-600', hover: 'hover:bg-yellow-600' },
-        'lime-500': { border: 'border-lime-500', hover: 'hover:bg-lime-500' },
-        'lime-600': { border: 'border-lime-600', hover: 'hover:bg-lime-600' },
-        'green-500': { border: 'border-green-500', hover: 'hover:bg-green-500' },
-        'green-600': { border: 'border-green-600', hover: 'hover:bg-green-600' },
-        'emerald-500': { border: 'border-emerald-500', hover: 'hover:bg-emerald-500' },
-        'emerald-600': { border: 'border-emerald-600', hover: 'hover:bg-emerald-600' },
-        'teal-500': { border: 'border-teal-500', hover: 'hover:bg-teal-500' },
-        'teal-600': { border: 'border-teal-600', hover: 'hover:bg-teal-600' },
-        'cyan-500': { border: 'border-cyan-500', hover: 'hover:bg-cyan-500' },
-        'cyan-600': { border: 'border-cyan-600', hover: 'hover:bg-cyan-600' },
-        'sky-500': { border: 'border-sky-500', hover: 'hover:bg-sky-500' },
-        'sky-600': { border: 'border-sky-600', hover: 'hover:bg-sky-600' },
-        'blue-500': { border: 'border-blue-500', hover: 'hover:bg-blue-500' },
-        'blue-600': { border: 'border-blue-600', hover: 'hover:bg-blue-600' },
-        'indigo-500': { border: 'border-indigo-500', hover: 'hover:bg-indigo-500' },
-        'indigo-600': { border: 'border-indigo-600', hover: 'hover:bg-indigo-600' },
-        'violet-500': { border: 'border-violet-500', hover: 'hover:bg-violet-500' },
-        'violet-600': { border: 'border-violet-600', hover: 'hover:bg-violet-600' },
-        'purple-500': { border: 'border-purple-500', hover: 'hover:bg-purple-500' },
-        'purple-600': { border: 'border-purple-600', hover: 'hover:bg-purple-600' },
-        'fuchsia-500': { border: 'border-fuchsia-500', hover: 'hover:bg-fuchsia-500' },
-        'fuchsia-600': { border: 'border-fuchsia-600', hover: 'hover:bg-fuchsia-600' },
-        'pink-500': { border: 'border-pink-500', hover: 'hover:bg-pink-500' },
-        'pink-600': { border: 'border-pink-600', hover: 'hover:bg-pink-600' },
-        'rose-500': { border: 'border-rose-500', hover: 'hover:bg-rose-500' },
-        'rose-600': { border: 'border-rose-600', hover: 'hover:bg-rose-600' },
-        'stone-700': { border: 'border-stone-700', hover: 'hover:bg-stone-700' }
-    };
-
-    const colors = colorMap[levelColor] || { border: 'border-gray-500', hover: 'hover:bg-gray-500' };
+    const colors = CARD_COLOR_CLASSES[levelColor] || { border: 'border-gray-500', hover: 'hover:bg-gray-500' };
     return `${colors.border} ${colors.hover}`;
 }
 
 /**
  * Obtiene la clase de border para el modal basada en el nivel
+ * Usa constantes pre-definidas para evitar recrear objetos
  */
 function getModalBorderClass(group: GroupDisplay): string {
     const levelColor = getLevelColor(group.level);
-
-    const colorMap: { [key: string]: string } = {
-        'red-500': 'border-red-500',
-        'red-600': 'border-red-600',
-        'orange-500': 'border-orange-500',
-        'orange-600': 'border-orange-600',
-        'amber-500': 'border-amber-500',
-        'amber-600': 'border-amber-600',
-        'yellow-500': 'border-yellow-500',
-        'yellow-600': 'border-yellow-600',
-        'lime-500': 'border-lime-500',
-        'lime-600': 'border-lime-600',
-        'green-500': 'border-green-500',
-        'green-600': 'border-green-600',
-        'emerald-500': 'border-emerald-500',
-        'emerald-600': 'border-emerald-600',
-        'teal-500': 'border-teal-500',
-        'teal-600': 'border-teal-600',
-        'cyan-500': 'border-cyan-500',
-        'cyan-600': 'border-cyan-600',
-        'sky-500': 'border-sky-500',
-        'sky-600': 'border-sky-600',
-        'blue-500': 'border-blue-500',
-        'blue-600': 'border-blue-600',
-        'indigo-500': 'border-indigo-500',
-        'indigo-600': 'border-indigo-600',
-        'violet-500': 'border-violet-500',
-        'violet-600': 'border-violet-600',
-        'purple-500': 'border-purple-500',
-        'purple-600': 'border-purple-600',
-        'fuchsia-500': 'border-fuchsia-500',
-        'fuchsia-600': 'border-fuchsia-600',
-        'pink-500': 'border-pink-500',
-        'pink-600': 'border-pink-600',
-        'rose-500': 'border-rose-500',
-        'rose-600': 'border-rose-600',
-        'stone-700': 'border-stone-700'
-    };
-
-    return colorMap[levelColor] || 'border-gray-500';
+    return MODAL_BORDER_CLASSES[levelColor] || 'border-gray-500';
 }
 
-// Leyenda de colores
-const legendItems = computed(() => {
-    const levels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'E'];
-    // Mapear tokens a clases bg-*
-    const bgColorMap: { [key: string]: string } = {
-        'red-500': 'bg-red-500',
-        'red-600': 'bg-red-600',
-        'orange-500': 'bg-orange-500',
-        'orange-600': 'bg-orange-600',
-        'amber-500': 'bg-amber-500',
-        'amber-600': 'bg-amber-600',
-        'yellow-500': 'bg-yellow-500',
-        'yellow-600': 'bg-yellow-600',
-        'lime-500': 'bg-lime-500',
-        'lime-600': 'bg-lime-600',
-        'green-500': 'bg-green-500',
-        'green-600': 'bg-green-600',
-        'emerald-500': 'bg-emerald-500',
-        'emerald-600': 'bg-emerald-600',
-        'teal-500': 'bg-teal-500',
-        'teal-600': 'bg-teal-600',
-        'cyan-500': 'bg-cyan-500',
-        'cyan-600': 'bg-cyan-600',
-        'sky-500': 'bg-sky-500',
-        'sky-600': 'bg-sky-600',
-        'blue-500': 'bg-blue-500',
-        'blue-600': 'bg-blue-600',
-        'indigo-500': 'bg-indigo-500',
-        'indigo-600': 'bg-indigo-600',
-        'violet-500': 'bg-violet-500',
-        'violet-600': 'bg-violet-600',
-        'purple-500': 'bg-purple-500',
-        'purple-600': 'bg-purple-600',
-        'fuchsia-500': 'bg-fuchsia-500',
-        'fuchsia-600': 'bg-fuchsia-600',
-        'pink-500': 'bg-pink-500',
-        'pink-600': 'bg-pink-600',
-        'rose-500': 'bg-rose-500',
-        'rose-600': 'bg-rose-600',
-        'stone-700': 'bg-stone-700',
-        'gray-500': 'bg-gray-500'
-    };
+// Leyenda de colores - usa constantes pre-definidas
+const LEGEND_LEVELS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'E'];
 
-    return levels.map(lvl => {
+const legendItems = computed(() => {
+    return LEGEND_LEVELS.map(lvl => {
         const token = getLevelColor(lvl);
         return {
             level: lvl,
-            bgClass: bgColorMap[token] || 'bg-gray-500'
+            bgClass: BG_COLOR_MAP[token] || 'bg-gray-500'
         };
     });
 });
@@ -1083,14 +1131,20 @@ function canDropInSlot(hour: string, day: string): boolean {
     if (draggedGroup.value.professor.id === 'null') return true;
 
     // Check if the professor has a conflict at this time against ALL groups
-    const conflictingGroups = allGroups.value.filter(group =>
-        group.id !== draggedGroup.value!.id &&
-        group.hour === hour &&
-        group.day === day &&
-        group.professor.id === draggedGroup.value!.professor.id
-    );
+    const conflictingGroups = getConflictingGroups(hour, day);
 
     return conflictingGroups.length === 0;
+}
+
+/**
+ * Obtiene grupos en conflicto usando índice pre-computado O(1)
+ */
+function getConflictingGroups(hour: string, day: string): GroupDisplay[] {
+    if (!draggedGroup.value || draggedGroup.value.professor.id === 'null') {
+        return [];
+    }
+    const key = `${draggedGroup.value.professor.id}-${hour}-${day}`;
+    return groupsByProfessorSlot.value.get(key) || [];
 }
 
 function handleDrop(event: DragEvent, hour: string, day: string) {
@@ -1104,12 +1158,7 @@ function handleDrop(event: DragEvent, hour: string, day: string) {
     // Check if the drop is valid and show specific error messages
     if (!canDropInSlot(hour, day)) {
         // Find conflicting groups to provide a specific error message (check ALL groups)
-        const conflictingGroups = allGroups.value.filter(group =>
-            group.id !== draggedGroup.value!.id &&
-            group.hour === hour &&
-            group.day === day &&
-            group.professor.id === draggedGroup.value!.professor.id
-        );
+        const conflictingGroups = getConflictingGroups(hour, day);
 
         if (conflictingGroups.length > 0) {
             const conflictingGroup = conflictingGroups[0];
@@ -1592,13 +1641,12 @@ const showDeleteModal = ref(false);
 const groupToDelete = ref<GroupDisplay | null>(null);
 const isDeleting = ref(false);
 
+/**
+ * Verifica si un grupo ha sido modificado
+ * Usa el Set pre-computado para O(1) en lugar de JSON.stringify O(n)
+ */
 function isGroupModified(groupId: string): boolean {
-    const currentGroup = groups.value.find(g => g.id === groupId);
-    const originalGroup = originalGroups.value.find(g => g.id === groupId);
-
-    if (!currentGroup || !originalGroup) return false;
-
-    return JSON.stringify(currentGroup) !== JSON.stringify(originalGroup);
+    return modifiedGroupIds.value.has(groupId);
 }
 
 function generateDetailedChanges() {
@@ -1753,23 +1801,22 @@ async function confirmDeleteGroup() {
         isDeleting.value = true;
 
         // Extract the API group ID from the display group ID (format: apiGroupId-hour-day)
-        const apiGroupId = parseInt(groupToDelete.value.id.split('-')[0]);
-        await groupsService.deleteGroup(apiGroupId);
+        const apiGroupId = groupToDelete.value.id.split('-')[0];
+        await groupsService.deleteGroup(parseInt(apiGroupId));
 
-        // Remove all cards for this group (same code) from local state
-        const groupCode = groupToDelete.value.code;
+        // Remove all cards for this specific API group (by apiGroupId, not by code)
+        // El código puede repetirse entre diferentes materias, pero el apiGroupId es único
 
         // Remove from changed groups set first (before filtering groups)
         const groupsToRemove = Array.from(changedGroups.value).filter(id => {
-            const group = groups.value.find(g => g.id === id);
-            return group && group.code === groupCode;
+            return id.split('-')[0] === apiGroupId;
         });
         groupsToRemove.forEach(id => changedGroups.value.delete(id));
 
-        // Now remove from all arrays
-        groups.value = groups.value.filter(g => g.code !== groupCode);
-        allGroups.value = allGroups.value.filter(g => g.code !== groupCode);
-        originalGroups.value = originalGroups.value.filter(g => g.code !== groupCode);
+        // Now remove from all arrays - filter by apiGroupId, not by code
+        groups.value = groups.value.filter(g => g.id.split('-')[0] !== apiGroupId);
+        allGroups.value = allGroups.value.filter(g => g.id.split('-')[0] !== apiGroupId);
+        originalGroups.value = originalGroups.value.filter(g => g.id.split('-')[0] !== apiGroupId);
 
         // Update unsaved changes status
         hasUnsavedChanges.value = changedGroups.value.size > 0;
