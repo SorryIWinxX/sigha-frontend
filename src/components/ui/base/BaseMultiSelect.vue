@@ -92,13 +92,18 @@ const searchInput = ref(null);
 
 // Watch for external changes to modelValue
 watch(() => props.modelValue, (newValue) => {
-    selectedTags.value = [...newValue];
+    // Avoid infinite loop by checking if values are actually different
+    const isSame = newValue.length === selectedTags.value.length &&
+        newValue.every((val) => selectedTags.value.includes(val));
+
+    if (!isSame) {
+        selectedTags.value = [...newValue];
+    }
 }, { deep: true });
 
-// Watch for changes to selectedTags and emit update
-watch(selectedTags, (newValue) => {
-    emit('update:modelValue', [...newValue]);
-}, { deep: true });
+function emitUpdate() {
+    emit('update:modelValue', [...selectedTags.value]);
+}
 
 function toggleDropdown() {
     showList.value = !showList.value;
@@ -110,6 +115,7 @@ function selectTag(tag) {
     } else {
         selectedTags.value.push(tag);
     }
+    emitUpdate();
 }
 
 function toggleTag(tag, value) {
@@ -120,6 +126,7 @@ function toggleTag(tag, value) {
     } else {
         selectedTags.value = selectedTags.value.filter((t) => t !== tag);
     }
+    emitUpdate();
 }
 
 function isSelected(tag) {
@@ -143,6 +150,7 @@ function selectAllTags(value) {
             (tag) => !currentlyFilteredTags.includes(tag)
         );
     }
+    emitUpdate();
 }
 
 const areAllVisibleTagsSelected = computed(() => {
