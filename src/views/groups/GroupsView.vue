@@ -1,12 +1,12 @@
 <template>
     <Layout>
-        <div class="flex h-full flex-col overflow-hidden">
+        <div class="flex h-full flex-col">
             <div class="flex w-full pb-4 justify-between items-center flex-shrink-0">
                 <h1 class="text-2xl font-bold text-gray-800">Grupos</h1>
                 <SemesterSelector @semester-changed="onSemesterChanged" />
             </div>
 
-            <div class="flex-1 min-h-0 bg-white overflow-hidden">
+            <div class="flex-1 bg-white">
                 <GroupsList :semester-id="currentSemesterId" />
             </div>
         </div>
