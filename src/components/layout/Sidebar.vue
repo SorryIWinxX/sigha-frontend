@@ -113,7 +113,7 @@ const menuItems = computed<SidebarItem[]>(() => {
                 to: '/schedule-groups',
             },
             { to: '/groups', icon: Blocks, label: 'Grupos' },
-            { to: '/areas-subjects', icon: SquareLibrary, label: 'Areas y Materias' },
+            { to: '/areas-subjects', icon: SquareLibrary, label: 'Areas y Asignaturas' },
             { to: '/available-management', icon: CalendarRange, label: 'Disponibilidades' },
             { to: '/users', icon: Users, label: 'Usuarios' },
             // { to: '/requests', icon: FileText, label: 'Solicitudes' },
