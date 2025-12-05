@@ -114,7 +114,7 @@
                     Limpiar filtros
                 </Button>
                 <span class="text-sm text-gray-600 flex items-center">
-                    Mostrando {{ groups.length }} de {{ allGroups.length }} horarios (grupos únicos: {{
+                    Mostrando {{ groups.length }} de {{ allGroups.length }} horas programadas (grupos únicos: {{
                         uniqueFilteredGroupCount }} de {{ uniqueTotalGroupCount }})
                 </span>
             </div>
