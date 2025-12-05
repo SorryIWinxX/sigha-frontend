@@ -1,6 +1,6 @@
 <template>
     <div class="w-full bg-white">
-        <div class="overflow-hidden border border-gray-200 rounded-sm">
+        <div class="border border-gray-200 rounded-sm">
             <table class="w-full">
                 <thead class="bg-gray-100 border-b border-gray-200">
                     <tr>
