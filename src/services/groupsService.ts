@@ -485,7 +485,7 @@ export class GroupsService {
         id: group.id,
         idSemestre: semesterId, // Cambiar al semestre de destino
         idSubject: group.idSubject,
-        idDocente: null, // Siempre null como especificaste
+        idDocente: group.idDocente || null, // Siempre null como especificaste
         levelName: group.levelName || null,
         code: group.code,
         scheduleList: group.scheduleList || [],
@@ -513,9 +513,9 @@ export class GroupsService {
       console.log('Respuesta de la API:', response.status, response.statusText)
 
       if (!response.ok) {
-        const errorData = await response.text()
+        const errorData = await response.json()
         console.error('Error data from API:', errorData)
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`)
+        throw new Error(errorData.message)
       }
 
       console.log('Previous schedule copied successfully')

@@ -239,13 +239,13 @@
 
                                     <!-- Modo edición de asignatura -->
                                     <div v-if="editingSubjectId === subject.id" class="p-4">
-                                        <div class="grid grid-cols-3 gap-4 mb-4">
+                                        <div class="grid grid-cols-4 gap-4 mb-4">
                                             <div>
                                                 <Input id="edit-subject-code" v-model="editSubjectForm.code"
                                                     type="number" label="Código" uppercase
                                                     @keyup.enter="saveEditSubject" @keyup.escape="cancelEditSubject" />
                                             </div>
-                                            <div>
+                                            <div class="col-span-1">
                                                 <Input id="edit-subject-name" v-model="editSubjectForm.name" type="text"
                                                     label="Asignatura" uppercase @keyup.enter="saveEditSubject"
                                                     @keyup.escape="cancelEditSubject" />
@@ -254,6 +254,11 @@
                                                 <Select id="edit-subject-level" v-model="editSubjectForm.level"
                                                     :options="subjectLevelOptionsWithoutEmpty" label="Nivel"
                                                     placeholder="Seleccionar nivel" />
+                                            </div>
+                                            <div>
+                                                <Select id="edit-subject-area" v-model="editSubjectForm.areaId"
+                                                    :options="areaOptions" label="Área"
+                                                    placeholder="Seleccionar área" />
                                             </div>
                                         </div>
                                         <div class="flex gap-2 justify-end">
@@ -379,7 +384,8 @@ const newSubject = reactive({
 const editSubjectForm = reactive({
     code: '',
     name: '',
-    level: ''
+    level: '',
+    areaId: null as number | null
 })
 
 // Computed properties
@@ -449,6 +455,13 @@ const areaTypeOptions = computed(() => [
     { value: 'software', label: 'Software' },
     { value: 'other', label: 'Otros' }
 ])
+
+const areaOptions = computed(() => {
+    return areas.value.map(area => ({
+        value: area.id || 0,
+        label: area.description
+    }))
+})
 
 const filteredAreas = computed(() => {
     let result = areas.value
@@ -781,17 +794,18 @@ const startEditSubject = (subject: Subject, areaId: number) => {
     editSubjectForm.code = subject.code
     editSubjectForm.name = subject.name
     editSubjectForm.level = normalizeLevel(subject.level || '')
+    editSubjectForm.areaId = areaId
 }
 
 const saveEditSubject = async () => {
-    if (!editingSubjectId.value || !currentEditingAreaId.value) return
+    if (!editingSubjectId.value || !currentEditingAreaId.value || !editSubjectForm.areaId) return
 
     const updateData = {
         code: editSubjectForm.code.trim(),
         name: editSubjectForm.name.trim(),
         level: editSubjectForm.level.trim(),
         idLevel: parseInt(editSubjectForm.level.trim()),
-        idArea: currentEditingAreaId.value
+        idArea: editSubjectForm.areaId
     }
 
     try {
@@ -811,6 +825,7 @@ const cancelEditSubject = () => {
     editSubjectForm.code = ''
     editSubjectForm.name = ''
     editSubjectForm.level = ''
+    editSubjectForm.areaId = null
 }
 
 
