@@ -20,7 +20,7 @@
                 <div class="space-y-2">
                     <div v-for="change in detailedChanges" :key="change.groupId"
                         class="bg-white rounded p-2 text-black text-sm">
-                        <div class="font-medium">{{ change.groupCode }} - {{ change.subject }}</div>
+                        <div class="font-medium">{{ change.codeSubject }} - {{ change.nameSubject }}</div>
                         <div class="text-xs mt-1 space-y-1">
                             <div v-for="detail in change.changes" :key="detail.type" class="flex items-center gap-2">
                                 <span class="inline-block w-2 h-2 bg-white rounded-full"></span>
@@ -221,8 +221,8 @@
 
                                         <!-- Subject -->
                                         <div class="text-xs group-hover:text-white text-gray-600 mb-2 truncate"
-                                            :title="group.subject">
-                                            {{ group.code }} - {{ group.subject }}
+                                            :title="group.nameSubject">
+                                            {{ group.codeSubject }} - {{ group.nameSubject }}
                                         </div>
 
                                         <!-- Professor -->
@@ -295,7 +295,7 @@
 
             <div class="mb-3">
                 <div class="text-normal text-gray-600 mb-1">
-                    <strong>Asignatura:</strong> {{ selectedGroup.code }} - {{ selectedGroup.subject }}
+                    <strong>Asignatura:</strong> {{ selectedGroup.codeSubject }} - {{ selectedGroup.nameSubject }}
                 </div>
 
                 <div class="text-normal text-gray-600 ">
@@ -460,7 +460,8 @@ interface Professor {
 interface GroupDisplay {
     id: string;
     code: string;
-    subject: string;
+    nameSubject: string;
+    codeSubject: string;
     professor: Professor;
     level: string;
     day: string;
@@ -779,7 +780,8 @@ function mapGroupToDisplayFormat(apiGroup: ApiGroup): GroupDisplay[] {
         return {
             id: `${apiGroup.id}-${schedule.hour}-${schedule.day}`,
             code: apiGroup.code,
-            subject: subjectName,
+            nameSubject: subjectName,
+            codeSubject: subject?.code || '',
             professor: professorInfo,
             level: apiGroup.levelName || 'Sin nivel',
             day: dayKey,
@@ -978,7 +980,7 @@ const availableProfessors = computed(() => {
     if (!selectedGroup.value) {
         availableProfs = professors.value;
     } else {
-        availableProfs = getProfessorsForSubject(selectedGroup.value.subject);
+        availableProfs = getProfessorsForSubject(selectedGroup.value.nameSubject);
     }
 
     // Ordenar alfabéticamente
@@ -1695,7 +1697,7 @@ defineEmits(['nivelChanged']);
 
 // New state for detailed changes
 const showChangesDetails = ref(false);
-const detailedChanges = ref<{ groupId: string; groupCode: string; subject: string; changes: { type: string; description: string }[] }[]>([]);
+const detailedChanges = ref<{ groupId: string; groupCode: string; nameSubject: string; codeSubject: string; changes: { type: string; description: string }[] }[]>([]);
 
 // State for copy previous schedule modal
 const showCopyScheduleModal = ref(false);
@@ -1717,7 +1719,7 @@ function isGroupModified(groupId: string): boolean {
 }
 
 function generateDetailedChanges() {
-    const changes: { groupId: string; groupCode: string; subject: string; changes: { type: string; description: string }[] }[] = [];
+    const changes: { groupId: string; groupCode: string; nameSubject: string; codeSubject: string; changes: { type: string; description: string }[] }[] = [];
 
     for (const groupId of changedGroups.value) {
         const currentGroup = groups.value.find(g => g.id === groupId);
@@ -1764,7 +1766,8 @@ function generateDetailedChanges() {
             changes.push({
                 groupId: groupId,
                 groupCode: currentGroup.code,
-                subject: currentGroup.subject,
+                nameSubject: currentGroup.nameSubject,
+                codeSubject: currentGroup.codeSubject,
                 changes: groupChanges
             });
         }
