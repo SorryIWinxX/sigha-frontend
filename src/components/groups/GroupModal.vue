@@ -144,6 +144,7 @@ import Input from '@/components/ui/base/BaseInput.vue'
 import Button from '@/components/ui/base/BaseButton.vue'
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue'
 import { AvailabilityService } from '@/services/availabilityService'
+import { showErrorToast } from '@/utils/toast'
 
 // Props
 const props = defineProps({
@@ -495,10 +496,17 @@ const handleSubmit = async () => {
 
         emit('submit', groupData)
 
-        // Close modal after successful submission
-        closeModal()
+        // Note: We don't close the modal here anymore. 
+        // The parent component is responsible for closing it upon successful submission.
+        // This allows the modal to stay open if there's an error.
     } catch (error) {
         console.error('Error submitting form:', error)
+        // If we have a specific error message structure
+        if (error.message && typeof error.message === 'object' && error.message.message) {
+            showErrorToast(error.message.message)
+        } else {
+            showErrorToast(error.message || 'Error al enviar el formulario')
+        }
     } finally {
         isSubmitting.value = false
     }
