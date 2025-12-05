@@ -76,33 +76,41 @@
 
         <!-- Filter Panel -->
         <div v-if="showFilters" class="p-4 bg-gray-50 border border-gray-200 rounded-sm">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <!-- Filter by level -->
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Niveles Agrupados</label>
+                    <BaseSelect v-model="filters.groupedLevel" :options="groupedLevelOptions"
+                        placeholder="Todos los niveles" search-placeholder="Buscar nivel..."
+                        :disabled="filters.level.length > 0" />
+                </div>
+                <div :class="{ 'opacity-50 pointer-events-none': filters.groupedLevel }">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
                     <BaseMultiSelect v-model="filters.level" :options="levelOptions" placeholder="Todos los niveles"
-                        search-placeholder="Buscar nivel..." @update:modelValue="applyFilters" />
+                        search-placeholder="Buscar nivel..." />
                 </div>
 
                 <!-- Filter by professor -->
                 <div v-if="!docenteId">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profesor</label>
                     <BaseMultiSelect v-model="filters.professor" :options="professorOptions"
-                        placeholder="Todos los profesores" search-placeholder="Buscar profesor..."
-                        @update:modelValue="applyFilters" />
+                        placeholder="Todos los profesores" search-placeholder="Buscar profesor..." />
                 </div>
 
                 <!-- Filter by subject -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asignatura</label>
                     <BaseMultiSelect v-model="filters.subject" :options="subjectOptions"
-                        placeholder="Todas las materias" search-placeholder="Buscar materia..."
-                        @update:modelValue="applyFilters" />
+                        placeholder="Todas las asignaturas" search-placeholder="Buscar asignatura..." />
                 </div>
             </div>
 
-            <div class="mt-4 flex gap-2">
-                <Button variant="primary" @click="clearFilters">
+            <div class="mt-4 flex gap-2 items-center">
+                <Button variant="primary" @click="applyFilters" :disabled="isFiltering">
+                    <span v-if="isFiltering">Filtrando...</span>
+                    <span v-else>Aplicar filtros</span>
+                </Button>
+                <Button variant="secondary" @click="clearFilters" :disabled="isFiltering">
                     Limpiar filtros
                 </Button>
                 <span class="text-sm text-gray-600 flex items-center">
@@ -214,7 +222,7 @@
                                         <!-- Subject -->
                                         <div class="text-xs group-hover:text-white text-gray-600 mb-2 truncate"
                                             :title="group.subject">
-                                            {{ group.subject }}
+                                            {{ group.code }} - {{ group.subject }}
                                         </div>
 
                                         <!-- Professor -->
@@ -287,7 +295,7 @@
 
             <div class="mb-3">
                 <div class="text-normal text-gray-600 mb-1">
-                    <strong>Materia:</strong> {{ selectedGroup.subject }}
+                    <strong>Asignatura:</strong> {{ selectedGroup.code }} - {{ selectedGroup.subject }}
                 </div>
 
                 <div class="text-normal text-gray-600 ">
@@ -299,9 +307,9 @@
             </div>
 
             <div class="mb-4">
-                <Select id="professor-select" label="Profesor" v-model="selectedProfessorId"
+                <BaseSelect id="professor-select" label="Profesor" v-model="selectedProfessorId"
                     :options="modalProfessorOptions" placeholder="Elige un profesor" width="w-full">
-                </Select>
+                </BaseSelect>
 
                 <!-- Error de conflicto de horario -->
                 <div v-if="professorConflictValidation.hasConflict"
@@ -372,9 +380,9 @@
                     <strong class="text-amber-600">Esto reemplazará todos los horarios actuales.</strong>
                 </p>
 
-                <Select id="semester-select" label="Semestre anterior" v-model="selectedPreviousSemesterId"
+                <BaseSelect id="semester-select" label="Semestre anterior" v-model="selectedPreviousSemesterId"
                     :options="semesterOptions" placeholder="Selecciona un semestre" width="w-full">
-                </Select>
+                </BaseSelect>
             </div>
 
             <div class="flex justify-end space-x-3">
@@ -405,7 +413,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { User as UserIcon, X, Save, Trash2, ArrowLeft, Plus, ClipboardCopy, Maximize2, Filter, ChevronDown, Info, AlertTriangle, FileText } from 'lucide-vue-next';
-import Select from '@/components/ui/base/BaseSelect.vue';
+import BaseSelect from '@/components/ui/base/BaseSelect.vue';
 import BaseMultiSelect from '@/components/ui/base/BaseMultiSelect.vue';
 import Button from '@/components/ui/base/BaseButton.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
@@ -472,8 +480,10 @@ const error = ref<string | null>(null);
 // Search and filter state
 const searchQuery = ref('');
 const showFilters = ref(false);
+const isFiltering = ref(false);
 const filters = reactive({
     level: [] as string[],
+    groupedLevel: '' as string,
     professor: [] as string[],
     subject: [] as string[]
 });
@@ -722,7 +732,6 @@ async function loadScheduleData() {
         filters.level = [];
         filters.professor = [];
         filters.subject = [];
-        applyFilters();
 
         console.log('groups.value', groups.value);
 
@@ -858,22 +867,55 @@ const activeFiltersCount = computed(() => {
 });
 
 // Options for multi-select filters
+const groupedLevelOptions = [
+    { label: 'Niveles 1-2-3', value: '1-2-3' },
+    { label: 'Niveles 3-4-5', value: '3-4-5' },
+    { label: 'Niveles 5-6-7', value: '5-6-7' },
+    { label: 'Niveles 7-8-9-E', value: '7-8-9-E' }
+];
+
+const groupedLevelToIds: { [key: string]: number[] } = {
+    '1-2-3': [1, 2, 3],
+    '3-4-5': [3, 4, 5],
+    '5-6-7': [5, 6, 7],
+    '7-8-9-E': [7, 8, 9, 11]
+};
+
 const levelOptions = computed(() => [
-    '1-2-3',
-    '3-4-5',
-    '5-6-7',
-    '7-8-9-E'
+    'Nivel 1',
+    'Nivel 2',
+    'Nivel 3',
+    'Nivel 4',
+    'Nivel 5',
+    'Nivel 6',
+    'Nivel 7',
+    'Nivel 8',
+    'Nivel 9',
+    'Nivel 10',
+    'Nivel E'
 ]);
+
+// Mapeo de labels de nivel a IDs para el endpoint
+const levelLabelToId: { [key: string]: number } = {
+    'Nivel 1': 1,
+    'Nivel 2': 2,
+    'Nivel 3': 3,
+    'Nivel 4': 4,
+    'Nivel 5': 5,
+    'Nivel 6': 6,
+    'Nivel 7': 7,
+    'Nivel 8': 8,
+    'Nivel 9': 9,
+    'Nivel 10': 10,
+    'Nivel E': 11
+};
 
 const professorOptions = computed(() => {
     return sortedProfessors.value.map(professor => professor.name);
 });
 
 const subjectOptions = computed(() => {
-    return subjects.value.map(subject => {
-        // Use the same format for display
-        return `${subject.code} - ${subject.name}`;
-    });
+    return subjects.value.map(subject => `${subject.code} - ${subject.name}`);
 });
 
 const modalProfessorOptions = computed(() => [
@@ -1495,8 +1537,14 @@ function undoChanges() {
     hasUnsavedChanges.value = false;
     changedGroups.value.clear();
 
-    // Reapply filters to update the displayed groups
-    applyFilters();
+    // Restaurar grupos mostrados (sin llamar al servidor)
+    if (hasActiveFilters.value) {
+        // Si hay filtros activos, reaplicarlos
+        applyFilters();
+    } else {
+        // Si no hay filtros, mostrar todos los grupos
+        groups.value = [...allGroups.value];
+    }
 
     showSuccessToast('Cambios deshechados exitosamente');
 }
@@ -1506,79 +1554,103 @@ function toggleFilters() {
     showFilters.value = !showFilters.value;
 }
 
-function applyFilters() {
+async function applyFilters() {
+    const semesterId = props.semesterId || semesterStore.currentSemester?.id;
+
+    if (!semesterId) {
+        console.warn('No hay semestre seleccionado');
+        return;
+    }
+
+    // Si no hay filtros activos, cargar todos los grupos
     if (!hasActiveFilters.value) {
-        // If no filters, show all groups
         groups.value = [...allGroups.value];
         return;
     }
 
-    let filteredData = [...allGroups.value];
+    try {
+        isFiltering.value = true;
 
-    // Apply level filter
-    if (filters.level.length > 0) {
-        filteredData = filteredData.filter(group => {
-            // Check if the group level matches any of the selected level ranges
-            const groupLevel = group.level;
+        // Convertir labels de nivel a IDs (priorizar agrupación si existe)
+        let levelIds: number[] = [];
 
-            return filters.level.some(selectedLevel => {
-                switch (selectedLevel) {
-                    case '1-2-3':
-                        return ['1', '2', '3'].some(level => groupLevel.includes(level));
-                    case '3-4-5':
-                        return ['3', '4', '5'].some(level => groupLevel.includes(level));
-                    case '5-6-7':
-                        return ['5', '6', '7'].some(level => groupLevel.includes(level));
-                    case '7-8-9-E':
-                        return ['7', '8', '9', 'E'].some(level => groupLevel.includes(level));
-                    default:
-                        return false;
-                }
-            });
-        });
-    }
+        if (filters.groupedLevel) {
+            levelIds = groupedLevelToIds[filters.groupedLevel] || [];
+        } else {
+            levelIds = filters.level
+                .map(levelLabel => levelLabelToId[levelLabel])
+                .filter((id): id is number => id !== undefined);
+        }
 
-    // Apply professor filter
-    if (filters.professor.length > 0) {
-        // Convert professor names to IDs for filtering
-        const selectedProfessorIds = sortedProfessors.value
-            .filter(prof => filters.professor.includes(prof.name))
-            .map(prof => prof.id);
+        // Convertir nombres de profesores a IDs
+        const docenteIds = filters.professor
+            .map(profName => {
+                const prof = professors.value.find(p => p.name === profName);
+                return prof ? parseInt(prof.id) : null;
+            })
+            .filter((id): id is number => id !== null);
 
-        filteredData = filteredData.filter(group =>
-            selectedProfessorIds.includes(group.professor.id)
-        );
-    }
+        // Convertir labels de materias a IDs
+        const subjectIds = filters.subject
+            .map(subjectLabel => {
+                // Extraer código del formato "code - name"
+                const code = subjectLabel.split(' - ')[0];
+                const subject = subjects.value.find(s => s.code === code);
+                return subject ? subject.id : null;
+            })
+            .filter((id): id is number => id !== null);
 
-    // Apply subject filter
-    if (filters.subject.length > 0) {
-        // Extract subject names from the filter options (format: "code - name")
-        const selectedSubjectNames = filters.subject.map(filterValue => {
-            // Extract name from "code - name" format
-            const parts = filterValue.split(' - ');
-            return parts.length > 1 ? parts.slice(1).join(' - ') : filterValue;
+        // Llamar al endpoint con los filtros
+        const apiGroups = await groupsService.getGroupsByFilters({
+            semesterId: semesterId,
+            idLevels: levelIds.length > 0 ? levelIds : undefined,
+            docentesIds: docenteIds.length > 0 ? docenteIds : undefined,
+            subjectIds: subjectIds.length > 0 ? subjectIds : undefined
         });
 
-        filteredData = filteredData.filter(group =>
-            selectedSubjectNames.includes(group.subject)
-        );
-    }
+        // Mapear los grupos filtrados al formato de display
+        const mappedGroups = apiGroups
+            .filter((group: ApiGroup) => group.scheduleList && group.scheduleList.length > 0)
+            .flatMap((group: ApiGroup) => mapGroupToDisplayFormat(group))
+            .filter((group: GroupDisplay | null) => group !== null) as GroupDisplay[];
 
-    // Apply filters but don't validate conflicts here - we want to show filtered groups
-    // Conflicts will be validated when assigning professors
-    groups.value = filteredData;
+        groups.value = mappedGroups;
+
+    } catch (err) {
+        console.error('Error applying filters:', err);
+        showErrorToast('Error al aplicar los filtros');
+        // En caso de error, mostrar todos los grupos
+        groups.value = [...allGroups.value];
+    } finally {
+        isFiltering.value = false;
+    }
 }
 
 const hasActiveFilters = computed(() => {
-    return filters.level.length > 0 || filters.professor.length > 0 || filters.subject.length > 0;
+    return filters.level.length > 0 || !!filters.groupedLevel || filters.professor.length > 0 || filters.subject.length > 0;
 });
 
-function clearFilters() {
+async function clearFilters() {
     filters.level = [];
+    filters.groupedLevel = '';
     filters.professor = [];
     filters.subject = [];
-    applyFilters();
+    // Al limpiar filtros, restaurar todos los grupos
+    groups.value = [...allGroups.value];
 }
+
+// Watchers for mutual exclusivity of level filters
+watch(() => filters.groupedLevel, (newValue) => {
+    if (newValue) {
+        filters.level = [];
+    }
+});
+
+watch(() => filters.level, (newValue) => {
+    if (newValue && newValue.length > 0) {
+        filters.groupedLevel = '';
+    }
+}, { deep: true });
 
 // Watch for semester changes
 watch(() => props.semesterId, async (newSemesterId) => {
@@ -1849,10 +1921,33 @@ async function handleModalSubmit(groupData: any) {
         await loadScheduleData();
 
         groupsStore.closeModal();
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error guardando grupo:', error);
-        const action = groupsStore.getModalMode === 'create' ? 'crear' : 'actualizar';
-        showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`);
+
+        let errorMessage = '';
+
+        // Intentar extraer el mensaje de error detallado si existe
+        if (error.message) {
+            // Buscar patrón de mensaje JSON anidado
+            const jsonMatch = error.message.match(/message:\s*({.*})/);
+            if (jsonMatch && jsonMatch[1]) {
+                try {
+                    const errorData = JSON.parse(jsonMatch[1]);
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (e) {
+                    // Ignorar errores de parsing
+                }
+            }
+        }
+
+        if (errorMessage) {
+            showErrorToast(errorMessage);
+        } else {
+            const action = groupsStore.getModalMode === 'create' ? 'crear' : 'actualizar';
+            showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`);
+        }
     }
 }
 </script>

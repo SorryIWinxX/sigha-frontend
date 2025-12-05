@@ -405,6 +405,45 @@ export class GroupsService {
     }
   }
 
+  // Obtener grupos con filtros
+  async getGroupsByFilters(params: {
+    semesterId: number
+    idLevels?: number[]
+    docentesIds?: number[]
+    subjectIds?: number[]
+  }): Promise<Group[]> {
+    try {
+      const queryParams = new URLSearchParams()
+      queryParams.append('semesterId', params.semesterId.toString())
+
+      if (params.idLevels && params.idLevels.length > 0) {
+        params.idLevels.forEach((id) => queryParams.append('idLevels', id.toString()))
+      }
+
+      if (params.docentesIds && params.docentesIds.length > 0) {
+        params.docentesIds.forEach((id) => queryParams.append('docentesIds', id.toString()))
+      }
+
+      if (params.subjectIds && params.subjectIds.length > 0) {
+        params.subjectIds.forEach((id) => queryParams.append('subjectIds', id.toString()))
+      }
+
+      const response = await fetch(`/api/v1/group/by-filters?${queryParams}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching groups by filters:', error)
+      throw error
+    }
+  }
+
   // Copiar horarios de semestre anterior
   async copyPreviousSchedule(previousSemesterId: number, targetSemesterId?: number): Promise<void> {
     try {

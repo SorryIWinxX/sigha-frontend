@@ -104,7 +104,7 @@ export class AreasService {
     subject: Omit<Subject, 'id'>,
   ): Promise<Subject> {
     try {
-      const response = await fetch(`/api/v1/area/${areaId}/subject/${subjectId}`, {
+      const response = await fetch(`/api/v1/subject/${subjectId}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(subject),
@@ -123,7 +123,7 @@ export class AreasService {
 
   async deleteSubject(areaId: number, subjectId: number): Promise<void> {
     try {
-      const response = await fetch(`/api/v1/area/${areaId}/subject/${subjectId}`, {
+      const response = await fetch(`/api/v1/subject/${subjectId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       })
