@@ -73,7 +73,7 @@
                                 </td>
                             </tr>
                             <!-- Error state -->
-                            <tr v-else-if="groupsStore.hasError">
+                            <tr v-else-if="groupsStore.hasError && groupsStore.getAllGroups.length === 0">
                                 <td colspan="4" class="px-6 py-8 text-center">
                                     <div class="text-red-600">
                                         <p class="font-semibold">Error al cargar grupos</p>
@@ -434,9 +434,30 @@ const handleModalSubmit = async (groupData) => {
 
         groupsStore.closeModal()
     } catch (error) {
-        console.error('Error guardando grupo:', error)
-        const action = groupsStore.getModalMode === 'create' ? 'crear' : 'actualizar'
-        showErrorToast(`Error al ${action} el grupo. Por favor intenta de nuevo.`)
+        console.error('Error creating group:', error)
+
+        let errorMessage = error?.message || 'Error desconocido al crear grupo'
+
+        // Intentar limpiar el mensaje si viene del servicio
+        if (errorMessage.includes('HTTP error!') && errorMessage.includes('message:')) {
+            try {
+                const parts = errorMessage.split('message:')
+                const content = parts[1].trim()
+                // Intentar parsear si es JSON
+                if (content.startsWith('{')) {
+                    const parsed = JSON.parse(content)
+                    if (parsed.message) {
+                        errorMessage = parsed.message
+                    }
+                } else {
+                    errorMessage = content
+                }
+            } catch (e) {
+                // Si falla, usar el mensaje original
+            }
+        }
+
+        showErrorToast(errorMessage)
     } finally {
         isSubmitting.value = false
     }

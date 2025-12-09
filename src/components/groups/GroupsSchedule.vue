@@ -1421,17 +1421,18 @@ async function saveChanges() {
                     idGroup: apiGroupId,
                     scheduleList: []
                 };
+
+                // Always include the professor ID (whether changed or not) to ensure persistence
+                if (currentGroup.professor.id !== 'null') {
+                    updateItem.idDocente = parseInt(currentGroup.professor.id);
+                } else {
+                    updateItem.idDocente = null;
+                }
+
                 groupChanges.set(apiGroupId, updateItem);
             }
 
-            // Check if professor changed (always check, not just when creating new item)
-            if (currentGroup.professor.id !== originalGroup.professor.id) {
-                if (currentGroup.professor.id === 'null') {
-                    updateItem.idDocente = null;
-                } else {
-                    updateItem.idDocente = parseInt(currentGroup.professor.id);
-                }
-            }
+
 
             // Convert day and hour back to API format
             const dayMapping: { [key: string]: string } = {
