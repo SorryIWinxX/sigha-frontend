@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { groupsService } from '@/services/groupsService'
 import type { Group, CreateGroupRequest, UpdateGroupRequest } from '@/types/groups'
+import { showErrorToast } from '@/utils/toast'
 
 export const useGroupsStore = defineStore('groups', {
   state: () => ({
@@ -107,7 +108,7 @@ export const useGroupsStore = defineStore('groups', {
       } catch (error) {
         console.error('Error fetching groups:', error)
         this.error = error instanceof Error ? error.message : 'Error desconocido al cargar grupos'
-        throw error
+        showErrorToast(this.error || 'Error desconocido al cargar grupos')
       } finally {
         this.loading = false
       }
@@ -133,7 +134,7 @@ export const useGroupsStore = defineStore('groups', {
       } catch (error) {
         console.error('Error fetching group:', error)
         this.error = error instanceof Error ? error.message : 'Error desconocido al cargar grupo'
-        throw error
+        showErrorToast(this.error || 'Error desconocido al cargar grupo')
       } finally {
         this.loading = false
       }
@@ -159,7 +160,7 @@ export const useGroupsStore = defineStore('groups', {
       } catch (error) {
         console.error('Error creating group:', error)
         this.error = error instanceof Error ? error.message : 'Error desconocido al crear grupo'
-        throw error
+        showErrorToast(this.error || 'Error desconocido al crear grupo')
       } finally {
         this.loading = false
       }
@@ -189,7 +190,7 @@ export const useGroupsStore = defineStore('groups', {
         console.error('Error updating group:', error)
         this.error =
           error instanceof Error ? error.message : 'Error desconocido al actualizar grupo'
-        throw error
+        showErrorToast(this.error || 'Error desconocido al actualizar grupo')
       } finally {
         this.loading = false
       }
@@ -213,7 +214,7 @@ export const useGroupsStore = defineStore('groups', {
       } catch (error) {
         console.error('Error deleting group:', error)
         this.error = error instanceof Error ? error.message : 'Error desconocido al eliminar grupo'
-        throw error
+        showErrorToast(this.error || 'Error desconocido al eliminar grupo')
       } finally {
         this.loading = false
       }

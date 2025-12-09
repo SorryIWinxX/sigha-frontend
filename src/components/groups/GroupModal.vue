@@ -500,13 +500,9 @@ const handleSubmit = async () => {
         // The parent component is responsible for closing it upon successful submission.
         // This allows the modal to stay open if there's an error.
     } catch (error) {
-        console.error('Error submitting form:', error)
-        // If we have a specific error message structure
-        if (error.message && typeof error.message === 'object' && error.message.message) {
-            showErrorToast(error.message.message)
-        } else {
-            showErrorToast(error.message || 'Error al enviar el formulario')
-        }
+        console.error('Error creating group:', error)
+        this.error = error instanceof Error ? error.message : 'Error desconocido al crear grupo'
+        showErrorToast(this.error || 'Error desconocido al crear grupo')
     } finally {
         isSubmitting.value = false
     }
