@@ -206,9 +206,15 @@
                                         </div>
 
                                         <!-- Subject -->
-                                        <div class="text-xs group-hover:text-white text-gray-600 mb-2 truncate"
+                                        <div class="text-xs group-hover:text-white text-gray-600 mb-1 truncate"
                                             :title="group.nameSubject">
                                             {{ group.codeSubject }} - {{ group.nameSubject }}
+                                        </div>
+
+                                        <!-- Program -->
+                                        <div class="text-[10px] group-hover:text-white text-gray-500 mb-2 truncate italic"
+                                            :title="group.programName">
+                                            {{ group.programName }}
                                         </div>
 
                                         <!-- Professor -->
@@ -452,6 +458,7 @@ interface GroupDisplay {
     level: string;
     day: string;
     hour: string;
+    programName: string;
 }
 
 // Reactive state
@@ -774,7 +781,8 @@ function mapGroupToDisplayFormat(apiGroup: ApiGroup): GroupDisplay[] {
             professor: professorInfo,
             level: apiGroup.levelName || 'Sin nivel',
             day: dayKey,
-            hour: hourStr
+            hour: hourStr,
+            programName: apiGroup.programName || 'Sin programa'
         };
     }).filter(group => group !== null) as GroupDisplay[];
 }
