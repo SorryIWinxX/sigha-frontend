@@ -314,13 +314,19 @@ const filteredRequests = computed(() => {
 
     // Filtrar por término de búsqueda
     if (searchTerm.value.trim()) {
-        const term = searchTerm.value.toLowerCase()
+        const normalizeText = (text) => {
+            return (text || '')
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+        }
+        const term = normalizeText(searchTerm.value)
         requests = requests.filter(request =>
-            request.professorName.toLowerCase().includes(term) ||
-            request.professorEmail.toLowerCase().includes(term) ||
-            request.comment.toLowerCase().includes(term) ||
-            (request.subject && request.subject.toLowerCase().includes(term)) ||
-            (request.groupCode && request.groupCode.toLowerCase().includes(term))
+            normalizeText(request.professorName).includes(term) ||
+            normalizeText(request.professorEmail).includes(term) ||
+            normalizeText(request.comment).includes(term) ||
+            (request.subject && normalizeText(request.subject).includes(term)) ||
+            (request.groupCode && normalizeText(request.groupCode).includes(term))
         )
     }
 

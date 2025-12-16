@@ -134,8 +134,14 @@ function isSelected(tag) {
 }
 
 const filteredTags = computed(() => {
-    const term = searchTerm.value.toLowerCase();
-    return props.options.filter((tag) => tag.toLowerCase().includes(term));
+    const normalizeText = (text) => {
+        return text
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+    }
+    const term = normalizeText(searchTerm.value)
+    return props.options.filter((tag) => normalizeText(tag).includes(term));
 });
 
 function selectAllTags(value) {

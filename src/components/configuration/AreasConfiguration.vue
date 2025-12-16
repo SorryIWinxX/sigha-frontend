@@ -468,17 +468,23 @@ const filteredAreas = computed(() => {
 
     // Aplicar filtro de búsqueda - solo busca en área, asignatura y código
     if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase().trim()
+        const normalizeText = (text: string) => {
+            return (text || '')
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+        }
+        const query = normalizeText(searchQuery.value.trim())
 
         result = result.filter(area => {
             try {
                 // Buscar en el nombre del área
-                const areaNameMatch = area.description?.toLowerCase().includes(query) || false
+                const areaNameMatch = normalizeText(area.description).includes(query)
 
                 // Buscar en las asignaturas (nombre y código)
                 const subjectMatch = area.subjectList?.some(subject => {
-                    const nameMatch = subject.name?.toLowerCase().includes(query) || false
-                    const codeMatch = subject.code?.toLowerCase().includes(query) || false
+                    const nameMatch = normalizeText(subject.name).includes(query)
+                    const codeMatch = normalizeText(subject.code).includes(query)
                     return nameMatch || codeMatch
                 }) || false
 

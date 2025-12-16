@@ -44,3 +44,9 @@ export interface ScheduleUpdateItem {
 }
 
 export type BulkScheduleUpdateRequest = ScheduleUpdateItem[]
+
+export interface Program {
+  id: number
+  name: string
+  code: string
+}

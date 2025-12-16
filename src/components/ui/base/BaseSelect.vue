@@ -118,9 +118,15 @@ const filteredOptions = computed(() => {
     if (!searchTerm.value.trim()) {
         return props.options
     }
-    const term = searchTerm.value.toLowerCase().trim()
+    const normalizeText = (text) => {
+        return text
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+    }
+    const term = normalizeText(searchTerm.value.trim())
     return props.options.filter(option =>
-        option.label.toLowerCase().includes(term)
+        normalizeText(option.label).includes(term)
     )
 })
 
