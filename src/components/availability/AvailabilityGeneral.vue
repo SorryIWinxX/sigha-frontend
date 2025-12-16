@@ -132,11 +132,10 @@ const filteredSubjects = computed(() => {
         return areasStore.areas.flatMap(area =>
             areasStore.getSubjectsByArea(area.id || 0)
         )
+    } else {
+        const areaId = parseInt(selectedAreaFilter.value[0])
+        return areaId ? areasStore.getSubjectsByArea(areaId) : []
     }
-
-    return selectedAreaIds.flatMap(areaId =>
-        areasStore.getSubjectsByArea(areaId)
-    )
 })
 
 // Opciones de materias usando código y nombre (más legible)

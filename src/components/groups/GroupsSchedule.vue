@@ -1043,6 +1043,11 @@ const canSaveProfessorChange = computed(() => {
     return true;
 });
 
+// Computed para materias ordenadas alfabéticamente
+const sortedSubjects = computed(() => {
+    return [...subjects.value].sort((a, b) => a.name.localeCompare(b.name));
+});
+
 // Methods
 function getDayLabel(day: string): string {
     return dayLabels[day as keyof typeof dayLabels] || day.toUpperCase();
