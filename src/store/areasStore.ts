@@ -20,11 +20,13 @@ export const useAreasStore = defineStore('areas', {
     // Obtener todas las áreas
     getAllAreas: (state) => state.areas,
 
-    // Obtener materias por área
+    // Obtener materias por área (ordenadas alfabéticamente por nombre)
     getSubjectsByArea: (state) => {
       return (areaId: number): Subject[] => {
         const area = state.areas.find((area) => area.id === areaId)
-        return area?.subjectList || []
+        const subjects = area?.subjectList || []
+        // Ordenar alfabéticamente por nombre
+        return [...subjects].sort((a, b) => a.name.localeCompare(b.name))
       }
     },
 

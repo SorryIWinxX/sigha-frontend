@@ -263,6 +263,7 @@ const availableSubjects = computed(() => {
             subjects.push(subject)
         })
     })
+    // Ordenar alfabéticamente por nombre
     return subjects.sort((a, b) => a.name.localeCompare(b.name))
 })
 
