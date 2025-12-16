@@ -58,14 +58,15 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useRoleStore } from '@/store/roleStore';
 import { onMounted, computed } from 'vue';
+import { getEnv } from '@/utils/env' // Importar el helper
 
 const router = useRouter();
 const authStore = useAuthStore();
 const roleStore = useRoleStore();
 
-// Environment variables
-const schoolName = import.meta.env.VITE_SCHOOL
-const schoolColor = import.meta.env.VITE_COLOR
+// Environment variables - USAR getEnv
+const schoolName = getEnv('VITE_SCHOOL')
+const schoolColor = getEnv('VITE_COLOR')
 
 // Computed property for school color class
 const schoolColorClass = computed(() => {

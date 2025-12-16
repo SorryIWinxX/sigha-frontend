@@ -9,7 +9,7 @@
                         <h1 class="font-bold text-5xl px-4 text-gray-800">SIGHA</h1>
 
                     </div>
-                    <h1 class="font-bold text-center text-xl px-4 text-[{{  }}]"> {{ schoolName }}</h1>
+                    <h1 class="font-bold text-center text-xl px-4 py-2" :class="schoolColorClass"> {{ schoolName }}</h1>
                     <!-- Login Form -->
                     <form v-if="!isForgotPasswordMode && !isChangePasswordMode" class="space-y-6">
                         <div class="space-y-2">
@@ -176,15 +176,18 @@ import { useAuthStore } from '@/store/authStore'
 import { useRoleStore } from '@/store/roleStore'
 import { useRouter } from 'vue-router'
 import { userService } from '@/services/userServices'
+import { getEnv } from '@/utils/env' // Importar el helper
 
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
 const router = useRouter()
 
-// Environment variables
-const schoolName = import.meta.env.VITE_SCHOOL
-const schoolColor = import.meta.env.VITE_COLOR
-
+// Environment variables - USAR getEnv
+const schoolName = getEnv('VITE_SCHOOL')
+const schoolColor = getEnv('VITE_COLOR')
+const schoolColorClass = computed(() => {
+    return `text-${schoolColor}-600`
+})
 // Form state
 const documento = ref('')
 const password = ref('')

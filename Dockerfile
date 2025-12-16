@@ -1,24 +1,27 @@
-# Dockerfile para pre-prod - Vue.js + Vite (sin nginx)
-
-FROM node:20-alpine
-
-# Set working directory
+# Etapa 1: Construcción
+FROM node:20-alpine as build-stage
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
-
-# Copy source code
 COPY . .
-
-# Build the application for preview
 RUN npm run build
 
-# Expose port 3000 (Vite preview default)
-EXPOSE 3000
+# Etapa 2: Producción con Nginx
+FROM nginx:alpine as production-stage
+# Copiar los archivos construidos de la etapa anterior
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Start with Vite preview (sin nginx)
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"] 
+# Copiar la configuración de nginx a la carpeta de templates.
+# La imagen de nginx ejecutará automáticamente envsubst en los archivos que terminen en .template
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+# Script mágico: Genera config.js usando las variables de entorno actuales
+RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'echo "window.__ENV__ = {" > /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'echo "  VITE_SCHOOL: \"$VITE_SCHOOL\"," >> /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'echo "  VITE_COLOR: \"$VITE_COLOR\"," >> /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
+    echo 'echo "};" >> /usr/share/nginx/html/config.js' >> /docker-entrypoint.d/40-generate-config.sh && \
+    chmod +x /docker-entrypoint.d/40-generate-config.sh
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"] 

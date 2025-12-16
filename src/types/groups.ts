@@ -17,6 +17,9 @@ export interface Group {
   levelName?: string
   schedule?: GroupSchedule // Formato anterior (para compatibilidad)
   scheduleList?: ScheduleItem[] // Nuevo formato
+  programId?: number
+  programCode?: string
+  programName?: string
 }
 
 export interface CreateGroupRequest {
