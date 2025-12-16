@@ -135,11 +135,18 @@ export const useAreasStore = defineStore('areas', {
         return this.areas
       }
 
-      const term = searchTerm.toLowerCase()
+      const normalizeText = (text: string) => {
+        return (text || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+      }
+
+      const term = normalizeText(searchTerm)
       return this.areas.filter(
         (area) =>
-          area.description.toLowerCase().includes(term) ||
-          area.subjectList.some((subject) => subject.name.toLowerCase().includes(term)),
+          normalizeText(area.description).includes(term) ||
+          area.subjectList.some((subject) => normalizeText(subject.name).includes(term)),
       )
     },
 

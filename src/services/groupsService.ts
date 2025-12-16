@@ -7,6 +7,7 @@ import type {
   GroupSchedule,
   ScheduleItem,
   BulkScheduleUpdateRequest,
+  Program,
 } from '@/types/groups'
 
 export class GroupsService {
@@ -444,6 +445,48 @@ export class GroupsService {
     }
   }
 
+  async getGroupsByFiltersGeneral(params: {
+    semesterId: number
+    idLevels?: number[]
+    docentesIds?: number[]
+    subjectIds?: number[]
+    programIds?: number[]
+  }): Promise<Group[]> {
+    try {
+      const queryParams = new URLSearchParams()
+      queryParams.append('semesterId', params.semesterId.toString())
+
+      if (params.idLevels && params.idLevels.length > 0) {
+        params.idLevels.forEach((id) => queryParams.append('idLevels', id.toString()))
+      }
+
+      if (params.docentesIds && params.docentesIds.length > 0) {
+        params.docentesIds.forEach((id) => queryParams.append('docentesIds', id.toString()))
+      }
+
+      if (params.subjectIds && params.subjectIds.length > 0) {
+        params.subjectIds.forEach((id) => queryParams.append('subjectIds', id.toString()))
+      }
+
+      if (params.programIds && params.programIds.length > 0) {
+        params.programIds.forEach((id) => queryParams.append('programIds', id.toString()))
+      }
+
+      const response = await fetch(`/api/v1/group/by-filters/all-programs?${queryParams}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching groups by filters:', error)
+      throw error
+    }
+  }
   // Copiar horarios de semestre anterior
   async copyPreviousSchedule(previousSemesterId: number, targetSemesterId?: number): Promise<void> {
     try {
@@ -521,6 +564,22 @@ export class GroupsService {
       console.log('Previous schedule copied successfully')
     } catch (error) {
       console.error('Error copying previous schedule:', error)
+      throw error
+    }
+  }
+
+  async getPrograms(): Promise<Program[]> {
+    try {
+      const response = await fetch('/api/v1/programs', {
+        method: 'GET',
+        headers: this.getHeaders(),
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching programs:', error)
       throw error
     }
   }

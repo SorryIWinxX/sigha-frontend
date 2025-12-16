@@ -29,7 +29,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Código -->
                         <div>
-                            <Input id="code-input" v-model="formData.code" label="Código" type="text"
+                            <Input id="code-input" v-model="formData.code" label="Franja" type="text"
                                 placeholder="Ej: A01, B02, GRP-001, MAT-A1" :uppercase="true" required />
                         </div>
 

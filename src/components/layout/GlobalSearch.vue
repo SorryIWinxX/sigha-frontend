@@ -286,12 +286,19 @@ const filteredResults = computed((): SearchResult[] => {
         return []
     }
 
-    const searchTerm = query.value.toLowerCase().trim()
+    const normalizeText = (text: string) => {
+        return text
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+    }
+
+    const searchTerm = normalizeText(query.value.trim())
 
     return searchItems.value.filter(item => {
-        const titleMatch = item.title.toLowerCase().includes(searchTerm)
-        const descriptionMatch = item.description?.toLowerCase().includes(searchTerm)
-        const keywordMatch = item.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm))
+        const titleMatch = normalizeText(item.title).includes(searchTerm)
+        const descriptionMatch = item.description ? normalizeText(item.description).includes(searchTerm) : false
+        const keywordMatch = item.keywords.some(keyword => normalizeText(keyword).includes(searchTerm))
 
         return titleMatch || descriptionMatch || keywordMatch
     })

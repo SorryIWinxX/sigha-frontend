@@ -34,19 +34,6 @@
 
         <!-- Filters Section -->
         <div class="flex flex-col sm:flex-row gap-4 justify-end items-center">
-            <Button v-if="!readOnly" variant="secondary" @click="groupsStore.openCreateModal()">
-                <template #icon>
-                    <FileText :size="18" />
-                </template>
-                Exportar PDF
-            </Button>
-
-            <Button v-if="!readOnly" variant="primary" @click="groupsStore.openCreateModal()">
-                <template #icon>
-                    <Plus :size="18" />
-                </template>
-                Crear grupo
-            </Button>
 
 
             <div class="w-full sm:w-auto flex gap-2">
@@ -63,27 +50,12 @@
                     :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                     <Maximize2 :size="18" />
                 </Button>
-                <Button v-if="!readOnly" variant="info" @click="openCopyScheduleModal">
-                    Horario anterior
-                    <ClipboardCopy :size="18" />
-                </Button>
-                <Button v-if="!readOnly" variant="danger" @click="undoChanges" :disabled="!hasUnsavedChanges">
-                    Deshacer Cambios
-                    <Trash2 :size="18" />
-                </Button>
-
-                <Button v-if="!readOnly" variant="primary" @click="saveChanges"
-                    :disabled="!hasUnsavedChanges || isSaving">
-                    <span v-if="isSaving">Guardando...</span>
-                    <span v-else>Guardar cambios</span>
-                    <Save :size="18" />
-                </Button>
             </div>
         </div>
 
         <!-- Filter Panel -->
         <div v-if="showFilters" class="p-4 bg-gray-50 border border-gray-200 rounded-sm">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <!-- Filter by level -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Niveles Agrupados</label>
@@ -110,6 +82,13 @@
                     <BaseMultiSelect v-model="filters.subject" :options="subjectOptions"
                         placeholder="Todas las asignaturas" search-placeholder="Buscar asignatura..." />
                 </div>
+
+                <!-- Filter by Program -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Programa Académico</label>
+                    <BaseMultiSelect v-model="filters.program" :options="programOptions"
+                        placeholder="Todos los programas" search-placeholder="Buscar programa..." />
+                </div>
             </div>
 
             <div class="mt-4 flex gap-2 items-center">
@@ -121,8 +100,7 @@
                     Limpiar filtros
                 </Button>
                 <span class="text-sm text-gray-600 flex items-center">
-                    Mostrando {{ groups.length }} de {{ allGroups.length }} horas programadas (grupos:
-                    {{
+                    Mostrando {{ groups.length }} de {{ allGroups.length }} horas programadas (grupos únicos: {{
                         uniqueFilteredGroupCount }} de {{ uniqueTotalGroupCount }})
                 </span>
             </div>
@@ -452,7 +430,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Types
-import type { Group as ApiGroup, ScheduleItem, BulkScheduleUpdateRequest, ScheduleUpdateItem } from '@/types/groups';
+import type { Group as ApiGroup, ScheduleItem, BulkScheduleUpdateRequest, ScheduleUpdateItem, Program } from '@/types/groups';
 import type { User } from '@/types/user';
 import type { Area, Subject } from '@/types/areas';
 import type { Semester } from '@/types/semester';
@@ -494,7 +472,8 @@ const filters = reactive({
     level: [] as string[],
     groupedLevel: '' as string,
     professor: [] as string[],
-    subject: [] as string[]
+    subject: [] as string[],
+    program: [] as string[]
 });
 
 // Drag and drop state
@@ -512,6 +491,7 @@ const groups = ref<GroupDisplay[]>([]);
 const allGroups = ref<GroupDisplay[]>([]);
 const professors = ref<Professor[]>([]);
 const subjects = ref<Subject[]>([]);
+const programs = ref<Program[]>([]);
 const areasData = ref<Area[]>([]);
 const usersData = ref<User[]>([]);
 
@@ -698,19 +678,19 @@ async function loadScheduleData() {
         }
 
         // Load data in parallel
-        const groupsPromise = props.docenteId
-            ? groupsService.getGroupsByDocente(props.docenteId)
-            : groupsService.getGroups(semesterId);
+        const groupsPromise = groupsService.getGroupsByFiltersGeneral({ semesterId: semesterId });
 
-        const [apiGroups, users, areas] = await Promise.all([
+        const [apiGroups, users, areas, programsList] = await Promise.all([
             groupsPromise,
             userService.getUsers(),
-            areasService.getAreas()
+            areasService.getAreas(),
+            groupsService.getPrograms()
         ]);
 
         // Store raw data for filtering
         usersData.value = users;
         areasData.value = areas;
+        programs.value = programsList;
 
         // Map users to professors
         professors.value = users.map((user: User) => ({
@@ -741,6 +721,7 @@ async function loadScheduleData() {
         filters.level = [];
         filters.professor = [];
         filters.subject = [];
+        filters.program = [];
 
         console.log('groups.value', groups.value);
 
@@ -873,6 +854,7 @@ const activeFiltersCount = computed(() => {
     if (filters.level.length > 0) count++;
     if (filters.professor.length > 0) count++;
     if (filters.subject.length > 0) count++;
+    if (filters.program.length > 0) count++;
     return count;
 });
 
@@ -926,6 +908,10 @@ const professorOptions = computed(() => {
 
 const subjectOptions = computed(() => {
     return subjects.value.map(subject => `${subject.code} - ${subject.name}`);
+});
+
+const programOptions = computed(() => {
+    return programs.value.map(program => program.name);
 });
 
 const modalProfessorOptions = computed(() => [
@@ -1606,12 +1592,21 @@ async function applyFilters() {
             })
             .filter((id): id is number => id !== null);
 
+        // Convertir nombres de programas a IDs
+        const programIds = filters.program
+            .map(progName => {
+                const prog = programs.value.find(p => p.name === progName);
+                return prog ? prog.id : null;
+            })
+            .filter((id): id is number => id !== null);
+
         // Llamar al endpoint con los filtros
-        const apiGroups = await groupsService.getGroupsByFilters({
+        const apiGroups = await groupsService.getGroupsByFiltersGeneral({
             semesterId: semesterId,
             idLevels: levelIds.length > 0 ? levelIds : undefined,
             docentesIds: docenteIds.length > 0 ? docenteIds : undefined,
-            subjectIds: subjectIds.length > 0 ? subjectIds : undefined
+            subjectIds: subjectIds.length > 0 ? subjectIds : undefined,
+            programIds: programIds.length > 0 ? programIds : undefined
         });
 
         // Mapear los grupos filtrados al formato de display
@@ -1633,7 +1628,7 @@ async function applyFilters() {
 }
 
 const hasActiveFilters = computed(() => {
-    return filters.level.length > 0 || !!filters.groupedLevel || filters.professor.length > 0 || filters.subject.length > 0;
+    return filters.level.length > 0 || !!filters.groupedLevel || filters.professor.length > 0 || filters.subject.length > 0 || filters.program.length > 0;
 });
 
 async function clearFilters() {
@@ -1641,6 +1636,7 @@ async function clearFilters() {
     filters.groupedLevel = '';
     filters.professor = [];
     filters.subject = [];
+    filters.program = [];
     // Al limpiar filtros, restaurar todos los grupos
     groups.value = [...allGroups.value];
 }
@@ -2003,6 +1999,7 @@ td::-webkit-scrollbar-thumb {
 
 td::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
+    border-radius: 2px;
 }
 
 /* Ensure groups stack nicely */

@@ -261,16 +261,22 @@ const filteredUsers = computed(() => {
         return users.value
     }
 
-    const query = props.searchQuery.toLowerCase().trim()
+    const normalizeText = (text) => {
+        return (text || '')
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+    }
+    const query = normalizeText(props.searchQuery)
     return users.value.filter(user => {
         // Buscar en nombre
-        const nameMatch = user.name?.toLowerCase().includes(query) || false
+        const nameMatch = normalizeText(user.name).includes(query)
 
         // Buscar en email
-        const emailMatch = user.email?.toLowerCase().includes(query) || false
+        const emailMatch = normalizeText(user.email).includes(query)
 
         // Buscar en permisos/rol
-        const permissionMatch = user.permission?.toLowerCase().includes(query) || false
+        const permissionMatch = normalizeText(user.permission).includes(query)
 
         return nameMatch || emailMatch || permissionMatch
     })

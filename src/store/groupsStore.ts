@@ -226,8 +226,15 @@ export const useGroupsStore = defineStore('groups', {
         return this.groups
       }
 
-      const term = searchTerm.toLowerCase()
-      return this.groups.filter((group) => group.code.toLowerCase().includes(term))
+      const normalizeText = (text: string) => {
+        return text
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+      }
+
+      const term = normalizeText(searchTerm)
+      return this.groups.filter((group) => normalizeText(group.code).includes(term))
     },
 
     // Refrescar grupos (forzar recarga)

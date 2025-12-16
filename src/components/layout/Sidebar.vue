@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, type Component } from 'vue';
 import { useRouter } from 'vue-router';
-import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays, Home, ChevronDown, Earth, FileText } from 'lucide-vue-next';
+import { CalendarCog, CalendarRange, PanelLeftClose, PanelLeftOpen, Users, Settings, Blocks, HelpCircle, SquareLibrary, LogOut, CalendarDays, Home, ChevronDown, Earth, FileText, CalendarSearch } from 'lucide-vue-next';
 import { usePermissions } from '@/composables/usePermissions';
 import { useSidebarStore } from '@/store/sidebarStore';
 
@@ -107,6 +107,7 @@ const menuItems = computed<SidebarItem[]>(() => {
     if (isAdmin.value) {
         items.push(
             { to: '/dashboard', icon: Home, label: 'Dashboard' },
+            { to: '/schedule-groups-general', icon: CalendarSearch, label: 'Horarios de Escuela' },
             {
                 icon: CalendarDays,
                 label: 'Horarios de Grupos',
@@ -115,7 +116,7 @@ const menuItems = computed<SidebarItem[]>(() => {
             { to: '/groups', icon: Blocks, label: 'Grupos' },
             { to: '/areas-subjects', icon: SquareLibrary, label: 'Areas y Asignaturas' },
             { to: '/available-management', icon: CalendarRange, label: 'Disponibilidades' },
-            { to: '/users', icon: Users, label: 'Usuarios' },
+            { to: '/users', icon: Users, label: 'Profesores' },
             // { to: '/requests', icon: FileText, label: 'Solicitudes' },
             { to: '/settings', icon: Settings, label: 'Configuración' },
 

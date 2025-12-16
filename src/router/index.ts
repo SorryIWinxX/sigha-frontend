@@ -14,6 +14,7 @@ import DashboardView from '@/views/dashboard/DashboardView.vue'
 import RequestsView from '@/views/requests/requestsView.vue'
 import CalendarAsignedView from '@/views/groups/CalendarAsignedView.vue'
 import RequestsTeacherView from '@/views/requests/RequestsTeacherView.vue'
+import ScheduleGroupsGeneralView from '@/views/groups/ScheduleGroupsGeneralView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL),
@@ -120,6 +121,15 @@ const router = createRouter({
       meta: {
         requiresAuth: true,
         roles: ['PROFESOR'],
+      },
+    },
+    {
+      path: '/schedule-groups-general',
+      name: 'schedule-groups-general',
+      component: ScheduleGroupsGeneralView,
+      meta: {
+        requiresAuth: true,
+        roles: ['DIRECTOR DE ESCUELA', 'COORDINADOR ACADEMICO'],
       },
     },
     {
