@@ -8,7 +8,7 @@
 
                 <!-- Filtro por materia -->
                 <BaseMultiSelect :options="subjectOptions" v-model="selectedSubjectFilter"
-                    placeholder="Filtrar por materias" searchPlaceholder="Buscar materias..." />
+                    placeholder="Filtrar por asignaturas" searchPlaceholder="Buscar asignaturas..." />
             </div>
 
             <div class="flex items-center gap-2">
@@ -301,11 +301,17 @@ const filteredGroups = computed(() => {
 
     // Filtrar por término de búsqueda
     if (searchTerm.value.trim()) {
-        const term = searchTerm.value.toLowerCase()
+        const normalizeText = (text) => {
+            return text
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+        }
+        const term = normalizeText(searchTerm.value)
         groups = groups.filter(group => {
-            const subjectName = getSubjectName(group.idSubject).toLowerCase()
-            return group.code.toLowerCase().includes(term) ||
-                subjectName.includes(term)
+            const subjectName = getSubjectName(group.idSubject)
+            return normalizeText(group.code).includes(term) ||
+                normalizeText(subjectName).includes(term)
         })
     }
 

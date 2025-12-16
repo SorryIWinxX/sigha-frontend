@@ -397,12 +397,18 @@ const filteredRequests = computed(() => {
 
     // Filtrar por término de búsqueda
     if (searchTerm.value.trim()) {
-        const term = searchTerm.value.toLowerCase()
+        const normalizeText = (text) => {
+            return (text || '')
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+        }
+        const term = normalizeText(searchTerm.value)
         requests = requests.filter(request =>
-            request.comment.toLowerCase().includes(term) ||
-            (request.subject && request.subject.toLowerCase().includes(term)) ||
-            (request.groupCode && request.groupCode.toLowerCase().includes(term)) ||
-            getRequestTypeLabel(request.type).toLowerCase().includes(term)
+            normalizeText(request.comment).includes(term) ||
+            (request.subject && normalizeText(request.subject).includes(term)) ||
+            (request.groupCode && normalizeText(request.groupCode).includes(term)) ||
+            normalizeText(getRequestTypeLabel(request.type)).includes(term)
         )
     }
 
