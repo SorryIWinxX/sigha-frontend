@@ -3,16 +3,6 @@ stages:
   - push
   - deploy
 
-
-
-variables:
-  WORKFLOW_STRATEGY: 'gitflow'
-
-vstages:
-  - build
-  - push
-  - deploy
-
 variables:
   WORKFLOW_STRATEGY: "gitflow"
 
