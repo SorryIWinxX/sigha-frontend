@@ -19,7 +19,7 @@ include:
 
 react_build:
   variables:
-    IMAGE: "node:20-alpine" 
+    IMAGE: "node:22-alpine" 
     BUILD_DIR: "dist"
 
 trigger_deploy:
