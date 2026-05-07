@@ -8,9 +8,17 @@ stages:
 variables:
   WORKFLOW_STRATEGY: 'gitflow'
 
+vstages:
+  - build
+  - push
+  - deploy
+
+variables:
+  WORKFLOW_STRATEGY: "gitflow"
+
 include:
   - project: "infraestructure/gitlab-ci-templates"
-    file: "/build/nestjs-build.yml"
+    file: "/build/react-build.yml"
     ref: v4.0.6
   - project: "infraestructure/gitlab-ci-templates"
     file: "/docker/docker-push.yml"
@@ -19,9 +27,10 @@ include:
     file: "/deploy/trigger-infra.yml"
     ref: v4.0.6
 
-nestjs_build:
+react_build:
   variables:
-    NEXT_BUILD_IMAGE: "node:20-alpine"
+    IMAGE: "node:20-alpine" 
+    BUILD_DIR: "dist"
 
 trigger_deploy:
   extends: .trigger-infra
