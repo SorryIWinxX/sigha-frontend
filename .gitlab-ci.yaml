@@ -27,6 +27,6 @@ trigger_deploy:
     APP_NETWORKS: 'nginx-network'
     SECRET_NAME: 'SIGHA-infra'
     APP_VARS: |
-      - VITE_API_URL
-      - VITE_SCHOOL
+      - SISTEMAS_VITE_API_URL
+      - SISTEMAS_VITE_SCHOOL
       - VITE_COLOR
