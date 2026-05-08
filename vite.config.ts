@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   // Fallback para VITE_API_URL si no está definida
-  const apiUrl = env.VITE_API_URL
+  const apiUrl =  "/api/sigha"
 
   return {
     plugins: [vue(), vueDevTools(), tailwindcss()],
