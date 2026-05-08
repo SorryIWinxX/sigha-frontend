@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import { ref, type Ref } from 'vue'
 import type { LoginResponse } from '@/types/auth'
@@ -32,7 +33,7 @@ export class AuthService {
 
   async login(documento: string, password: string): Promise<boolean> {
     try {
-      const res = await fetch(`/public/auth/login`, {
+      const res = await apiFetch(`/public/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export class AuthService {
     }
 
     try {
-      const res = await fetch('/api/v1/changePassword', {
+      const res = await apiFetch('/api/v1/changePassword', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

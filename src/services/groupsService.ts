@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import { useSemesterStore } from '@/store/semesterStore'
 import type {
@@ -45,7 +46,7 @@ export class GroupsService {
         throw new Error('No semester ID available')
       }
 
-      const response = await fetch(`/api/v1/group/by-semesters`, {
+      const response = await apiFetch(`/api/v1/group/by-semesters`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -63,7 +64,7 @@ export class GroupsService {
 
   async getGroupById(id: number): Promise<Group | null> {
     try {
-      const response = await fetch(`/api/v1/group/${id}`, {
+      const response = await apiFetch(`/api/v1/group/${id}`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -87,7 +88,7 @@ export class GroupsService {
       // El semesterId ya se envía en el header a través de getHeaders()
       // El formato del body debe incluir: code, idSubject, scheduleList
       // idDocente es opcional y se envía solo si está presente en groupData
-      const response = await fetch('/api/v1/group', {
+      const response = await apiFetch('/api/v1/group', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(groupData),
@@ -108,7 +109,7 @@ export class GroupsService {
   async updateGroup(id: number, groupData: UpdateGroupRequest): Promise<Group> {
     try {
       // idDocente es opcional y solo se envía si está presente en groupData
-      const response = await fetch(`/api/v1/group/${id}`, {
+      const response = await apiFetch(`/api/v1/group/${id}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(groupData),
@@ -128,7 +129,7 @@ export class GroupsService {
 
   async deleteGroup(id: number): Promise<void> {
     try {
-      const response = await fetch(`/api/v1/group/${id}`, {
+      const response = await apiFetch(`/api/v1/group/${id}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       })
@@ -274,7 +275,7 @@ export class GroupsService {
     try {
       console.log('Datos enviados a la API:', JSON.stringify(scheduleUpdates, null, 2))
 
-      const response = await fetch('/api/v1/schedule', {
+      const response = await apiFetch('/api/v1/schedule', {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(scheduleUpdates),
@@ -302,7 +303,7 @@ export class GroupsService {
         idLevels: levelIds.join(','),
       })
 
-      const response = await fetch(`/api/v1/group/by-levels?${params}`, {
+      const response = await apiFetch(`/api/v1/group/by-levels?${params}`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -324,7 +325,7 @@ export class GroupsService {
         docenteId: docenteId.toString(),
       })
 
-      const response = await fetch(`/api/v1/group/by-docente?${params}`, {
+      const response = await apiFetch(`/api/v1/group/by-docente?${params}`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -346,7 +347,7 @@ export class GroupsService {
         subjectId: subjectId.toString(),
       })
 
-      const response = await fetch(`/api/v1/group/by-subject?${params}`, {
+      const response = await apiFetch(`/api/v1/group/by-subject?${params}`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -387,7 +388,7 @@ export class GroupsService {
 
       console.log(`Obteniendo grupos del semestre ${semesterId}`)
 
-      const response = await fetch(`/api/v1/group/by-semesters`, {
+      const response = await apiFetch(`/api/v1/group/by-semesters`, {
         method: 'GET',
         headers: headers,
       })
@@ -429,7 +430,7 @@ export class GroupsService {
         params.subjectIds.forEach((id) => queryParams.append('subjectIds', id.toString()))
       }
 
-      const response = await fetch(`/api/v1/group/by-filters?${queryParams}`, {
+      const response = await apiFetch(`/api/v1/group/by-filters?${queryParams}`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -472,7 +473,7 @@ export class GroupsService {
         params.programIds.forEach((id) => queryParams.append('programIds', id.toString()))
       }
 
-      const response = await fetch(`/api/v1/group/by-filters/all-programs?${queryParams}`, {
+      const response = await apiFetch(`/api/v1/group/by-filters/all-programs?${queryParams}`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -547,7 +548,7 @@ export class GroupsService {
       console.log('Headers enviados:', { ...headers, Authorization: 'Bearer [HIDDEN]' })
       console.log('Body enviado (primeros 2 grupos):', groupsToCreate.slice(0, 2))
 
-      const response = await fetch('/api/v1/group/bulk', {
+      const response = await apiFetch('/api/v1/group/bulk', {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(groupsToCreate),
@@ -570,7 +571,7 @@ export class GroupsService {
 
   async getPrograms(): Promise<Program[]> {
     try {
-      const response = await fetch('/api/v1/programs', {
+      const response = await apiFetch('/api/v1/programs', {
         method: 'GET',
         headers: this.getHeaders(),
       })

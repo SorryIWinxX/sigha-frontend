@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import type {
   ProfessorAvailability,
@@ -41,7 +42,7 @@ export class AvailabilityService {
 
   async getAvailability(semesterId: string | number): Promise<AvailabilityResponse> {
     try {
-      const response = await fetch('/api/v1/availability/docente', {
+      const response = await apiFetch('/api/v1/availability/docente', {
         method: 'GET',
         headers: this.getHeaders(semesterId),
       })
@@ -66,7 +67,7 @@ export class AvailabilityService {
         disponibilidad: availability,
       }
 
-      const response = await fetch('/api/v1/availability', {
+      const response = await apiFetch('/api/v1/availability', {
         method: 'POST',
         headers: this.getHeaders(semesterId),
         body: JSON.stringify(requestBody),
@@ -88,7 +89,7 @@ export class AvailabilityService {
     semesterId: string | number,
   ): Promise<GlobalAvailabilityResponse> {
     try {
-      const response = await fetch(`/api/v1/availability/global/${docentId}`, {
+      const response = await apiFetch(`/api/v1/availability/global/${docentId}`, {
         method: 'GET',
         headers: this.getHeaders(semesterId),
       })
@@ -110,7 +111,7 @@ export class AvailabilityService {
     semesterId: string | number,
   ): Promise<UpdateAvailabilityStatusResponse> {
     try {
-      const response = await fetch(`/api/v1/availability/${idDisponibilidad}`, {
+      const response = await apiFetch(`/api/v1/availability/${idDisponibilidad}`, {
         method: 'PUT',
         headers: this.getHeaders(semesterId, newStatusId),
       })
@@ -130,7 +131,7 @@ export class AvailabilityService {
     semesterId: string | number,
   ): Promise<AllProfessorsAvailabilityResponse> {
     try {
-      const response = await fetch('/api/v1/availability/global', {
+      const response = await apiFetch('/api/v1/availability/global', {
         method: 'GET',
         headers: this.getHeaders(semesterId),
       })

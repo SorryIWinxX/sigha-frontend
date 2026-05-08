@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import type { Semester, SemesterRequest, SemesterUpdateRequest } from '@/types/semester'
 
@@ -25,7 +26,7 @@ export class SemesterService {
 
   async getSemesters(): Promise<Semester[]> {
     try {
-      const response = await fetch('/api/v1/semesters', {
+      const response = await apiFetch('/api/v1/semesters', {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -43,7 +44,7 @@ export class SemesterService {
 
   async createSemester(semesterData: SemesterRequest): Promise<Semester> {
     try {
-      const response = await fetch('/api/v1/semesters', {
+      const response = await apiFetch('/api/v1/semesters', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(semesterData),
@@ -62,7 +63,7 @@ export class SemesterService {
 
   async updateSemester(semesterData: SemesterUpdateRequest): Promise<Semester> {
     try {
-      const response = await fetch('/api/v1/semesters', {
+      const response = await apiFetch('/api/v1/semesters', {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(semesterData),
@@ -81,7 +82,7 @@ export class SemesterService {
 
   async updateAvailability(semesterId: number, newAvailability: boolean): Promise<Semester> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/v1/semesters/availability?newAvailability=${newAvailability}&semesterId=${semesterId}`,
         {
           method: 'PUT',
@@ -102,7 +103,7 @@ export class SemesterService {
 
   async deleteSemester(id: number): Promise<void> {
     try {
-      const response = await fetch(`/api/v1/semesters/${id}`, {
+      const response = await apiFetch(`/api/v1/semesters/${id}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       })

@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import type {
   User,
@@ -22,7 +23,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/v1/users', {
+      const response = await apiFetch('/api/v1/users', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +58,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/v1/users/me', {
+      const response = await apiFetch('/api/v1/users/me', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +93,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/v1/users/me', {
+      const response = await apiFetch('/api/v1/users/me', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +129,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch('/api/v1/changePassword', {
+      const response = await apiFetch('/api/v1/changePassword', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +169,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch(`/api/v1/users/${id}`, {
+      const response = await apiFetch(`/api/v1/users/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +204,7 @@ export const userService = {
     }
 
     try {
-      const response = await fetch(`/api/v1/users/${id}`, {
+      const response = await apiFetch(`/api/v1/users/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -291,7 +292,7 @@ export const userService = {
   },
 
   async forgotPassword(documento: string): Promise<void> {
-    const response = await fetch(`/public/auth/send-recovery`, {
+    const response = await apiFetch(`/public/auth/send-recovery`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
