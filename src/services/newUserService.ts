@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import type { NewUserRequest, NewUserResponse } from '@/types/user'
 import { useAuthStore } from '@/store/authStore'
 
@@ -29,7 +30,7 @@ export const newUserService = {
         throw new Error('Debe seleccionar al menos un rol')
       }
 
-      const response = await fetch(`/api/v1/register`, {
+      const response = await apiFetch(`/api/v1/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

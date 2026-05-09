@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import type { Area, Subject, CreateSubjectRequest } from '@/types/areas'
 
@@ -25,7 +26,7 @@ export class AreasService {
 
   async getAreas(): Promise<Area[]> {
     try {
-      const response = await fetch('/api/v1/area', {
+      const response = await apiFetch('/api/v1/area', {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -43,7 +44,7 @@ export class AreasService {
 
   async createArea(area: Omit<Area, 'id'>): Promise<Area> {
     try {
-      const response = await fetch('/api/v1/area', {
+      const response = await apiFetch('/api/v1/area', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(area),
@@ -62,7 +63,7 @@ export class AreasService {
 
   async updateArea(id: number, area: Omit<Area, 'id'>): Promise<Area> {
     try {
-      const response = await fetch(`/api/v1/area/${id}`, {
+      const response = await apiFetch(`/api/v1/area/${id}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(area),
@@ -81,7 +82,7 @@ export class AreasService {
 
   async createSubject(subjectData: CreateSubjectRequest): Promise<Subject> {
     try {
-      const response = await fetch('/api/v1/subject', {
+      const response = await apiFetch('/api/v1/subject', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(subjectData),
@@ -104,7 +105,7 @@ export class AreasService {
     subject: Omit<Subject, 'id'>,
   ): Promise<Subject> {
     try {
-      const response = await fetch(`/api/v1/subject/${subjectId}`, {
+      const response = await apiFetch(`/api/v1/subject/${subjectId}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(subject),
@@ -123,7 +124,7 @@ export class AreasService {
 
   async deleteSubject(areaId: number, subjectId: number): Promise<void> {
     try {
-      const response = await fetch(`/api/v1/subject/${subjectId}`, {
+      const response = await apiFetch(`/api/v1/subject/${subjectId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       })

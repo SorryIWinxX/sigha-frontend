@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import type { TipoDocumento } from '@/types/tipoDocumento'
 
@@ -25,7 +26,7 @@ export class TipoDocumentoService {
 
   async getTiposDocumento(): Promise<TipoDocumento[]> {
     try {
-      const response = await fetch('/api/v1/tipoDocumento', {
+      const response = await apiFetch('/api/v1/tipoDocumento', {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -43,7 +44,7 @@ export class TipoDocumentoService {
 
   async createTipoDocumento(tipoDocumento: Omit<TipoDocumento, 'id'>): Promise<TipoDocumento> {
     try {
-      const response = await fetch('/api/v1/tipoDocumento', {
+      const response = await apiFetch('/api/v1/tipoDocumento', {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(tipoDocumento),
@@ -65,7 +66,7 @@ export class TipoDocumentoService {
     tipoDocumento: Omit<TipoDocumento, 'id'>,
   ): Promise<TipoDocumento> {
     try {
-      const response = await fetch(`/api/v1/tipoDocumento/${id}`, {
+      const response = await apiFetch(`/api/v1/tipoDocumento/${id}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(tipoDocumento),

@@ -19,8 +19,6 @@ package-lock.json
 .env.test.local
 .env.production.local
 
-# Archivos de build
-dist
 build
 
 # Archivos de pruebas

@@ -1,3 +1,4 @@
+import { apiFetch } from '@/utils/http'
 import { useAuthStore } from '@/store/authStore'
 import type { StatusAvailability } from '@/types/status'
 
@@ -24,7 +25,7 @@ class StatusService {
 
   async getStatusAvailability(): Promise<StatusAvailability[]> {
     try {
-      const response = await fetch(`/api/v1/status-availability`, {
+      const response = await apiFetch(`/api/v1/status-availability`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
@@ -42,7 +43,7 @@ class StatusService {
 
   async getStatus() {
     try {
-      const response = await fetch(`/api/v1/status`, {
+      const response = await apiFetch(`/api/v1/status`, {
         method: 'GET',
         headers: this.getHeaders(),
       })
