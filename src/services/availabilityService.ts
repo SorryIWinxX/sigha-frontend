@@ -13,7 +13,7 @@ import type {
 export type AllProfessorsAvailabilityResponse = ProfessorAvailability[]
 
 export class AvailabilityService {
-  private getHeaders(semesterId: string | number, newStatusId?: number) {
+  private getHeaders(semesterId: string | number) {
     const authStore = useAuthStore()
     const token = authStore.getToken()
     const userId = authStore.userId
@@ -26,18 +26,12 @@ export class AvailabilityService {
       throw new Error('No user ID available')
     }
 
-    const headers: any = {
+    return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
       UserId: userId.toString(),
       semesterId: semesterId.toString(),
     }
-
-    if (newStatusId !== undefined) {
-      headers.newStatusId = newStatusId.toString()
-    }
-
-    return headers
   }
 
   async getAvailability(semesterId: string | number): Promise<AvailabilityResponse> {
@@ -111,10 +105,16 @@ export class AvailabilityService {
     semesterId: string | number,
   ): Promise<UpdateAvailabilityStatusResponse> {
     try {
-      const response = await apiFetch(`/api/v1/availability/${idDisponibilidad}`, {
-        method: 'PUT',
-        headers: this.getHeaders(semesterId, newStatusId),
+      const query = new URLSearchParams({
+        newStatusId: String(newStatusId),
       })
+      const response = await apiFetch(
+        `/api/v1/availability/${idDisponibilidad}?${query.toString()}`,
+        {
+          method: 'PUT',
+          headers: this.getHeaders(semesterId),
+        },
+      )
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
